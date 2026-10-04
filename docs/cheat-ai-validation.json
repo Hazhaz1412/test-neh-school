@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-04",
+  "engine": "Godot 4.7.2 Compatibility",
+  "rendered_test_display": "Xvfb / Mesa llvmpipe; isolated from player desktop",
+  "tests": {
+    "rooftop": {
+      "passed": true,
+      "checks_passed": 21,
+      "summary": "Soul rooftop validation: 21 checks, 0 failures"
+    },
+    "cheats_headless": {
+      "passed": true,
+      "checks_passed": 33,
+      "summary": "Cheat / AI diagnostics validation: 33 checks, 0 failures"
+    },
+    "cheats_rendered": {
+      "passed": true,
+      "checks_passed": 37,
+      "summary": "Cheat / AI diagnostics validation: 37 checks, 0 failures"
+    },
+    "camera_headless": {
+      "passed": true,
+      "checks_passed": 41,
+      "summary": "Camera/inventory validation: 41 checks, 0 failures"
+    },
+    "soul_quest": {
+      "passed": true,
+      "checks_passed": 33,
+      "summary": "Soul quest validation failures: 0"
+    },
+    "runtime_geometry": {
+      "passed": true,
+      "checks_passed": 13,
+      "summary": "Runtime validation failures: 0"
+    },
+    "survival": {
+      "passed": true,
+      "checks_passed": 39,
+      "summary": "Survival validation failures: 0"
+    },
+    "ai_protocol": {
+      "passed": true,
+      "fixture_tests": 12
+    }
+  },
+  "ai_live": {
+    "model": "gemini-3.8-flash",
+    "bridge_version": 4,
+    "configured": true,
+    "model_get_http": 200,
+    "comfort_http": 200,
+    "source": "ai",
+    "synthetic_drawing_response_scores": {
+      "understanding": 2,
+      "validation": 2,
+      "support": 2
+    },
+    "godot_dialog_received_real_feedback": true,
+    "rest_mime_type": "APPLICATION_JSON",
+    "overload_retry_attempts": 3,
+    "total_request_budget_seconds": 80
+  },
+  "tuning": {
+    "flashlight_drain_percent_per_second": 0.675,
+    "full_flashlight_runtime_seconds": 148.15,
+    "stamina_max": 130,
+    "camera_cost_percent": 20,
+    "battery_recharge_percent": 50
+  },
+  "rooftop": {
+    "connector_roof_center_y": 11.6,
+    "roof_surface_y": 11.7,
+    "soul_position": [
+      15,
+      11.75,
+      5
+    ],
+    "sanctuary": "All three A rooftop wings, all enemy archetypes excluded",
+    "cheat_leaves_an_available": true,
+    "clock_and_battery_continue": true
+  },
+  "screenshots": [
+    "soul-rooftop-preview.png",
+    "cheat-menu-preview.png",
+    "soul-ai-status-preview.png"
+  ],
+  "notes": [
+    "AI rubric fixtures remain separate from live provider validation.",
+    "No credentials or private configuration were copied into the project.",
+    "Game request schema, overload retry, player movement, dialogue and roof seam were validated."
+  ]
+}

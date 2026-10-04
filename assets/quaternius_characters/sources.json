@@ -1,0 +1,23 @@
+{
+  "author": "Quaternius",
+  "pack": "Ultimate Animated Character Pack",
+  "author_page": "https://quaternius.com/packs/ultimatedanimatedcharacter.html",
+  "license_page": "https://opengameart.org/content/animated-characters-pack",
+  "archive_url": "https://opengameart.org/sites/default/files/ultimate_animated_character_pack_by_quaternius.zip",
+  "license": "CC0",
+  "retrieved": "2026-10-04",
+  "files": {
+    "Casual_Female.fbx": {
+      "sha256": "abde1b986cf3d5178e1de21efee3536b27984651b42d0e931c837615b3fcfd7a",
+      "bytes": 1615612
+    },
+    "Casual_Male.fbx": {
+      "sha256": "d3c2ada76aede1be3b37f084de952fc8686668a5627c03fa854b45070f583997",
+      "bytes": 1612396
+    },
+    "Suit_Male.fbx": {
+      "sha256": "f1c7112a59d035a4b54339961e1225e03fc3968b09788b480bd42f618d0519e6",
+      "bytes": 1614492
+    }
+  }
+}

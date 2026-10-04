@@ -1,0 +1,18 @@
+[
+  {
+    "asset": "cracked_concrete",
+    "page": "https://polyhaven.com/a/cracked_concrete",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cracked_concrete/cracked_concrete_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "sha256": "26b268b23dc71accc627cc25d889bdb56287518a5abb27565bb71bda26cec5c5",
+    "bytes": 849369
+  },
+  {
+    "asset": "concrete_wall_003",
+    "page": "https://polyhaven.com/a/concrete_wall_003",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_003/concrete_wall_003_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "sha256": "7d1d4b9f5ed1aa3e6385ef3232e26e123a3dac5f364e44f9f34784e39bf8d6bb",
+    "bytes": 264756
+  }
+]

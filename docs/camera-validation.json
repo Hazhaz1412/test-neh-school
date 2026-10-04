@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-04",
+  "engine": "Godot 4.7.2 Compatibility",
+  "tests": {
+    "camera_headless": {
+      "passed": true,
+      "checks_passed": 41,
+      "summary": [
+        "Camera/inventory validation: 41 checks, 0 failures"
+      ],
+      "script_errors": 0
+    },
+    "camera_gpu": {
+      "passed": true,
+      "checks_passed": 45,
+      "summary": [
+        "Camera/inventory validation: 45 checks, 0 failures"
+      ],
+      "script_errors": 0
+    },
+    "survival": {
+      "passed": true,
+      "checks_passed": 39,
+      "summary": [
+        "Survival validation failures: 0"
+      ],
+      "script_errors": 0
+    },
+    "opening": {
+      "passed": true,
+      "checks_passed": 39,
+      "summary": [
+        "Opening / night clock validation failures: 0"
+      ],
+      "script_errors": 0
+    },
+    "soul_quest": {
+      "passed": true,
+      "checks_passed": 33,
+      "summary": [
+        "Soul quest validation failures: 0"
+      ],
+      "script_errors": 0
+    },
+    "runtime": {
+      "passed": true,
+      "checks_passed": 13,
+      "summary": [
+        "Runtime validation failures: 0"
+      ],
+      "script_errors": 0
+    },
+    "chalk_headless": {
+      "passed": true,
+      "checks_passed": 25,
+      "summary": [
+        "Charged chalk/recharge validation: 25 checks, 0 failures"
+      ],
+      "script_errors": 0
+    },
+    "chalk_gpu": {
+      "passed": true,
+      "checks_passed": 29,
+      "summary": [
+        "Charged chalk/recharge validation: 29 checks, 0 failures"
+      ],
+      "script_errors": 0
+    }
+  },
+  "screenshots": [
+    "camera-ready-preview.png",
+    "camera-flash-preview.png",
+    "camera-return-preview.png",
+    "chalk-charge-preview.png"
+  ],
+  "notes": [
+    "GPU suite exercises real numeric, wheel and left-click input handlers.",
+    "Soul quest validation uses valid mock protocol replies, not a real AI provider.",
+    "Capture stages existing four enemy archetypes for visual comparison; no new spawns."
+  ],
+  "tuning": {
+    "battery_recharge_percentage_points": 50,
+    "camera_cost_percentage_points": 20,
+    "camera_banish_seconds": 6,
+    "camera_cooldown_seconds": 1.5,
+    "chalk_charge_seconds": 1.5,
+    "chalk_max_range_multiplier": 5
+  },
+  "chalk_measured_reach": {
+    "quick_m": 6.20889282226562,
+    "full_m": 30.6217422485352,
+    "ratio": 4.93191670803576,
+    "conditions": "Same level camera, real courtyard floor, swept CharacterBody collisions."
+  }
+}

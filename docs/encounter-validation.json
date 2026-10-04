@@ -1,0 +1,10 @@
+{
+	"checks": 31,
+	"confirmation_seconds": 1.25,
+	"failures": 0,
+	"hard_cap": 3,
+	"interval_seconds": 22,
+	"minimum_spawn_distance": 14,
+	"normal_active": 2,
+	"roster": 6
+}

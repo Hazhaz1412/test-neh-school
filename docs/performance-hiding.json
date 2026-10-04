@@ -1,0 +1,69 @@
+{
+	"adapter": "NVIDIA GeForce RTX 3060",
+	"load_ms": 841,
+	"nodes": 10095.0,
+	"quality": 1,
+	"samples": [
+		{
+			"cpu_ms": 158.34,
+			"draw_calls": 5136,
+			"median_frame_ms": 8.2,
+			"p95_frame_ms": 9.96,
+			"physics_ms": 198.55,
+			"primitives": 875888,
+			"spirit": false,
+			"view": "campus"
+		},
+		{
+			"cpu_ms": 43.35,
+			"draw_calls": 5135,
+			"median_frame_ms": 8.59,
+			"p95_frame_ms": 11.57,
+			"physics_ms": 1.1,
+			"primitives": 855781,
+			"spirit": false,
+			"view": "hallway"
+		},
+		{
+			"cpu_ms": 5.04,
+			"draw_calls": 605,
+			"median_frame_ms": 1.54,
+			"p95_frame_ms": 2.55,
+			"physics_ms": 1.04,
+			"primitives": 212294,
+			"spirit": false,
+			"view": "library"
+		},
+		{
+			"cpu_ms": 44.8,
+			"draw_calls": 5684,
+			"median_frame_ms": 9.88,
+			"p95_frame_ms": 11.93,
+			"physics_ms": 0.96,
+			"primitives": 949509,
+			"spirit": true,
+			"view": "campus"
+		},
+		{
+			"cpu_ms": 12.75,
+			"draw_calls": 5684,
+			"median_frame_ms": 10.04,
+			"p95_frame_ms": 12.11,
+			"physics_ms": 0.76,
+			"primitives": 945786,
+			"spirit": true,
+			"view": "hallway"
+		},
+		{
+			"cpu_ms": 5.6,
+			"draw_calls": 687,
+			"median_frame_ms": 2.09,
+			"p95_frame_ms": 2.98,
+			"physics_ms": 0.93,
+			"primitives": 259790,
+			"spirit": true,
+			"view": "library"
+		}
+	],
+	"viewport": "(1280, 720)"
+}

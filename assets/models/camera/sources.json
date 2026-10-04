@@ -1,0 +1,12 @@
+{
+  "title": "Camera",
+  "author": "Poly by Google",
+  "page": "https://poly.pizza/m/0nfSsetwy0Z",
+  "download": "https://static.poly.pizza/5816c144-82dc-4e1b-a0d9-7f3609d6887c.glb",
+  "license": "CC BY 3.0",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/",
+  "retrieved": "2026-10-04",
+  "sha256": "eee68c9c9e936459c76fe5ae3b2259e407f549e076793ae34ccd3d45e50b25c5",
+  "bytes": 1588164,
+  "changes": "Original GLB unchanged; normalized scale/orientation and viewmodel placement in Godot. Equipped camera uses unshaded copies of the original materials."
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "drawing",
+    "title": "Bức vẽ bị xé",
+    "item": "Vở vẽ",
+    "room": 301,
+    "position": [
+      -29.5,
+      8.7,
+      -10.5
+    ],
+    "hint": "A · tầng 3 · Mỹ thuật",
+    "story": "An đem bức vẽ tới lớp. Họ xé nó, cười nhạo rồi bắt em xin lỗi.",
+    "feeling": "Em tưởng những thứ em yêu thích đều đáng bị chê cười.",
+    "rubric": "Thừa nhận mất mát của bức vẽ; khẳng định việc bị phá đồ không phải lỗi của An, không chê sở thích hay buộc em mạnh mẽ.",
+    "model": "books"
+  },
+  {
+    "id": "isolation",
+    "title": "Chỗ ngồi trống",
+    "item": "Hộp cơm",
+    "room": 1102,
+    "position": [
+      4.5,
+      0.9,
+      -58
+    ],
+    "hint": "B · tầng 1 · Lớp 102",
+    "story": "Ngày nào An cũng ăn một mình. Ai ngồi cùng em đều bị đe dọa.",
+    "feeling": "Em nghĩ không ai muốn ở cạnh mình.",
+    "rubric": "Lắng nghe sự cô đơn, công nhận em xứng đáng được kết nối; đề nghị đồng hành mà không ép hòa nhập hay kết bạn với người làm hại em.",
+    "model": "cardboardBoxClosed"
+  },
+  {
+    "id": "rumour",
+    "title": "Đoạn ghi âm bị cắt",
+    "item": "Thẻ nhớ",
+    "room": 1201,
+    "position": [
+      -21,
+      4.8,
+      -60.4
+    ],
+    "hint": "B · tầng 2 · Máy tính",
+    "story": "Lời nói của An bị cắt ghép rồi lan khắp nhóm lớp. Những lời chế giễu không dừng khi em về nhà.",
+    "feeling": "Em sợ mọi người chỉ tin đoạn ghi âm ấy.",
+    "rubric": "Tin và lắng nghe em, không tiếp tục lan truyền; đề nghị lưu bằng chứng và nhờ người lớn đáng tin hỗ trợ việc báo cáo nếu em đồng ý. Không đòi em giao mật khẩu hoặc công khai thông tin.",
+    "model": "computerKeyboard"
+  },
+  {
+    "id": "fear",
+    "title": "Lời cầu cứu chưa gửi",
+    "item": "Mảnh giấy trong băng tay",
+    "room": 104,
+    "position": [
+      25,
+      0.92,
+      -9
+    ],
+    "hint": "A · tầng 1 · Y tế",
+    "story": "An giấu vết thương dưới băng tay. Tờ giấy xin giúp đỡ vẫn nằm trong túi vì em sợ bị trả đũa.",
+    "feeling": "Nếu kể ra, họ sẽ đánh em nữa.",
+    "rubric": "Công nhận nỗi sợ bị trả đũa; cùng chọn người lớn đáng tin và cách bảo vệ an toàn. Tôn trọng nhịp chia sẻ, không ép đối đầu hay hứa giữ bí mật tuyệt đối, không đổ lỗi cho việc im lặng.",
+    "model": "bandage"
+  }
+]

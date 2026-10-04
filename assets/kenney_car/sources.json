@@ -1,0 +1,11 @@
+{
+  "page": "https://kenney.nl/assets/car-kit",
+  "archive": "https://kenney.nl/media/pages/assets/car-kit/1a312ec241-1775131960/kenney_car-kit.zip",
+  "license": "CC0",
+  "files": {
+    "van.glb": "ed4ed56e8e5ed98db050af09ed2062b3b6bb7b93eab1e563cb6774b387b233a1",
+    "wheel-dark.glb": "ca871b4db5c5300314c5873b4c8e412f30fc95c1f1deee87599fde736a7adc20",
+    "License.txt": "c33b7f6453d134deae7b1b8493717d9ccfa754c25ab97f6de89b88f8fda19b00",
+    "Textures/colormap.png": "f3622a03a20c6696065cae9cbe391351be873508af190c2ebd1d420c055787a5"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-04",
+  "model": "mimo-v2.6-flash-free",
+  "provider": "OpenCode Zen",
+  "live_ai": {
+    "configured": true,
+    "tested": true,
+    "successful": false,
+    "http_status": 403,
+    "error_type": "FreeTierError",
+    "message": "OpenCode's free tier can only be used from within OpenCode"
+  },
+  "checks": {
+    "python_provider_protocol": 3,
+    "godot_soul_quest": "passed including localhost HTTP fixtures",
+    "opening_clock": "passed",
+    "survival": "passed",
+    "runtime_geometry": "passed",
+    "master_key_path": "passed",
+    "gpu_visual_capture": "passed"
+  },
+  "note": "Fixture response scores do not demonstrate real AI quality or availability.",
+  "gemini_adapter": {
+    "model": "gemini-3.8-flash",
+    "protocol_tests": "6 provider tests passed",
+    "live_ai_tested": false,
+    "live_ai_status": "Waiting for Google AI Studio key",
+    "credentials": "Private config outside project; provider keys isolated",
+    "response_validation": "JSON schema, final answer only, reject safety block and truncation"
+  }
+}
