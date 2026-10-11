@@ -1,2 +1,7 @@
 .godot/
 *.tmp
+
+# Local export cache and generated playtest packages
+.export_templates/
+dist/
+build/

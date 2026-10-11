@@ -16,7 +16,14 @@ func _health_received(result: int, status: int, _headers: PackedStringArray, bod
 		var payload = JSON.parse_string(body.get_string_from_utf8())
 		configured = payload is Dictionary and payload.get("service") == "neh-soul-ai" and payload.get("configured") == true
 		return
-	var script := ProjectSettings.globalize_path("res://tools/soul_ai_server.py")
+	var script := ProjectSettings.globalize_path("res://tools/soul_ai_server.py") if OS.has_feature("editor") else OS.get_executable_path().get_base_dir().path_join("tools/soul_ai_server.py")
+	if not OS.has_feature("editor"):
+		var private_config := OS.get_environment("SOUL_AI_CONFIG")
+		if private_config.is_empty():
+			var home_dir := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
+			private_config = home_dir.path_join(".config/neh-school/ai.json")
+		if not FileAccess.file_exists(private_config) and OS.get_environment("GOOGLE_API_KEY").is_empty() and OS.get_environment("GEMINI_API_KEY").is_empty() and OS.get_environment("OPENCODE_API_KEY").is_empty():
+			return
 	if FileAccess.file_exists(script):
 		var executable := "python" if OS.has_feature("windows") else "python3"
 		OS.create_process(executable, [script], false)

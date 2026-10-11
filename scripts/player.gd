@@ -101,7 +101,7 @@ func cycle_item(step: int) -> void:
 
 func can_use_item() -> bool:
 	var world: Node3D = get_parent()
-	return enabled and health > 0 and not combat.busy() and world.simulation_active() and not world.map_panel.visible and (world.soul_quest == null or not world.soul_quest.panel_visible()) and (world.progression == null or not world.progression.panel_visible())
+	return enabled and health > 0 and not combat.busy() and world.simulation_active() and not world.map_panel.visible and (world.soul_quest == null or not world.soul_quest.panel_visible()) and (world.progression == null or not world.progression.panel_visible() and not world.progression.controls_player())
 
 func use_selected_item() -> bool:
 	if not can_use_item():
@@ -175,6 +175,8 @@ func drop_selected_item() -> bool:
 	return true
 
 func get_interaction_target() -> Node3D:
+	if get_parent().get("progression") != null and get_parent().progression.controls_player():
+		return null
 	if get_parent().get("progression") != null and get_parent().progression.panel_visible():
 		return null
 	if not enabled or combat.busy():
@@ -198,6 +200,8 @@ func get_door_target() -> Node3D:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if get_parent().get("survival") == null:
+		return
+	if get_parent().get("progression") != null and get_parent().progression.controls_player():
 		return
 	if combat.busy():
 		if event is InputEventKey and event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
@@ -256,6 +260,9 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 	invulnerable_time = maxf(0.0, invulnerable_time - delta)
+	if get_parent().progression != null and get_parent().progression.controls_player():
+		get_parent().progression.tick_player(delta)
+		return
 	if health <= 0.0 or not enabled or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		velocity = Vector3.ZERO
 		return
@@ -310,7 +317,7 @@ func movement_noise(running: bool, quiet: bool) -> float:
 	return 2.0 if quiet else (18.0 if running else 6.0)
 
 func tick_survival(delta: float, wants_hold: bool) -> void:
-	if flashlight.visible:
+	if flashlight.visible and not get_parent().progression.runner.active:
 		battery = maxf(0, battery - delta * FLASHLIGHT_DRAIN)
 		if battery <= 0:
 			flashlight.hide()
@@ -338,6 +345,8 @@ func cancel_chalk_charge() -> void:
 	chalk_charge_source = ""
 
 func begin_chalk_charge(source: String) -> bool:
+	if get_parent().progression != null and get_parent().progression.tutorial_active():
+		return false
 	if chalk_charging or selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().spirit_enabled:
 		return false
 	chalk_charging = true
@@ -365,6 +374,8 @@ func _notification(what: int) -> void:
 		cancel_chalk_charge()
 
 func throw_chalk(charge := 0.0) -> bool:
+	if get_parent().progression != null and get_parent().progression.tutorial_active():
+		return false
 	if chalk <= 0 or is_hidden() or not get_parent().spirit_enabled or not can_use_item():
 		return false
 	var decoy: CharacterBody3D = preload("res://scripts/chalk_decoy.gd").new()

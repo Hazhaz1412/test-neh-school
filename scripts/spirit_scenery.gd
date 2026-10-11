@@ -161,13 +161,26 @@ func _build_manifestations() -> void:
 	ink.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ink.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_batch("Handprints", hand, marks, ink)
+	var stains := StandardMaterial3D.new()
+	stains.albedo_texture = preload("res://assets/horror_props/blood_splatter.png")
+	stains.albedo_color = Color(0.18, 0.10, 0.11, 0.7)
+	stains.uv1_scale = Vector3(0.5, 0.5, 1)
+	stains.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	stains.cull_mode = BaseMaterial3D.CULL_DISABLED
+	stains.roughness = 1.0
+	var stain_mesh := QuadMesh.new()
+	stain_mesh.size = Vector2(0.85, 1.15)
+	var stain_places: Array[Transform3D] = []
+	for floor_index in range(3):
+		for side in [-1, 1]:
+			for index in range(3):
+				stain_places.append(Transform3D(Basis.from_euler(Vector3(0, -side * PI / 2, index * 0.9)), Vector3(side * 24.84, floor_index * 3.9 + 0.75 + index * 0.17, 20 + index * 13)))
+	_batch("FadedWallStains", stain_mesh, stain_places, stains)
 	for floor_index in range(3):
 		var y := floor_index * 3.9
 		for i in range(3):
 			_hanging_chair(Vector3(1.5, y + 2.85, -12 - i * 10), i * 0.7)
-		_warning("ĐỪNG QUAY LẠI", Vector3(-24.85, y + 2.10, 34), PI / 2)
-		_warning("KHÔNG AI NGHE THẤY", Vector3(24.85, y + 2.08, 22), -PI / 2)
-	_warning("CHÌA KHÓA KHÔNG CỨU ĐƯỢC MÀY", Vector3(-45, 2.3, -58.84), 0)
+	_build_abandoned_traces()
 	var pool := CylinderMesh.new()
 	pool.top_radius = 2.05
 	pool.bottom_radius = 2.05
@@ -175,17 +188,93 @@ func _build_manifestations() -> void:
 	pool.radial_segments = 32
 	_batch("FountainBlackWater", pool, [Transform3D(Basis(), Vector3(0, 0.11, 32))], cursed_material(null, 4))
 
-func _warning(text: String, pos: Vector3, yaw: float) -> void:
-	var node := Label3D.new()
-	node.text = text
-	node.position = pos
-	node.rotation.y = yaw
-	node.pixel_size = 0.009
-	node.font_size = 30
-	node.outline_size = 0
-	node.modulate = Color(0.50, 0.06, 0.05)
-	node.no_depth_test = false
-	decor.add_child(node)
+func _build_abandoned_traces() -> void:
+	# Reuse licensed furniture meshes; the vignettes sit against walls and never
+	# add collision or change a door, clue, hiding place or navigation surface.
+	var rubble := StandardMaterial3D.new()
+	rubble.albedo_texture = preload("res://assets/polyhaven_horror/rubble_diff_1k.jpg")
+	rubble.albedo_color = Color(0.53, 0.47, 0.43)
+	rubble.roughness = 1.0
+	rubble.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rubble.vertex_color_use_as_albedo = true
+	var patch := _rubble_patch()
+	var patches: Array[Transform3D] = []
+	var chairs: Array[Transform3D] = []
+	var books: Array[Transform3D] = []
+	var debris: Array[Transform3D] = []
+	var splinters: Array[Transform3D] = []
+	for floor_index in range(3):
+		var y := floor_index * 3.9
+		for side in [-1, 1]:
+			for i in range(4):
+				var pos := Vector3(side * 24.35, y + 0.045, 18 + i * 9)
+				patches.append(Transform3D(Basis(), pos))
+				chairs.append(Transform3D(Basis.from_euler(Vector3(0.0, i * 1.3, side * 1.4)).scaled(Vector3.ONE * 0.6), pos + Vector3(0, 0.3, 0)))
+				books.append(Transform3D(Basis(Vector3.UP, i * 0.8).scaled(Vector3.ONE * 0.7), pos + Vector3(-side * 0.24, 0.03, 0.6)))
+				debris.append(Transform3D(Basis(Vector3.UP, i * 1.7), pos + Vector3(0, 0.01, 0.7)))
+				if i % 2 == 0:
+					splinters.append(Transform3D(Basis(Vector3.UP, i * 0.9), pos + Vector3(0, 0.01, -0.6)))
+		# Books left in a fan at the far end of the connecting passage.
+		patches.append(Transform3D(Basis(), Vector3(0.5, y + 0.045, -30)))
+		books.append(Transform3D(Basis(Vector3.UP, 0.8).scaled(Vector3.ONE), Vector3(0.5, y + 0.05, -30)))
+	_batch("CrumblingPlaster", patch, patches, rubble)
+	_asset_batch("OverturnedChairs", "res://assets/kenney_furniture/chair.glb", chairs, 0.9)
+	_asset_batch("ScatteredBooks", "res://assets/kenney_furniture/books.glb", books, 0.4)
+	_asset_batch("BrokenMasonry", "res://assets/kenney_horror/debris.glb", debris, 0.13, false)
+	_asset_batch("BrokenTimber", "res://assets/kenney_horror/debris-wood.glb", splinters, 0.12, false)
+	var benches: Array[Transform3D] = [Transform3D(Basis(Vector3.UP, PI / 2), Vector3(-24.2, 0.05, 30)), Transform3D(Basis(Vector3.UP, -PI / 2), Vector3(24.2, 3.95, 39))]
+	_asset_batch("BrokenBenches", "res://assets/kenney_horror/bench-damaged.glb", benches, 0.65, false)
+	var candles: Array[Transform3D] = [Transform3D(Basis(), Vector3(-46.6, 0.05, -58.1)), Transform3D(Basis(), Vector3(0.5, 3.95, -32)), Transform3D(Basis(), Vector3(-24.4, 7.85, 18))]
+	_asset_batch("AbandonedCandles", "res://assets/kenney_horror/candle-multiple.glb", candles, 0.23, false)
+	_asset_batch("WarehouseShovel", "res://assets/kenney_horror/shovel.glb", [Transform3D(Basis.from_euler(Vector3(0.0, 0.6, -0.4)), Vector3(-47.4, 0.12, -56.8))], 1.2, false)
+	_asset_batch("ForgottenLantern", "res://assets/kenney_horror/lantern-glass.glb", [Transform3D(Basis(), Vector3(-44.2, 0.05, -58.3))], 0.3, false)
+
+func _asset_batch(label: String, path: String, placements: Array[Transform3D], height: float, corrupt := true) -> void:
+	var model: Node3D = load(path).instantiate()
+	decor.add_child(model)
+	var meshes := model.find_children("*", "MeshInstance3D", true, false)
+	var bounds := AABB()
+	var started := false
+	for mesh in meshes:
+		var local: Transform3D = model.global_transform.affine_inverse() * mesh.global_transform
+		var part: AABB = local * mesh.get_aabb()
+		bounds = bounds.merge(part) if started else part
+		started = true
+	var factor := height / maxf(bounds.size.y, 0.01)
+	var normalize := Transform3D(Basis().scaled(Vector3.ONE * factor), -Vector3(bounds.get_center().x, bounds.position.y, bounds.get_center().z) * factor)
+	for index in range(meshes.size()):
+		var mesh: MeshInstance3D = meshes[index]
+		var transforms: Array[Transform3D] = []
+		var local: Transform3D = model.global_transform.affine_inverse() * mesh.global_transform
+		for placement in placements:
+			transforms.append(placement * normalize * local)
+		_batch(label + str(index), mesh.mesh, transforms, cursed_material(null, 2) if corrupt else null)
+	model.free()
+
+func _rubble_patch() -> ArrayMesh:
+	var vertices := PackedVector3Array([Vector3.ZERO])
+	var uv := PackedVector2Array([Vector2(0.5, 0.5)])
+	var colors := PackedColorArray([Color.WHITE])
+	var indices := PackedInt32Array()
+	for i in range(16):
+		var angle := i * TAU / 16
+		var edge := Vector2(cos(angle), sin(angle)) * (0.88 + sin(i * 2.1) * 0.12)
+		vertices.append(Vector3(edge.x * 0.4, 0, edge.y * 1.2))
+		uv.append(edge * 0.5 + Vector2.ONE * 0.5)
+		colors.append(Color(1, 1, 1, 0))
+		indices.append_array(PackedInt32Array([0, 1 + (i + 1) % 16, i + 1]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array()
+	for i in range(vertices.size()):
+		arrays[Mesh.ARRAY_NORMAL].append(Vector3.UP)
+	arrays[Mesh.ARRAY_TEX_UV] = uv
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var result := ArrayMesh.new()
+	result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return result
 
 func _hanging_chair(pos: Vector3, yaw: float) -> void:
 	var pivot := Node3D.new()

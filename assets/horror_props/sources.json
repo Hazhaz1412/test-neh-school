@@ -1,0 +1,13 @@
+[
+  {
+    "title": "miscBloodDecalParticles - blood_splatter_01_base.png",
+    "author": "Anonymous",
+    "page": "https://opengameart.org/content/miscblooddecalparticles-bloodsplatter01basepng",
+    "download": "https://opengameart.org/sites/default/files/oga-textures/77840/blood_splatter_01_base.png",
+    "license": "CC0 1.0",
+    "changes": "Source unchanged; material tint and placement in Godot",
+    "retrieved": "2026-10-04",
+    "sha256": "26c8e652cdf086c03c87b7add41c95dfa054be08ec0bf126cb4512349ff1b2bb",
+    "bytes": 230257
+  }
+]

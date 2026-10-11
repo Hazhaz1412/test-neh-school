@@ -2,7 +2,7 @@
 
 Demo khám phá trường 3D bằng Godot 4. **Khu A là khối chữ U ngược ba tầng**, bao quanh sân trong 44 × 44 m có đài phun nước. **Khu B** là khối học tập và phòng chức năng ở phía Bắc, nối với khu A bằng hành lang kín dài **35 m trên cả ba tầng**. Có **nhà kho riêng** ở sân dịch vụ phía Tây khu B và **sân thượng khu A** đi lên bằng cầu thang từ tầng 3.
 
-Các nhiệm vụ cầu chì, sửa điện và nhật ký của bản cũ đã được bỏ. F5 chạy **mở đầu không lời**: điều tra → chuẩn bị dụng cụ → xe tới → cắt khóa cửa bảo trì qua tường bao cao. Player vào trường lúc **23:30**, 60 giây chuẩn bị rồi chuông nửa đêm chuyển hẳn sang thế giới linh hồn. Đêm **00:00–06:00 kéo dài 12 phút**. Chìa tổng trong kho mở đường; cần sống tới bình minh và giải cứu linh hồn để hoàn thành. Đã có 4 vật chứng, sổ ký ức J và ô tự nhập lời an ủi; kết nối Gemini 3.8 Flash dùng key Google AI Studio trong file riêng trên máy. Xem [nhiệm vụ và cấu hình AI](docs/SOUL_QUEST.md). Chi tiết/ảnh: [docs/OPENING.md](docs/OPENING.md).
+Đêm 1 bắt đầu **22:30**, đồng hồ trôi liên tục: **phòng sáng đèn → gấu bông → bóng nữ ở cửa sổ lầu 2 → vở Nguyễn Bình An → vết máu / âm thanh lặp → mở cửa jumpscare → gậy dính máu → mất điện / tiếng cười → chạy ra cổng giữa hai thế giới chập chờn → nhiễu điện → tự chạy, quản lý stamina, rẽ, né, nhảy, trượt → sau 75 giây gặp Lan → theo vào phòng núp → hiểu lời nguyền → gầm bàn đưa về trường → tìm An / hội thoại AI → sống đến bình minh**. Xem [kịch bản](Demo-Idea.md), [gameplay](docs/PROGRESSION.md) và [AI](docs/SOUL_QUEST.md).
 
 ## Chạy
 
@@ -17,7 +17,7 @@ Mở `project.godot` bằng Godot 4.3+ (đã kiểm tra bằng 4.7.2), đợi im
 | Chuột trái | Dùng vật đang cầm; chọn máy ảnh để chụp |
 | Q | Thả vật đang chọn xuống sàn, E nhặt lại |
 | E | Nhặt chìa/đồ tiếp tế, dùng cửa và chỗ nấp, kiểm tra cổng phong kín |
-| ENTER | Bỏ qua phim mở đầu, vẫn bắt đầu chuẩn bị lúc 23:30 |
+| ENTER | Bỏ qua phim mở đầu, vẫn bắt đầu chuẩn bị lúc 22:30 |
 | N | Bắt đầu lại mở đầu sau khi kết thúc lượt |
 | Ctrl | Đi nhẹ, giảm tiếng chân |
 | Space | Giữ khi nấp để nín thở; nhấn đúng cung xanh để né/phản công trong QTE |
@@ -29,39 +29,37 @@ Mở `project.godot` bằng Godot 4.3+ (đã kiểm tra bằng 4.7.2), đợi im
 | F7 | Bật/tắt FPS và số lượt vẽ |
 | Esc | Thả/bắt chuột, dừng di chuyển |
 | R | Chơi lại; giữ chế độ sinh tồn nếu đang trong một đêm |
-| H + P cùng lúc | Bật/tắt TEST: bất tử, tốc độ ×3, có chìa/bốn ký ức, giữ An để thử hội thoại |
+| H + P cùng lúc | Bật/tắt TEST: bất tử, tốc độ ×3, có chìa/ba manh mối, giữ An để thử hội thoại |
 
 Đi qua sân trong tới cửa giữa dãy Bắc khu A để tìm cầu thang. Hai đầu cánh Tây–Đông tầng 1 cũng có lối vào từ sân trước. Cầu thang đi lên tầng 2, tầng 3 và sân thượng; ở các chiếu nghỉ, vòng sang phía Đông để ra hành lang hoặc sân thượng.
 
 Muốn qua **khu B**, từ khu cầu thang đi vào hành lang phía sau (hướng Bắc / -Z) và đi hết đoạn 35 m. Cả ba tầng đều có đường nối tương ứng. **Nhà kho**: tại hành lang khu B tầng 1 đi về phía Tây, ra sân dịch vụ rồi đi theo đường lát tới cửa kho. M mở sơ đồ có vị trí hai khu và kho.
 
-## Nhiệm vụ 01 / Chìa khóa tổng
+## Nhiệm vụ Đêm 1 / Bé An
 
-Ban đầu **39 cửa phòng khu A và B đều khóa**. Các hành lang, cầu thang, sân thượng và đường qua B vẫn đi được; **cửa nhà kho riêng không khóa** để người chơi có thể lấy chìa.
+Bắt đầu lúc **22:30**, đồng hồ trôi liên tục. Phòng 103 khu A sáng đèn và chỉ có gấu bông; E nhặt là hoàn thành manh mối đầu. Bóng nữ xuất hiện ở cửa sổ lầu 2 phía đối diện, đứng chờ khi nhìn từ tầng trệt; khi người chơi lên lầu 2, bóng mở phòng 205 rồi đi vào. Trong đó có vở Nguyễn Bình An với chữ viết tay nguệch ngoạc. Máu và âm thanh lặp ở tầng trệt dẫn tới phòng 102; E mở cửa gây jumpscare rồi thấy gậy dính máu. Đủ gấu bông, vở và gậy mới tắt điện: tiếng cười, cửa đóng sầm, đèn lóe và ngột ngạt tăng dần. Đứng yên mất máu sau cảnh báo; tiến về cổng giảm sức ép. Không spawn ma truy đuổi trong trường. Đèn thoát hiểm xanh dẫn về cổng, mục tiêu thoát được lưu trong J.
 
-Từ cổng đi vòng đài phun nước tới cửa giữa dãy Bắc A. Qua khu cầu thang rồi đi hết hành lang nối sang B tầng 1. Rẽ trái về phía Tây, ra sân dịch vụ, đi theo đường lát tới kho. E mở cửa kho, tìm **chìa khóa màu vàng trên bàn phía cuối kho**, nhìn gần và nhấn E để lấy. **M** đánh dấu nhà kho và nhiệm vụ trên sơ đồ.
+Chạm cổng gây tiếng rè và kéo player vào hành lang linh hồn sáng đỏ. **WASD tự di chuyển/rẽ, Shift chạy tiêu stamina, Space nhảy, Ctrl trượt khi lấy đà, chuột quay tự do hoặc chuột phải nhìn sau**. Bốn ngã rẽ có đường cụt, dấu chân máu/vải rách dẫn đường đúng; tủ cao để né, ghế thấp để nhảy, bàn gầm trống có ánh sáng phía sau để trượt, chướng ngại hạ xuống và các món đổi chỗ; năm ma biến dạng truy đuổi cùng nhạc căng thẳng. Đèn pin không tiêu pin trong đoạn chạy. **Lan xuất hiện sau ít nhất 75 giây di chuyển tại khúc rẽ thứ tư**, dẫn thêm một đoạn vào phòng trú. Sau lời giải thích, E chui gầm bàn và tự chui ra từ gầm bàn trong trường. [Kịch bản](Demo-Idea.md) · [Flow và kiểm tra](docs/PROGRESSION.md).
 
-Sau khi lấy, mọi cửa phòng có thể mở bằng E; chúng không tự mở hết. Ma cũng chỉ mở được các cửa phòng khi người chơi đã có chìa. Đổi thế giới bằng B giữ chìa và trạng thái cửa; R bắt đầu lại và đặt lại nhiệm vụ. Chìa nhặt được trong cả hai thế giới, không thể nhặt từ xa hay qua tường.
-
-[Chìa trong kho](docs/master-key-preview.png) · [Sau khi nhặt](docs/master-key-collected-preview.png)
+Lan chỉ biết lời nguyền và việc cần giải thoát các linh hồn; cô không biết An, các manh mối hay vị trí em. Lan giao chìa và hướng dẫn gầm bàn về trường. Player tự khám phá, lần tiếng khóc để tìm An. Gấu bông/gậy/vở đã được lưu trong J; không tìm các vật chứng cũ hoặc ghép giấy ở cửa sân thượng. Khung visual novel có chân dung, chữ hiện dần và lựa chọn bằng chuột/phím số. Player tự chọn manh mối muốn hỏi và lời đáp; AI chấm câu đã chọn cho sự cô đơn, nỗi sợ và những điều An viết trong vở. Giải cứu em rồi sống tới **06:00** để hoàn thành Đêm 1.
 
 ## Đêm sinh tồn
 
-F5 tự chạy mở đầu; N bắt đầu một lượt mới khi chưa chạy hoặc đã kết thúc. Lấy chìa tổng trong kho để mở đường, sống **00:00–06:00** và cứu linh hồn. **Cổng không cho thoát bằng chìa tổng**. Thu 4 vật chứng trong các phòng, gặp An trên sân thượng khu A và tự nhập lời an ủi cho 4 trải nghiệm. AI phải xác nhận từng câu; chưa giải cứu thì bình minh báo chưa hoàn thành. R chơi lại từ đoạn phim. N không hồi tài nguyên giữa lượt; B không được dùng để né nguy hiểm/hồi máu. Esc dừng game, M chỉ xem đường và không dừng AI trong lượt sinh tồn.
+F5 chạy mở đầu 34 giây; Enter bỏ qua phim. N bắt đầu lượt mới khi chưa chơi hoặc đã kết thúc; R chơi lại. Mặc định 22:30–06:00 là 15 phút thực. Esc dừng game; J/M/hội thoại vẫn giữ đồng hồ chạy. Biến cố do tương tác trong flow kích hoạt, không tự xảy ra lúc 00:00.
 
 Có **13 thực thể**: tám học sinh cầm gậy, hai Kẻ Dò Tiếng, hai Kẻ Rỉ Tai và một Kẻ Chặn Lối. Mỗi loại có cách đối phó riêng; [hướng dẫn sinh tồn và ảnh thực tế](docs/SURVIVAL.md). Pin, sơ cứu và phấn dùng một lần; nguồn giới hạn khuyến khích đi vòng tìm đồ. Hoảng loạn làm hơi thở to hơn, hồi stamina chậm hơn và nguy hiểm nếu duy trì ở mức tối đa.
 
-Để test nhanh: **giữ H, bấm P** (hoặc ngược lại). TEST bỏ qua mở đầu/chuẩn bị, bật bất tử và tốc độ ×3, cho chìa tổng và bốn ký ức, giữ An xuất hiện để nói chuyện. Đêm vẫn chơi được để test ma. **Esc → TEST · Đưa tới An để thử chấm AI** giữ chìa/ký ức nhưng xóa tiến độ an ủi, đưa player tới An; vẫn gọi AI thật và cần key. **Esc → TEST · Hoàn thành đêm, tới 06:00** kiểm tra kết thúc ngay. H+P tắt sức mạnh; nhiệm vụ đã hoàn thành vẫn giữ và lượt luôn gắn nhãn TEST. R chơi lại xóa cheat/tất cả tiến độ. Chữ H/P đang nhập trong hội thoại không bật cheat.
+Để test nhanh: **giữ H, bấm P** (hoặc ngược lại). TEST bỏ qua mở đầu/chuẩn bị, bật bất tử và tốc độ ×3, cho chìa tổng và ba manh mối, giữ An xuất hiện để nói chuyện. Đêm vẫn chơi được để test ma. **Esc → TEST · Đưa tới An để thử chấm AI** giữ chìa/ký ức nhưng xóa tiến độ an ủi, đưa player tới An; vẫn gọi AI thật và cần key. **Esc → TEST · Hoàn thành đêm, tới 06:00** kiểm tra kết thúc ngay. H+P tắt sức mạnh; nhiệm vụ đã hoàn thành vẫn giữ và lượt luôn gắn nhãn TEST. R chơi lại xóa cheat/tất cả tiến độ. Chữ H/P đang nhập trong hội thoại không bật cheat.
 
 **Máy ảnh** có sẵn ở ô 2: chọn rồi nhấn chuột trái. Một cú chớp làm sáng toàn bộ cảnh và đẩy lùi mọi thực thể trong **6 giây**, tiêu **20 điểm phần trăm pin**, hồi màn trập **1,5 giây**. Máy ảnh dùng chung năng lượng với đèn pin; nhặt pin dự phòng bằng E, chọn ô pin rồi dùng để sạc +50. Chuyển khỏi đèn pin sẽ tắt đèn. 100% pin đủ 5 ảnh nếu không dùng đèn. Không chụp khi đang nấp, mở giao diện, tạm dừng hoặc đã chết.
 
-Túi có **6 ô, mỗi ô một vật**, không cộng dồn: ban đầu đèn pin, máy ảnh, ba viên phấn và một ô trống. Đồ tiếp tế được cất để dùng sau; đầy túi thì Q thả bớt và E nhặt lại. Sơ cứu hồi +30 HP khi dùng, phấn tiêu một ô khi ném. Chìa khóa tổng và bốn ký ức được lưu riêng trong nhiệm vụ. [Ảnh máy ảnh và cú chớp](docs/CAMERA.md).
+Túi có **6 ô, mỗi ô một vật**, không cộng dồn: ban đầu đèn pin, máy ảnh, ba viên phấn và một ô trống. Đồ tiếp tế được cất để dùng sau; đầy túi thì Q thả bớt và E nhặt lại. Sơ cứu hồi +30 HP khi dùng, phấn tiêu một ô khi ném. Chìa khóa tổng và ba manh mối được lưu riêng trong nhiệm vụ. [Ảnh máy ảnh và cú chớp](docs/CAMERA.md).
 
 - **Ctrl** đi nhẹ, giữ khoảng cách để tránh Kẻ Dò Tiếng; khi nấp và hoảng loạn, **Space** nín thở. Hết hơi sẽ ho và có thể lộ tủ.
 - **Giữ/thả G** hoặc chuột trái khi cầm phấn để tích lực rồi ném, tối đa xa ×5 sau 1,5 giây: tiếng va chạm kéo thực thể nghe thấy sang chỗ rơi. Không ném được khi đang nấp.
 - **F** rọi vào mặt Kẻ Rỉ Tai khoảng 0,7 giây để ngắt tiếng và có 2,4 giây rút lui; hoặc cắt đường nhìn bằng tường/cửa.
 - Kẻ Chặn Lối có thân lớn chặn đường thật, bước nặng và gậy mạnh nhưng chuẩn bị 0,85 giây; dụ nó sang một phía rồi chạy vòng.
-- Chuông mỗi đợt săn báo 12 giây thực thể nghe xa hơn; lấy chìa cũng gây một đợt săn.
+- Chuông mỗi đợt săn báo 12 giây thực thể nghe xa hơn; nhịp săn bắt đầu sau phần hướng dẫn của Lan.
 
 ## Hiệu năng
 
@@ -185,7 +183,7 @@ Mở **`scenes/school.tscn` để chỉnh sửa**, rồi tạo lại scene runti
 
 Chọn node gốc **School**, trong Inspector có nhóm **Spirit realm · visuals** và **Spirit realm · bullies** để chỉnh màu/mật độ sương, ánh sáng nền, số ma (0–12), khoảng phát hiện, tốc độ đuổi và sát thương. Các thay đổi này được áp dụng khi bật B. Độ trễ đánh, thời gian giữa các cú đánh và tốc độ tuần tra nằm trong `scripts/bully_ghost.gd`; hiệu ứng màn hình ở `assets/materials/spirit_overlay.gdshader`. Khi chạy, ma và tro xuất hiện dưới `SpiritBullies` và `Resentment` trong Remote scene tree.
 
-Nhiệm vụ và inventory ở `scripts/world.gd`, vật phẩm ở `scripts/master_key.gd`; bàn đặt chìa nằm trong scene gốc. Quy tắc biến dạng đồ vật ở `scripts/realm_prop_rules.gd`, material/manifestation và khôi phục vật lý ở `scripts/spirit_scenery.gd`; shader ở `assets/materials/realm_surface.gdshader` và `ghost_skin.gdshader`. Hai loop âm thanh nhỏ được tổng hợp bằng `tools/build_horror_audio.py`.
+Flow Đêm 1 ở `scripts/school_progression.gd`, tương tác điều tra/Lan ở `scripts/night_story_interactable.gd`, nhiệm vụ AI ở `scripts/soul_quest.gd` và inventory ở `scripts/player.gd`. Quy tắc biến dạng đồ vật ở `scripts/realm_prop_rules.gd`, material/manifestation và khôi phục vật lý ở `scripts/spirit_scenery.gd`; shader ở `assets/materials/realm_surface.gdshader` và `ghost_skin.gdshader`. Hai loop âm thanh nhỏ được tổng hợp bằng `tools/build_horror_audio.py`.
 
 Cửa phòng nằm dưới `Architecture/ClassroomDoorXXX`; `scripts/classroom_door.gd` điều khiển tốc độ trượt, mở/đóng và tránh đóng vào người đang đứng ở ngưỡng cửa. Collider cửa ở layer 3 (giá trị bitmask 4), target tương tác ở layer 4 (8). Navmesh bake phần tường/sàn ở layer 1, để cửa mở vẫn có đường đi; ma phải tự mở cửa và chịu collider của cửa khi di chuyển.
 
@@ -225,18 +223,18 @@ godot --path . --script tools/capture_annex.gd --resolution 1280x720
 godot --path . --script tools/capture_horror_quest.gd --resolution 1280x720
 ```
 
-Validation map kiểm tra lối đi ba tầng, lối vào trường, sân/vườn/sân thể thao, collider cửa sổ, tầm nhìn đến trăng và CharacterBody đi lên/xuống cầu thang. Nó còn kiểm tra chọn cửa để tương tác, cửa đóng chặn người chơi, mở cửa rồi đi qua, tránh đóng vào người, và ma thật mở cửa để đi vào lớp. Validation spirit kiểm tra B, nhóm/ma lẻ, vật liệu không mặt, animation, ma thật đi lên tầng 3, phát hiện/báo nhóm/truy đuổi/đánh, chắn tầm nhìn, hồi sinh và xóa ma khi tắt B, kể cả bật/tắt nhanh lúc navigation chưa sẵn sàng. Validation annex kiểm tra đường nối ba tầng, mọi cửa phòng khu B, đường tới kho, nav tới sân thượng, diện tích/loại/bố trí phòng và capsule thật đi hết hành lang 35 m. Validation runtime đối chiếu vị trí/kích thước toàn bộ mesh, hình dạng/transform/layer của collider với scene gốc, danh mục phòng, ba mức chất lượng, đèn gần người chơi và F7. Chạy validation runtime với display còn kiểm tra từng transform trong buffer GPU. Tất cả kiểm tra/capture dùng main scene thực tế của project. Validation quest đi thật từ cổng tới kho khi các phòng khóa, nhặt chìa bằng ray E, kiểm tra khóa/mở khóa, trạng thái qua B và run mới. Validation realm scenery kiểm tra biến dạng mesh/collider, vật liệu, phục hồi qua nhiều lần đổi thế giới và tránh kẹt người chơi; chạy với display còn đối chiếu buffer GPU. Chụp preview cần display, không dùng headless.
+Validation map kiểm tra lối đi ba tầng, lối vào trường, sân/vườn/sân thể thao, collider cửa sổ, tầm nhìn đến trăng và CharacterBody đi lên/xuống cầu thang. Nó còn kiểm tra chọn cửa để tương tác, cửa đóng chặn người chơi, mở cửa rồi đi qua, tránh đóng vào người, và ma thật mở cửa để đi vào lớp. Validation spirit kiểm tra B, nhóm/ma lẻ, vật liệu không mặt, animation, ma thật đi lên tầng 3, phát hiện/báo nhóm/truy đuổi/đánh, chắn tầm nhìn, hồi sinh và xóa ma khi tắt B, kể cả bật/tắt nhanh lúc navigation chưa sẵn sàng. Validation annex kiểm tra đường nối ba tầng, mọi cửa phòng khu B, đường tới kho, nav tới sân thượng, diện tích/loại/bố trí phòng và capsule thật đi hết hành lang 35 m. Validation runtime đối chiếu vị trí/kích thước toàn bộ mesh, hình dạng/transform/layer của collider với scene gốc, danh mục phòng, ba mức chất lượng, đèn gần người chơi và F7. Chạy validation runtime với display còn kiểm tra từng transform trong buffer GPU. Tất cả kiểm tra/capture dùng main scene thực tế của project. Validation progression kiểm tra gấu bông, vết máu, mở cửa jumpscare, gậy, mất điện, cổng, chạy/né/nhảy/trượt, Lan, giải cứu/bình minh và reset. Validation realm scenery kiểm tra biến dạng mesh/collider, vật liệu, phục hồi qua nhiều lần đổi thế giới và tránh kẹt người chơi; chạy với display còn đối chiếu buffer GPU. Chụp preview cần display, không dùng headless.
 
 ## Phạm vi
 
-Hiện là demo một người chơi, phong cách low-poly đêm, có mở đầu không lời, đồng hồ 23:30–06:00, đêm 12 phút, pool 6 thực thể (thường 2 hoạt động, tối đa 3), tài nguyên hữu hạn và 47 chỗ nấp. Chi tiết dấu hiệu/đối phó ở [docs/SURVIVAL.md](docs/SURVIVAL.md). Chưa có multiplayer. Đã có nhiệm vụ 4 ký ức và hội thoại tự nhập; cần key Google AI Studio để chấm bằng Gemini 3.8 Flash. Đài phun nước có model có sẵn và hiệu ứng giọt nước, chưa mô phỏng nước hoặc phản xạ theo vật thể.
+Hiện là demo một người chơi, phong cách low-poly đêm, có mở đầu không lời, đồng hồ 22:30–06:00, đêm 15 phút, pool 6 thực thể (thường 2 hoạt động, tối đa 3), tài nguyên hữu hạn và 47 chỗ nấp. Chi tiết dấu hiệu/đối phó ở [docs/SURVIVAL.md](docs/SURVIVAL.md). Chưa có multiplayer. Đã có nhiệm vụ ba manh mối và hội thoại visual novel với lựa chọn hỏi/đáp; cần key Google AI Studio để chấm bằng Gemini 3.8 Flash. Đài phun nước có model có sẵn và hiệu ứng giọt nước, chưa mô phỏng nước hoặc phản xạ theo vật thể.
 
 Nguồn assets, giấy phép và tham khảo kiến trúc nằm trong [ASSETS.md](ASSETS.md). `Demo-Idea.md` ghi ý tưởng cùng các quyết định mở đầu/đồng hồ mới.
 
-HUD đã gọn lại: đồng hồ, 4 biểu tượng ký ức, chìa và các thanh tài nguyên cần thiết. Hướng dẫn nằm trong màn Esc; câu chuyện nằm trong J. Nhạc CC0 và SFX hành động xem [ASSETS.md](ASSETS.md).
+HUD đã gọn lại: đồng hồ, hai biểu tượng manh mối, chìa và các thanh tài nguyên cần thiết. Hướng dẫn nằm trong màn Esc; câu chuyện nằm trong J. Nhạc CC0 và SFX hành động xem [ASSETS.md](ASSETS.md).
 
-Ảnh giao diện hiện tại: [HUD](docs/compact-hud-preview.png), [vật chứng](docs/soul-memory-preview.png), [sổ ký ức](docs/soul-journal-preview.png), [tự nhập lời an ủi](docs/soul-comfort-preview.png).
+Ảnh giao diện hiện tại: [HUD](docs/compact-hud-preview.png), [gấu bông](docs/night1-teddy.png), [sổ ký ức](docs/soul-journal-preview.png), [chọn lời đáp với An](docs/night1-vn-an-replies.png).
 
 Tuần tra/QTE mới: ma nhớ dấu cuối, thấy sát thì phản ứng ngay. Pool 6 thực thể, tối đa 2 khi khám phá / 3 lúc chuông truy đuổi, spawn ngoài tầm nhìn và có nhịp nghỉ. Sau hai đòn trúng, SPACE đúng vòng QTE của đòn thứ ba để né → phản công → choáng ma gần 3 giây và adrenaline 8 giây (hao stamina chạy giảm 50%). [Chi tiết](docs/HUNT_COMBAT.md).
 
-Tiến trình mới: [bốn nhánh làm xen kẽ](docs/PROGRESSION.md), hai lối mở B, cửa sân thượng có khóa cuối và tiếng khóc định vị của An. Tiến độ làm dở được giữ; nhặt đủ ký ức vẫn cần hoàn thành các hệ thống, mở mái và an ủi qua AI. Chạy `tools/validate_progression.gd` để kiểm chứng, `tools/capture_progression.gd` trên display để thử input và chụp ảnh.
+Tiến trình Đêm 1: [khám phá, Lan và bé An](docs/PROGRESSION.md). Chạy `tools/validate_progression.gd` để kiểm chứng và `tools/capture_progression.gd` để thử input, chụp ảnh.

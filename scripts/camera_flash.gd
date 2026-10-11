@@ -12,8 +12,13 @@ var moon_color: Color
 var moon_energy := 0.0
 
 func trigger() -> bool:
+	if world.progression != null and world.progression.tutorial_active():
+		world.notify("Máy ảnh bị nhiễu bởi biến cố · Hãy chạy trốn và tìm nơi nấp")
+		return false
 	if cooldown > 0 or not world.simulation_active():
 		return false
+	if world.scares != null:
+		world.scares.cancel()
 	clear_light()
 	saved_environment = world.get_node("Atmosphere/MoonlitEnvironment").environment
 	saved_values = [saved_environment.ambient_light_color, saved_environment.ambient_light_energy,

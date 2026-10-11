@@ -1,90 +1,155 @@
 extends "res://tools/validate_progression.gd"
-
 func key(code: int) -> void:
-	for pressed in [true, false]:
-		var event := InputEventKey.new()
-		event.keycode = code
-		event.physical_keycode = code
-		event.pressed = pressed
-		Input.parse_input_event(event)
-		Input.flush_buffered_events()
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	event.pressed = true
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
 	await frames(2)
-
-func click(pos: Vector2) -> void:
-	Input.warp_mouse(pos)
-	for pressed in [true, false]:
+	event = event.duplicate()
+	event.pressed = false
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+	await frames(2)
+func click_button(button: Button) -> void:
+	await frames(4)
+	var center := button.get_global_rect().get_center()
+	var motion := InputEventMouseMotion.new()
+	motion.position = center
+	motion.global_position = center
+	Input.parse_input_event(motion)
+	Input.flush_buffered_events()
+	await frames(2)
+	for down in [true, false]:
 		var event := InputEventMouseButton.new()
 		event.button_index = MOUSE_BUTTON_LEFT
-		event.position = pos
-		event.global_position = pos
-		event.pressed = pressed
+		event.pressed = down
+		event.position = center
+		event.global_position = center
 		Input.parse_input_event(event)
 		Input.flush_buffered_events()
-	await frames(3)
-
+		await frames(2)
 func shot(title: String) -> void:
-	school._update_light_budget()
-	for i in range(8): await process_frame
+	for i in range(10): await process_frame
 	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png("res://docs/" + title + ".png")
-
+	root.get_texture().get_image().save_png("res://docs/"+title+".png")
 func validate() -> void:
 	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
-	school.enemy_count = 0
-	school.special_enemy_count = 0
+	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school
 	await frames(15)
 	root.grab_focus()
-	await frames(30)
+	await frames(15)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	school.survival.start_run(false)
-	school.survival.begin_midnight()
-	school.survival.set_physics_process(false)
 	school.player.set_physics_process(false)
-	p = school.progression
-	for kind in range(4):
-		check(await approach(p.terminals[kind]), "Rendered interaction ray reaches branch %d" % kind)
-		await key(KEY_E)
-		check(p.panel_visible() and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "Actual E opens technical UI %d and releases mouse" % kind)
-		if kind == 0:
-			await click(p.board.global_position + Vector2(90, 75))
-			check(p.puzzles.circuits[0] == 1, "Actual mouse click switches a circuit")
-		if kind == 1:
-			await click(p.board.global_position + Vector2(150, 110))
-			check(p.puzzles.route == [10, 5], "Actual mouse click extends the cable route")
-			p.show_technique()
-			await frames(6)
-		if kind == 2:
-			var original: int = p.puzzles.pipes[0]
-			await click(p.board.global_position + Vector2(150, 50))
-			check(p.puzzles.pipes[0] != original, "Actual mouse click rotates the pipe")
-		if kind == 3:
-			await click(p.board.global_position + Vector2(270, 170))
-			check(p.puzzles.board.count(1) == 1 and p.puzzles.board.count(2) == 1, "Actual mouse move gets an NPC counter-move")
-		var before: float = school.survival.run_time
-		school.survival.advance_clock(0.5)
-		check(school.survival.run_time > before, "Time continues while working on branch %d" % kind)
-		await key(KEY_R)
-		check(current_scene == school and p.panel_visible(), "R cannot accidentally restart from terminal %d" % kind)
-		await shot(["puzzle-electrical", "puzzle-routing", "puzzle-plumbing", "puzzle-board"][kind])
-		await key(KEY_ESCAPE)
-		check(not p.panel_visible() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not school.paused_by_user, "Esc leaves branch %d and restores movement without pausing" % kind)
-	school.player.position = Vector3(4.8, 11.75, 3.3)
-	school.player.camera.look_at(Vector3(6.25, 12.95, 3.3))
-	await frames(3)
-	await shot("roof-locked-keybox")
-	p.bypass_for_test()
-	school.player.position = school.soul_quest.SOUL_APPROACH
-	school.player.camera.look_at(school.soul_quest.soul.global_position + Vector3(0, 1, 0))
-	await shot("roof-unlocked-an")
-	var f := FileAccess.open("res://docs/progression-rendered-validation.json", FileAccess.WRITE)
-	f.store_string(JSON.stringify({"checks": checks, "failures": failures}, "\t"))
-	print("Rendered progression validation: ", checks, " checks / ", failures, " failures")
+	school.survival.set_physics_process(false)
+	story = school.progression
+	story.set_physics_process(false)
+	var first: Node3D = school.get_node("Architecture/ClassroomDoor103")
+	var second: Node3D = school.get_node("Architecture/ClassroomDoor102")
+	school.player.position = Vector3(14.5, 0.05, 9.2)
+	school.player.camera.look_at(story.bear.position+Vector3.UP*.5)
+	await shot("night1-lit-classroom")
+	check(await approach(first, 1.25), "Rendered first door is reachable")
+	await key(KEY_E)
+	await frames(35)
+	check(await approach(story.bear), "Rendered teddy is physically reachable")
+	await shot("night1-teddy")
+	await key(KEY_E)
+	check(story.evidence.has("bear"), "Actual E collects the teddy without a paper dialogue")
+	check(await approach(story.notebook,.06), "Rendered notebook is physically reachable")
+	await key(KEY_E)
+	check(story.panel_kind=="notebook" and story.evidence.has("notebook"), "Actual E opens An's notebook and records the third clue type")
+	await shot("night1-an-notebook")
+	await key(KEY_ESCAPE)
+	school.player.position = Vector3(5, 0.05, 7.5)
+	school.player.camera.look_at(Vector3(-10, 0.1, 7.5))
+	await shot("night1-blood-trail")
+	check(await approach(second, 1.25), "Rendered second door is reachable")
+	story._physics_process(.1)
+	await key(KEY_E)
+	check(story.stage == story.Stage.DOOR_SCARE, "Actual E opening the door causes the jumpscare")
+	await shot("night1-door-jumpscare")
+	story._physics_process(1.2)
+	await frames(35)
+	check(await approach(story.clubs), "Rendered bloodied clubs are reachable")
+	await shot("night1-bloody-clubs")
+	await key(KEY_E)
+	story._physics_process(1.6)
+	check(story.stage == story.Stage.ESCAPE_GATE and story.blackout, "Actual E triggers blackout and escape")
+	school.player.position = Vector3(0, 0.05, 68)
+	school.player.camera.look_at(Vector3(0, 1.2, 78))
+	await shot("night1-blackout-escape")
+	school.player.position = Vector3(0, 0.05, 76.5)
+	story._physics_process(.02)
+	story._physics_process(1.4)
+	await shot("night1-gate-static")
+	story._physics_process(1.3)
+	check(story.runner.active, "Gate contact pulls player into the spirit corridor")
+	var runner: Node3D = story.runner
+	await shot("night1-corridor-run")
+	var jumps := 0
+	var slides := 0
+	var shot_jump := false
+	var shot_slide := false
+	var driver := preload("res://tools/chase_driver.gd").new()
+	driver.runner = runner
+	driver.world = school
+	var captured_lan := false
+	for frame in range(12000):
+		await physics_frame
+		if frame%600==0: print("TRAVERSAL / ",frame," / ",runner.distance," / ",runner.elapsed," / active ",school.simulation_active()," / mouse ",Input.mouse_mode)
+		driver.tick()
+		runner.tick(1.0/60)
+		school.survival.advance_clock(1.0/60)
+		if not shot_jump and runner.jump_height > .9:
+			await shot("night1-corridor-jump")
+			shot_jump = true
+		if not shot_slide and runner.slide_remaining > 0:
+			await shot("night1-corridor-slide")
+			shot_slide = true
+		if runner.lan.visible and not captured_lan:
+			captured_lan = true
+			await shot("night1-lan-follow")
+		if story.stage == story.Stage.LAN_DIALOGUE or school.player.health <= 0: break
+	check(story.stage == story.Stage.LAN_DIALOGUE and runner.hit_count == 0, "Real WASD / Shift, turning, jumping and sliding complete the manual chase without damage")
+	await shot("night1-lan-curse")
+	await key(KEY_ESCAPE)
+	check(not story.panel_visible() and not school.paused_by_user, "Esc closes Lan dialogue without pausing gameplay")
+	school.player.camera.look_at(story.lan.position+Vector3.UP)
+	await shot("night1-lan-refuge")
+	await key(KEY_E)
+	check(story.panel_visible(), "Actual E resumes Lan inside the closed room")
+	for id in story.dialogue_data.lan.required:
+		for index in range(story.dialogue_data.lan.questions.size()):
+			if story.dialogue_data.lan.questions[index].id!=id: continue
+			story.lan_view.reveal()
+			await click_button(story.lan_view.choices.get_child(index))
+			for turn in range(2):
+				story.lan_view.reveal()
+				await click_button(story.lan_view.choices.get_child(0))
+	story.lan_view.reveal()
+	await click_button(story.lan_view.choices.get_child(story.lan_view.choices.get_child_count()-1))
+	check(story.stage == story.Stage.TABLE_ESCAPE, "Lan's dialogue enables the table escape")
+	check(await approach(runner.table, .55), "Lan table is reachable")
+	await key(KEY_E)
+	story._physics_process(1.9)
+	await frames(4)
+	check(story.portal_arrived and school.player.hidden_spot == story.return_table, "E enters the portal and arrives beneath the school table")
+	await key(KEY_E)
+	check(story.briefing_complete and story.stage == story.Stage.COMFORT_AN and not school.player.is_hidden(), "E leaves the school table and resumes An's story")
+	await key(KEY_J)
+	await shot("night1-journal")
+	await key(KEY_ESCAPE)
+	var file := FileAccess.open("res://docs/progression-rendered-validation.json", FileAccess.WRITE)
+	file.store_string(JSON.stringify({"checks":checks,"failures":failures,"lan_seconds":runner.LAN_AFTER_SECONDS},"\t"))
+	file.close()
+	print("RESULT / rendered ", checks, " checks, ", failures, " failures")
 	school.queue_free()
 	await frames(5)
-	load("res://scripts/humanoid_model.gd").animation_libraries.clear()
-	load("res://scripts/humanoid_model.gd").proportion_meshes.clear()
-	load("res://scripts/student_soul.gd").appearance_materials.clear()
-	load("res://scripts/combat_limbs.gd").meshes.clear()
-	load("res://scripts/humanoid_model.gd").faceless_mesh = null
-	quit(0 if failures == 0 else 1)
+	# Allow the audio mixing thread to release playbacks before process exit.
+	await create_timer(0.2).timeout
+	quit(1 if failures else 0)

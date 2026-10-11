@@ -65,7 +65,7 @@ func _ready() -> void:
 	refresh()
 
 func opened() -> bool:
-	return progression.roof_open if branch == 4 else progression.completed.has(branch)
+	return progression.roof_open
 
 func refresh() -> void:
 	var open := opened()
@@ -77,16 +77,9 @@ func refresh() -> void:
 	was_open = open
 
 func interaction_text() -> String:
-	if branch == 4:
-		return "E · Mở sân thượng" if progression.roof_key else "E · Khóa sân thượng"
-	return "E · " + ["", "Tủ điều khiển ↗", "Van nước ↗"][branch]
+	return "E · Cửa sân thượng · Lời cầu cứu bị xé"
 
 func interact(actor: CharacterBody3D) -> bool:
 	if actor != progression.world.player or not progression.world.simulation_active() or actor.get_interaction_target() != self:
 		return false
-	if branch == 4 and progression.roof_key:
-		progression.roof_open = true
-		refresh()
-		return true
-	progression.world.soundscape.cue("lock", -20)
-	return false
+	return progression.open_roof_note()

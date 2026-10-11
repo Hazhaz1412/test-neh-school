@@ -99,3 +99,19 @@ Tay và giày góc nhìn thứ nhất lấy từ mesh `Casual_Male.fbx` Quaterni
 ### Tiếng khóc định vị của An
 
 [Girl Crying — mvVoiceActing](https://freesound.org/people/mvVoiceActing/sounds/218184/) · CC0 1.0. Bản preview công khai được cắt đoạn 5–15 giây, lọc nhẹ, fade và chuyển mono Ogg 24 kHz. Metadata và SHA-256: `assets/audio/an_cry-source.json`. Phát từ sân thượng, vọng qua hai miệng thông cầu thang; dừng khi An được cứu.
+
+## Flow gấu bông và hành lang linh hồn
+
+Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được ghép bằng mesh Godot. Vật cản hành lang dùng nội thất Kenney CC0. Lan dùng rig Casual_Female Quaternius có sẵn; nhóm ma dùng model hiện tượng học sinh có sẵn. Bổ sung hai model nội thất trong mục bên dưới, không thêm texture ngoài.
+
+`corridor_chase.wav`, `strange_knock.wav`, `door_jumpscare.wav`, `gate_static.wav` là âm/nhạc nguyên bản tổng hợp bằng `tools/build_story_audio.py` (sin, bass, percussion và noise seed cố định). Nhạc chạy loop, không dùng bản ghi nhạc bên ngoài. Tiếng cười dùng asset `teasing_giggle.ogg` có nguồn/giấy phép trong `assets/audio/teasing_giggle-source.json`; tiếng chân/gầm dùng các WAV tổng hợp đã có.
+
+## Nội thất hành lang — cập nhật 2026-10-11
+
+- Tải thêm `table.glb` và `bookcaseClosedWide.glb` từ [Kenney Furniture Kit](https://kenney.nl/assets/furniture-kit), **CC0 1.0**. URL archive, SHA-256 và kích thước trong `assets/kenney_furniture/chase_sources.json`; giấy phép gốc tiếp tục lưu ở `License.txt`.
+- GLB nguồn giữ nguyên. Bản bàn runtime loại bỏ các tam giác của thanh giằng thấp, giữ mặt bàn và bốn chân ở mép: khoảng giữa nhìn xuyên qua và trượt qua được. Tủ sách xếp phía trên khiến khe thấp là đường bắt buộc. Collider mặt/chân tách riêng; khoảng trống khoảng 0,94 m, ánh lạnh phía sau gợi đường đi.
+- Tủ kín cao dùng để né, ghế dài Kenney đã có dùng để nhảy. Collider khớp kích thước vật cản nhìn thấy, tránh vùng chắn vô hình ở cạnh tủ. Bóng nữ và Lan dùng Casual_Female Quaternius CC0 có sẵn. Chữ viết tay/vở và màn hình ngột ngạt được vẽ bằng Godot, không dùng ảnh hoặc font tải ngoài.
+
+## Chân dung visual novel
+
+Lan và An dùng bản portrait riêng của rig Casual_Female Quaternius CC0 đã có, render trong SubViewport trong suốt. Lan mặc tím; An mặc xanh và nhỏ hơn. Khung, chữ hiện dần và lựa chọn dựng bằng Control của Godot; không tải thêm ảnh/model/font. Kịch bản hỏi/đáp ở `data/night1_dialogue.json`.

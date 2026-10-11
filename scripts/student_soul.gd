@@ -55,7 +55,7 @@ func _ready() -> void:
 	hide()
 
 func interaction_text() -> String:
-	return "E · An" if quest.found.size() == 4 else "E · Ký ức còn thiếu"
+	return "E · An" if quest.found.size() == quest.memories.size() else "E · Ký ức còn thiếu"
 
 func interact(actor: CharacterBody3D) -> bool:
 	return quest.begin_comfort(actor)
@@ -66,4 +66,4 @@ func _process(_delta: float) -> void:
 	visible = not released and quest.world.spirit_enabled and not director.finished and (not director.active or director.phase == director.Phase.NIGHT)
 	$Interaction.collision_layer = 16 if visible else 0
 	model.position.y = sin(quest.world.elapsed * 1.4) * 0.025
-	model.head_pitch = 0.27 * (1 - float(quest.accepted.size()) / 4)
+	model.head_pitch = 0.27 * (1 - float(quest.accepted.size()) / quest.memories.size())

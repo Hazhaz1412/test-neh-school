@@ -30,7 +30,10 @@ func validate() -> void:
 	school.set_process_unhandled_input(false)
 	await frames(20)
 	school.survival.start_run(false)
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	await frames(8)
 	var p: CharacterBody3D = school.player
 	p.set_physics_process(false)
@@ -196,7 +199,7 @@ func validate() -> void:
 		check(p.battery == 80, "Left click fires the equipped camera through the real input handler")
 		p._unhandled_input(click)
 		check(p.battery == 80, "Repeated click cannot spend energy during cooldown")
-	check(not school.has_master_key and school.master_key.visible and school.soul_quest.found.is_empty(), "Survival tools cannot bypass the master key or soul quest")
+	check(not school.has_master_key and not school.master_key.visible and school.soul_quest.found.is_empty(), "Survival tools cannot grant Lan's room key or An's memories")
 	if school.camera_flash.intensity == 0:
 		p.select_item("camera")
 		p.battery = 100

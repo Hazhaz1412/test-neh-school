@@ -16,7 +16,7 @@ func setup(school: Node3D) -> void:
 	music.play()
 	voice = AudioStreamPlayer.new()
 	add_child(voice)
-	for title in ["footstep", "torch", "door", "lock", "pickup", "paper", "hurt", "memory", "rescue", "camera", "counter_grab", "counter_punch", "counter_kick"]:
+	for title in ["footstep", "torch", "door", "lock", "pickup", "paper", "hurt", "memory", "rescue", "camera", "counter_grab", "counter_punch", "counter_kick", "chair_impact"]:
 		sounds[title] = load("res://assets/audio/%s.wav" % title)
 	for i in range(4):
 		var sound := AudioStreamPlayer3D.new()
@@ -45,6 +45,8 @@ func _process(delta: float) -> void:
 		target = -25 + world.threat * 4
 	if world.survival.soul_rescued:
 		target = -34
+	if world.progression != null and world.progression.tutorial_active():
+		target = -65
 	music.volume_db = move_toward(music.volume_db, target, delta * 3)
 	music.stream_paused = world.paused_by_user
 	voice.stream_paused = world.paused_by_user

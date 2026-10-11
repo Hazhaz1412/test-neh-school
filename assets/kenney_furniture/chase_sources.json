@@ -1,0 +1,18 @@
+{
+  "source": "https://kenney.nl/assets/furniture-kit",
+  "archive": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+  "license": "CC0-1.0",
+  "retrieved": "2026-10-11",
+  "files": [
+    {
+      "path": "assets/kenney_furniture/table.glb",
+      "sha256": "ff1a94498d023957f4bc3ff6f55a7a82977d336dbf01a573b3364f03afe5ff61",
+      "bytes": 8196
+    },
+    {
+      "path": "assets/kenney_furniture/bookcaseClosedWide.glb",
+      "sha256": "55b9903e9646dc407ed5237a1c41c1f0a14f9edc22e3392bdb9a4804d846af6a",
+      "bytes": 23140
+    }
+  ]
+}

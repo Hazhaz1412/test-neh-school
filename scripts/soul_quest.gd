@@ -7,7 +7,7 @@ var accepted := {}
 var fragments: Array[Node3D] = []
 var soul: Node3D
 var journal: PanelContainer
-var dialog: PanelContainer
+var dialog: Control
 var journal_text: Label
 var prompt: Label
 var reply: TextEdit
@@ -20,13 +20,18 @@ var selected_page := 0
 var topic := 0
 var generation := 0
 var camera_rotation := Vector3.ZERO
+var dialogue_data: Dictionary
+var dialogue_phase := "hub"
 const SOUL_POSITION := Vector3(15, 11.75, 5)
 const SOUL_APPROACH := Vector3(15, 11.75, 7)
 
 func setup(school: Node3D) -> void:
 	world = school
+	dialogue_data = JSON.parse_string(FileAccess.get_file_as_string("res://data/night1_dialogue.json"))
 	memories = JSON.parse_string(FileAccess.get_file_as_string("res://data/soul_memories.json"))
 	for i in range(memories.size()):
+		if memories[i].get("source", "") == "opening":
+			continue
 		var fragment: Node3D = preload("res://scripts/soul_fragment.gd").new()
 		fragment.quest = self
 		fragment.index = i
@@ -53,7 +58,7 @@ func night_active() -> bool:
 	return world.simulation_active() and world.survival.active and world.survival.phase == world.survival.Phase.NIGHT and world.spirit_enabled
 
 func collect(index: int, actor: CharacterBody3D) -> bool:
-	if not night_active() or not world.has_master_key or not fragment_available(index) or actor != world.player or found.has(index) or actor.get_interaction_target() != fragments[index]:
+	if not night_active() or not world.has_master_key or not fragment_available(index) or actor != world.player or found.has(index) or index >= fragments.size() or actor.get_interaction_target() != fragments[index]:
 		return false
 	found[index] = true
 	selected_page = index
@@ -62,12 +67,12 @@ func collect(index: int, actor: CharacterBody3D) -> bool:
 	fragments[index].get_node("Interaction").collision_layer = 0
 	world.soundscape.cue("memory")
 	world.notify(memories[index].title + " · J")
-	if found.size() == 4:
-		world.notify("4 ký ức · Tìm An trên sân thượng khu A")
+	if found.size() == memories.size():
+		world.notify("Đủ manh mối · Tìm An trên sân thượng khu A")
 	return true
 
 func fragment_available(index: int) -> bool:
-	return index not in [1, 2] or world.progression == null or world.progression.completed.has(1) or world.progression.completed.has(2)
+	return index >= 0 and index < memories.size() and memories[index].get("source", "") != "opening" and (world.progression == null or world.progression.briefing_complete)
 
 func safe_to_talk() -> bool:
 	if not night_active() or world.player.is_hidden() or world.player.global_position.distance_to(soul.global_position) > 2.8:
@@ -82,12 +87,12 @@ func safe_to_talk() -> bool:
 	return true
 
 func begin_comfort(actor: CharacterBody3D) -> bool:
-	if actor != world.player or actor.get_interaction_target() != soul or not safe_to_talk():
+	if dialog.visible or actor != world.player or actor.get_interaction_target() != soul or not safe_to_talk():
 		world.notify("Chưa an toàn")
 		return false
 	if world.progression != null and not world.progression.ready_for_rescue():
 		return false
-	if found.size() < 4:
+	if found.size() < memories.size():
 		world.notify("Ký ức còn thiếu · J")
 		return false
 	if world.survival.soul_rescued:
@@ -101,40 +106,92 @@ func begin_comfort(actor: CharacterBody3D) -> bool:
 	return true
 
 func ready_for_rescue() -> bool:
-	return found.size() == 4 and accepted.size() == 4 and night_active() and world.player.health > 0 and (world.progression == null or world.progression.ready_for_rescue())
+	return found.size() == memories.size() and accepted.size() == memories.size() and night_active() and world.player.health > 0 and (world.progression == null or world.progression.ready_for_rescue())
 
 func _next_topic() -> void:
-	for i in range(4):
+	if accepted.size()==memories.size():
+		dialogue_phase = "farewell"
+		dialog.show_line("An",dialogue_data.an.farewell,[{"text":"Tạm biệt An.","action":_finish_conversation}])
+		return
+	for i in range(memories.size()):
 		if not accepted.has(i):
 			topic = i
-			prompt.text = "An · %d / 4\n“%s”" % [accepted.size() + 1, memories[i].feeling]
-			reply.text = ""
-			feedback.text = ""
-			reply.grab_focus()
-			return
+			break
+	dialogue_phase = "hub"
+	reply.text = ""
+	feedback.text = ""
+	var items: Array = []
+	for i in range(memories.size()):
+		items.append({"text":_topic_data(i).question,"action":ask_topic.bind(i)})
+	items.append({"text":dialogue_data.an.identity_question,"action":ask_identity})
+	dialog.show_line("An",dialogue_data.an.intro if accepted.is_empty() else "Anh còn muốn hỏi em điều gì?",items)
+
+func _topic_data(index: int) -> Dictionary:
+	for entry in dialogue_data.an.topics:
+		if entry.id==memories[index].id: return entry
+	return {}
+
+func ask_identity() -> void:
+	if pending or not dialog.visible or not safe_to_talk(): return
+	dialogue_phase = "question"
+	dialog.show_line("Bạn",dialogue_data.an.identity_question,[{"text":"Nghe An trả lời","action":answer_identity}])
+
+func answer_identity() -> void:
+	if pending or not dialog.visible or not safe_to_talk(): return
+	dialogue_phase = "answer"
+	dialog.show_line("An",dialogue_data.an.identity_answer,[{"text":"Hỏi chuyện khác","action":_next_topic}])
+
+func ask_topic(index: int) -> void:
+	if pending or not dialog.visible or not safe_to_talk() or index<0 or index>=memories.size(): return
+	topic = index
+	dialogue_phase = "question"
+	dialog.show_line("Bạn",_topic_data(topic).question,[{"text":"Nghe An trả lời","action":_show_response_choices}])
+
+func _show_response_choices() -> void:
+	if pending or not dialog.visible or not safe_to_talk(): return
+	dialogue_phase = "answers"
+	var entry := _topic_data(topic)
+	var items: Array = []
+	if not accepted.has(topic):
+		for i in range(entry.replies.size()): items.append({"text":entry.replies[i],"action":choose_reply.bind(i)})
+	items.append({"text":"Hỏi chuyện khác","action":_next_topic})
+	dialog.show_line("An",entry.answer,items)
+
+func choose_reply(index: int) -> void:
+	var entry := _topic_data(topic)
+	if pending or not dialog.visible or not safe_to_talk() or accepted.has(topic) or index<0 or index>=entry.replies.size(): return
+	reply.text = entry.replies[index]
+	dialogue_phase = "player_reply"
+	dialog.show_line("Bạn",reply.text,[{"text":"Nói với An","action":submit}])
 
 func submit() -> void:
 	if pending or not dialog.visible or not safe_to_talk():
 		return
 	var words := reply.text.strip_edges()
 	if words.length() < 3 or words.length() > 1000:
-		feedback.text = "Viết lời anh muốn nói với An (tối đa 1000 ký tự)."
+		feedback.text = "Hãy chọn câu anh muốn nói với An."
 		return
 	pending = true
 	send_button.disabled = true
 	reply.editable = false
 	request_id = "%s-%s-%s" % [generation, topic, Time.get_ticks_usec()]
 	feedback.text = "An đang lắng nghe…"
+	dialogue_phase = "waiting"
+	dialog.show_line("An","…",[],"An đang lắng nghe…")
 	var body := JSON.stringify({"memory_id": memories[topic].id, "text": words, "request_id": request_id})
 	var error := request.request(world.comfort_ai_url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, body)
 	if error != OK:
 		_failed()
 
 func _failed(message := "Dịch vụ AI chưa sẵn sàng. Kiểm tra key trong ai.json rồi thử lại.") -> void:
+	request.cancel_request()
 	pending = false
 	send_button.disabled = false
 	reply.editable = true
 	feedback.text = message
+	dialogue_phase = "error"
+	if dialog.visible:
+		dialog.show_line("An","…",[{"text":"Thử nói lại câu vừa chọn","action":submit},{"text":"Chọn lời khác","action":_show_response_choices}],message)
 
 func ai_error_text(reason: String) -> String:
 	return {
@@ -147,8 +204,8 @@ func ai_error_text(reason: String) -> String:
 		"unsupported_model": "Model trong ai.json chưa được cầu nối hỗ trợ.",
 		"unsupported_provider": "Provider trong ai.json chưa được hỗ trợ.",
 		"network_error": "Không kết nối được nhà cung cấp AI. Kiểm tra mạng rồi thử lại.",
-		"timeout": "AI phản hồi quá lâu. Lời anh viết được giữ lại; thử lại sau.",
-		"blocked_answer": "AI đã chặn phản hồi này. Anh có thể viết lại lời an ủi.",
+		"timeout": "AI phản hồi quá lâu. Câu đã chọn được giữ lại; thử lại sau.",
+		"blocked_answer": "AI đã chặn phản hồi này. Anh có thể chọn lời đáp khác.",
 		"incomplete_answer": "AI trả lời chưa hoàn chỉnh. Anh có thể thử lại.",
 		"invalid_ai_response": "AI trả về đánh giá sai định dạng. Không tính điểm; thử lại.",
 		"provider_request_invalid": "Nhà cung cấp từ chối yêu cầu chấm. Kiểm tra cấu hình cầu nối.",
@@ -205,15 +262,20 @@ func _received(result: int, status: int, _headers: PackedStringArray, body: Pack
 	if passed:
 		accepted[topic] = true
 		world.soundscape.cue("memory", -25)
-		if ready_for_rescue() and world.survival.mark_soul_rescued():
-			soul.released = true
-			close()
-			world.soundscape.cue("rescue", -13)
-			world.notify("An đã được giải thoát · Sống sót tới 06:00")
-		else:
-			# Keep the AI feedback visible; the player decides when to continue.
-			send_button.text = "Tiếp tục"
-			reply.editable = false
+		send_button.text = "Tiếp tục"
+		reply.editable = false
+	dialogue_phase = "reaction"
+	var entry := _topic_data(topic)
+	var items: Array = [{"text":"Nghe tiếp","action":_next_topic}] if passed else [{"text":"Để anh nói lại","action":_show_response_choices},{"text":"Hỏi chuyện khác","action":_next_topic}]
+	dialog.show_line("An",entry.accepted_line if passed else entry.retry_line,items)
+
+func _finish_conversation() -> void:
+	if not dialog.visible or pending or not ready_for_rescue(): return
+	if world.survival.mark_soul_rescued():
+		soul.released = true
+		close()
+		world.soundscape.cue("rescue", -13)
+		world.notify("An đã được giải thoát · Sống sót tới 06:00")
 
 func _send_pressed() -> void:
 	if accepted.has(topic):
@@ -233,6 +295,7 @@ func close() -> void:
 	if request != null:
 		request.cancel_request()
 	pending = false
+	dialogue_phase = "hub"
 	generation += 1
 	if send_button != null:
 		send_button.disabled = false
@@ -255,18 +318,24 @@ func toggle_journal() -> void:
 	if journal.visible:
 		close()
 		return
-	if not world.simulation_active() or world.survival.opening.playing:
+	if not world.simulation_active() or world.survival.opening.playing or world.progression.controls_player():
 		return
 	show_memory(selected_page)
 	world.soundscape.cue("paper", -20)
 	journal.show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
+func show_context() -> void:
+	journal_text.text = world.progression.journal_context()
+
 func show_memory(index: int) -> void:
 	selected_page = index
 	var memory: Dictionary = memories[index]
-	var heading := "KÝ ỨC CỦA AN · %d / 4\n\n" % (index + 1)
+	var heading := "MANH MỐI VỀ AN · %d / %d\n\n" % [index + 1, memories.size()]
 	var lead: String = world.progression.current_goal() + "\n\n" if world.progression != null else ""
+	if world.progression != null and not world.progression.briefing_complete:
+		journal_text.text = world.progression.journal_context()
+		return
 	journal_text.text = heading + lead + memory.title + "\n" + memory.hint + "\n\n"
 	if found.has(index):
 		journal_text.text += memory.story + "\n\n“" + memory.feeling + "”"
@@ -274,7 +343,7 @@ func show_memory(index: int) -> void:
 		journal_text.text += "Ký ức còn thiếu…"
 
 func _input(event: InputEvent) -> void:
-	if world.player.combat.busy() or world.progression != null and world.progression.panel_visible():
+	if world.player.combat.busy() or world.progression != null and (world.progression.panel_visible() or world.progression.controls_player()):
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if panel_visible() and event.keycode == KEY_ESCAPE:
@@ -313,40 +382,40 @@ func _build_ui() -> void:
 	journal_text.add_theme_font_size_override("font_size", 17)
 	var tabs := HBoxContainer.new()
 	pages.add_child(tabs)
-	for i in range(4):
+	var context_tab := Button.new()
+	context_tab.text = "Điều tra / Lan"
+	context_tab.pressed.connect(show_context)
+	tabs.add_child(context_tab)
+	for i in range(memories.size()):
 		var tab := Button.new()
 		tab.text = "%02d" % (i + 1)
 		tab.pressed.connect(show_memory.bind(i))
 		tabs.add_child(tab)
-	pages.add_child(journal_text)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(640, 290)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	journal_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pages.add_child(scroll)
+	scroll.add_child(journal_text)
 	var leave := Button.new()
 	leave.text = "Đóng · J / Esc"
 	leave.pressed.connect(close)
 	pages.add_child(leave)
-	dialog = _panel(ui, Vector2(650, 335), Vector2(590, 330))
-	var stack := VBoxContainer.new()
-	dialog.add_child(stack)
+	dialog = preload("res://scripts/visual_novel_dialogue.gd").new()
+	dialog.setup(ui,"An",close)
+	# Keep the transport/diagnostic controls private; the visible UI uses
+	# authored questions and reply choices, never a text-entry form.
 	prompt = Label.new()
-	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	prompt.custom_minimum_size.x = 540
-	prompt.add_theme_font_size_override("font_size", 19)
-	stack.add_child(prompt)
+	dialog.add_child(prompt)
+	prompt.hide()
 	reply = TextEdit.new()
-	reply.custom_minimum_size = Vector2(540, 90)
-	reply.placeholder_text = "Anh sẽ nói gì với An?"
-	reply.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	stack.add_child(reply)
+	dialog.add_child(reply)
+	reply.hide()
 	feedback = Label.new()
-	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	feedback.add_theme_font_size_override("font_size", 15)
-	stack.add_child(feedback)
-	var buttons := HBoxContainer.new()
-	stack.add_child(buttons)
+	dialog.add_child(feedback)
+	feedback.hide()
 	send_button = Button.new()
 	send_button.text = "Nói với An"
 	send_button.pressed.connect(_send_pressed)
-	buttons.add_child(send_button)
-	var exit := Button.new()
-	exit.text = "Rời đi · Esc"
-	exit.pressed.connect(close)
-	buttons.add_child(exit)
+	dialog.add_child(send_button)
+	send_button.hide()

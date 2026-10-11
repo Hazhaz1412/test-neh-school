@@ -35,29 +35,22 @@ func validate() -> void:
 	var quest: Node3D = school.soul_quest
 	var director: Node3D = school.survival
 	director.start_run(false)
-	check(quest.fragments.size() == 4 and quest.found.is_empty(), "Four unique physical memories start uncollected")
-	check(not quest.fragments[0].interact(school.player), "Preparation cannot collect a spirit memory")
+	check(quest.fragments.is_empty() and quest.memories.size() == 3 and quest.found.is_empty(), "Old physical clues are absent; three opening clues start uncollected")
+	school.progression.bypass_for_test()
 	director.begin_midnight()
 	await frames(6)
 	for ghost in school.enemies:
 		ghost.set_physics_process(false)
 		ghost.position = Vector3(50, 0.05, -30)
 	check(not director.mark_soul_rescued(), "Public rescue hook cannot bypass the quest")
-	check(not quest.fragments[0].interact(school.player), "Remote pickup cannot collect a memory")
-	check(await approach(quest.fragments[0]), "Art memory has a reachable collision-free position and physical interaction ray")
-	check(not quest.fragments[0].interact(school.player), "Master key is required before collecting memories")
 	school.has_master_key = true
-	# Fixture: progression itself is covered by validate_progression.gd.
-	school.progression.bypass_for_test()
-	for door in school.get_node("Architecture").get_children():
-		if door.has_method("set_open"):
-			door.set_open(true)
-	await frames(35)
-	for i in range(4):
-		check(await approach(quest.fragments[i]), "Memory %d can be approached without walls or furniture blocking E" % i)
-		check(quest.fragments[i].interact(school.player), "Memory %d collects by physical E interaction" % i)
-		check(not quest.fragments[i].interact(school.player), "Memory %d cannot be duplicated" % i)
-	check(quest.found.size() == 4 and not director.soul_rescued, "Four pickups alone cannot rescue An")
+	school.player.position = quest.SOUL_APPROACH
+	school.player.camera.look_at(quest.soul.global_position + Vector3(0, 1, 0))
+	await frames()
+	check(not quest.begin_comfort(school.player), "An still requires all three opening clues")
+	# Opening physical interactions are verified by validate_progression.gd.
+	for i in range(quest.memories.size()): school.progression.record_evidence(i)
+	check(quest.found.size() == 3 and not director.soul_rescued, "Three opening clues alone cannot rescue An")
 	quest.toggle_journal()
 	check(quest.journal.visible and quest.journal_text.text.contains("An") and school.simulation_active(), "J shows collected stories while the night remains active")
 	var clock_before: float = director.run_time
@@ -67,7 +60,7 @@ func validate() -> void:
 	school.player.position = quest.SOUL_APPROACH
 	school.player.camera.look_at(quest.soul.global_position + Vector3(0, 1, 0))
 	await frames()
-	check(quest.begin_comfort(school.player) and quest.dialog.visible, "An accepts a real nearby E interaction after four memories")
+	check(quest.begin_comfort(school.player) and quest.dialog.visible, "An accepts a real nearby E interaction after all three clues")
 	check(school.simulation_active(), "Typing a response leaves combat and clock active")
 	var key := InputEventKey.new()
 	key.keycode = KEY_R
@@ -92,7 +85,7 @@ func validate() -> void:
 	quest._received(HTTPRequest.RESULT_SUCCESS, 200, [], JSON.stringify({"request_id":"cancel-on-damage", "source":"ai", "scores":{"understanding":2,"validation":2,"support":2},"unsafe":false,"feedback":"x"}).to_utf8_buffer())
 	check(quest.accepted.is_empty(), "A response arriving after interruption cannot grant trust")
 	check(quest.begin_comfort(school.player), "Conversation can resume safely after an interruption")
-	for i in range(4):
+	for i in range(quest.memories.size()):
 		quest.topic = i
 		if OS.get_cmdline_user_args().has("--fixture-http"):
 			school.comfort_ai_url = "http://127.0.0.1:8766/comfort"
@@ -108,8 +101,12 @@ func validate() -> void:
 			quest.request_id = "protocol-test-%d" % i
 			var payload := {"request_id":quest.request_id, "source":"ai", "scores":{"understanding":2,"validation":2,"support":2},"unsafe":false,"feedback":"Em được lắng nghe."}
 			quest._received(HTTPRequest.RESULT_SUCCESS, 200, [], JSON.stringify(payload).to_utf8_buffer())
-	check(director.soul_rescued and not director.won and not quest.dialog.visible, "Four valid protocol responses rescue An without winning early")
-	director.advance_clock(720)
+	check(quest.accepted.size()==3 and quest.dialog.visible and not director.soul_rescued,"Three accepted replies wait for the player to hear An's farewell")
+	quest._next_topic()
+	quest.dialog.reveal()
+	quest.dialog.select_choice(0)
+	check(director.soul_rescued and not director.won and not quest.dialog.visible, "Acknowledging An's farewell rescues her without winning early")
+	director.advance_clock(900)
 	check(director.won and director.finished, "Rescued An plus surviving to dawn wins the night")
 	director.start_run(false)
 	check(quest.found.is_empty() and quest.accepted.is_empty() and not director.soul_rescued, "Restart clears fragments, AI progress and rescue")

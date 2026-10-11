@@ -60,7 +60,10 @@ func validate() -> void:
 	school.set_process_unhandled_input(false)
 	await frames(25)
 	school.survival.start_run(false)
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	# Fixture: progression itself is covered by validate_progression.gd.
 	school.progression.bypass_for_test()
 	await frames(8)

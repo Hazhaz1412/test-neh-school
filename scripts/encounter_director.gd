@@ -37,7 +37,7 @@ func nearby_count() -> int:
 	return world.enemies.filter(func(e): return not e.dormant and absf(e.global_position.y - world.player.global_position.y) < 1.6 and e.global_position.distance_to(world.player.global_position) < 20).size()
 
 func _physics_process(delta: float) -> void:
-	if not world.smart_spawn_enabled or not world.spirit_enabled or not world.simulation_active():
+	if not world.smart_spawn_enabled or not world.spirit_enabled or not world.simulation_active() or world.progression.tutorial_active():
 		return
 	check_clock -= delta
 	spawn_clock = maxf(0, spawn_clock - delta)

@@ -53,12 +53,16 @@ func sprint_multiplier() -> float:
 	return 0.5 if adrenaline_remaining > 0 else 1.0
 
 func record_hit(source: CharacterBody3D) -> void:
+	if world.progression != null and world.progression.tutorial_active():
+		return
 	if source == null or player.is_hidden() or busy():
 		return
 	consecutive_hits = mini(2, consecutive_hits + 1)
 	combo_remaining = COMBO_WINDOW
 
 func offer_qte(source: CharacterBody3D) -> bool:
+	if world.progression != null and world.progression.tutorial_active():
+		return false
 	if consecutive_hits < 2 or busy() or player.invulnerable_time > 0 or player.test_invincible() or player.is_hidden() or not world.simulation_active() or not source.can_strike_player():
 		return false
 	if player.global_position.distance_to(source.global_position) > source.attack_range + 0.65:

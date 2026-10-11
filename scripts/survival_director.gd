@@ -79,7 +79,9 @@ func setup(school: Node3D) -> void:
 	end_panel.color = Color(0.015, 0.045, 0.04, 0.93)
 	end_panel.hide()
 	ui.add_child(end_panel)
-	end_text = world._label(end_panel, Vector2(230, 245), 25, Color(0.72, 0.86, 0.77))
+	end_text = world._label(end_panel, Vector2(160, 230), 23, Color(0.72, 0.86, 0.77))
+	end_text.size.x = 960
+	end_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.hide()
 	warning_label.hide()
 	world.master_key_collected.connect(_on_key)
@@ -95,6 +97,8 @@ func start_run(with_opening := true) -> void:
 	finished = false
 	phase = Phase.IDLE
 	world.set_spirit_world(false)
+	if world.scares != null:
+		world.scares.reset()
 	world.paused_by_user = false
 	world.map_panel.hide()
 	end_panel.hide()
@@ -106,8 +110,8 @@ func start_run(with_opening := true) -> void:
 		world.progression.reset()
 	world.has_master_key = false
 	world.master_key.collected = false
-	world.master_key.show()
-	world.master_key.get_node("Interaction").collision_layer = 16
+	world.master_key.hide()
+	world.master_key.get_node("Interaction").collision_layer = 0
 	for door in world.get_node("Architecture").get_children():
 		if door.has_method("request_toggle"):
 			door.is_open = false
@@ -151,32 +155,28 @@ func complete_opening() -> void:
 	world.paused_by_user = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	world.get_node("HUD").show()
-	world.notify("23:30 · Tìm chìa tổng trong nhà kho · J")
+	world.notice_time = 0
 
 func clock_text() -> String:
-	var minutes := -30.0
-	if phase == Phase.PREPARATION:
-		minutes = -30 + 30 * preparation_time / world.preparation_duration_seconds
-	elif phase == Phase.NIGHT:
-		minutes = minf(360, 360 * run_time / world.night_duration_seconds)
-	elif phase == Phase.DAWN:
+	var minutes: float = 1350.0 + (preparation_time + run_time) * 360.0 / world.night_duration_seconds
+	if phase == Phase.DAWN:
 		minutes = 360
 	var time_minutes := posmod(int(floor(minutes)), 1440)
 	return "%02d:%02d" % [int(time_minutes / 60.0), time_minutes % 60]
 
 func begin_midnight() -> void:
-	if not active or phase != Phase.PREPARATION:
+	if not active or phase != Phase.PREPARATION or not world.progression.can_cross_midnight():
 		return
 	phase = Phase.NIGHT
-	preparation_time = world.preparation_duration_seconds
 	run_time = 0
 	glimpse_on = false
-	# Finalize any brief visual glimpse, then spawn the night entities exactly once.
+	# This legacy hook now commits the gate transition, independently of the clock.
+	# The corridor owns its pursuers; campus enemies resume only after Lan.
 	world.set_spirit_world(false, true)
-	world.set_spirit_world(true)
+	world.set_spirit_world(true, not world.progression.briefing_complete)
 	opening.remove_companions()
-	midnight_bell.play()
-	warn("00:00 · CHUÔNG NỬA ĐÊM · Đồng đội đã biến mất. Sống sót tới 06:00.", 7)
+	if not world.progression.briefing_complete:
+		world.progression.begin_first_chase()
 	midnight_started.emit()
 
 func mark_soul_rescued() -> bool:
@@ -189,22 +189,14 @@ func advance_clock(delta: float) -> void:
 	if not active or not world.simulation_active():
 		return
 	if phase == Phase.PREPARATION:
-		preparation_time = minf(world.preparation_duration_seconds, preparation_time + delta)
-		var progress: float = preparation_time / world.preparation_duration_seconds
-		var glimpse := false
-		for interval in [Vector2(0.20, 0.21), Vector2(0.46, 0.48), Vector2(0.71, 0.73), Vector2(0.88, 0.91)]:
-			glimpse = glimpse or progress >= interval.x and progress < interval.y
-		if glimpse_on != glimpse:
-			glimpse_on = glimpse
-			world.set_spirit_world(glimpse, true)
-			if glimpse:
-				warn("Đèn vừa tắt... cảnh vật có gì đó khác.", 2)
-		if progress >= 1:
-			begin_midnight()
+		preparation_time += delta
 	elif phase == Phase.NIGHT:
-		run_time = minf(world.night_duration_seconds, run_time + delta)
-		if run_time >= world.night_duration_seconds:
+		run_time += delta
+		if clock_reached_dawn() and world.progression.briefing_complete:
 			_finish_dawn()
+
+func clock_reached_dawn() -> bool:
+	return (preparation_time + run_time) * 360.0 / world.night_duration_seconds >= 450.0
 
 func _finish_dawn() -> void:
 	world.soul_quest.close()
@@ -217,7 +209,7 @@ func _finish_dawn() -> void:
 	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 1.0)
 	world.player.enabled = false
 	world.player.velocity = Vector3.ZERO
-	end_text.text = ("06:00 · AN ĐÃ ĐƯỢC GIẢI THOÁT" if won else "06:00 · AN VẪN MẮC KẸT") + "\n\nR · Chơi lại"
+	end_text.text = ("06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if won else "06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu.") + "\n\nR · Chơi lại"
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
 	end_panel.show()
@@ -228,7 +220,7 @@ func _finish_dawn() -> void:
 	dawn_reached.emit(soul_rescued)
 
 func win() -> void:
-	if active and phase == Phase.NIGHT and run_time >= world.night_duration_seconds and soul_rescued and world.simulation_active():
+	if active and phase == Phase.NIGHT and clock_reached_dawn() and soul_rescued and world.simulation_active():
 		_finish_dawn()
 
 func hearing_multiplier() -> float:
@@ -239,14 +231,14 @@ func warn(message: String, duration: float) -> void:
 	warning_time = duration
 
 func trigger_hunt() -> void:
-	if not active or finished or phase != Phase.NIGHT:
+	if not active or finished or phase != Phase.NIGHT or world.progression.tutorial_active():
 		return
 	hunt_remaining = 12
 	bell.play()
 	world.notify("Chuông truy đuổi · chúng nghe xa hơn trong 12 giây. Cắt đường nhìn, đi nhẹ và tìm chỗ nấp.")
 
 func _on_key() -> void:
-	if active:
+	if active and not world.progression.tutorial_active():
 		trigger_hunt()
 		warn("ĐÃ LẤY CHÌA · Các phòng đã mở được · Sống tới 06:00 và tìm linh hồn học sinh", 8)
 
@@ -262,7 +254,7 @@ func _physics_process(delta: float) -> void:
 	advance_clock(delta)
 	if finished or not world.spirit_enabled or active and phase != Phase.NIGHT:
 		return
-	if active:
+	if active and not world.progression.tutorial_active():
 		hunt_remaining = maxf(0, hunt_remaining - delta)
 		bell_clock -= delta
 		if bell_clock <= 0:

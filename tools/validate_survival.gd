@@ -52,7 +52,10 @@ func validate() -> void:
 	await frames(25)
 	key(KEY_N)
 	school.survival.opening.finish()
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	await frames(8)
 	var player: CharacterBody3D = school.player
 	player.set_physics_process(false)
@@ -198,13 +201,13 @@ func validate() -> void:
 	check(player.throw_chalk() and player.chalk == 2, "Throwing a chalk decoy consumes one finite item")
 	await frames(90)
 	check(listener.suspected_spot == null and listener.last_known.z > 64 and listener.memory > 0, "Actual chalk-floor impact redirects the listener away from a suspected cover")
-	# The key opens the school rooms; returning to the gate cannot skip the night.
+	# Lan grants room access; returning to the gate still cannot skip the night.
 	player.health = 100
 	player.invulnerable_time = 0
-	await aim(Vector3(-45, 0.05, -54.5), school.master_key.global_position)
-	check(player.get_interaction_target() == school.master_key, "Survival supplies do not occlude the original key interaction")
-	interact(school.master_key)
-	check(school.has_master_key and school.survival.hunt_remaining > 0 and school.survival.bell.playing, "Taking the key opens exploration and rings the hunt bell")
+	check(not school.master_key.visible and school.master_key.get_node("Interaction").collision_layer == 0, "The obsolete warehouse key is absent from the active Night 1 flow")
+	school.collect_master_key()
+	school.survival.trigger_hunt()
+	check(school.has_master_key and school.survival.hunt_remaining > 0 and school.survival.bell.playing, "Room access and later hunt bells remain available after Lan's briefing")
 	await aim(Vector3(0, 0.05, 76), school.survival.gate.global_position)
 	check(player.get_interaction_target() == school.survival.gate, "The original physical campus gate has a reachable sealed-gate interaction")
 	interact(school.survival.gate)

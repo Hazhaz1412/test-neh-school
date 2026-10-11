@@ -14,5 +14,15 @@
     "license": "CC0-1.0",
     "sha256": "7d1d4b9f5ed1aa3e6385ef3232e26e123a3dac5f364e44f9f34784e39bf8d6bb",
     "bytes": 264756
+  },
+  {
+    "title": "Rubble",
+    "author": "Amal Kumar",
+    "page": "https://polyhaven.com/a/rubble",
+    "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rubble/rubble_diff_1k.jpg",
+    "license": "CC0 1.0",
+    "retrieved": "2026-10-04",
+    "sha256": "a656a0692138c045c9707933cf0551559b316b817e90089abf12b6ba76e5e779",
+    "bytes": 781237
   }
 ]

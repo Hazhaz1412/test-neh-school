@@ -1,4 +1,5 @@
 extends Node3D
+signal toggled(opened: bool)
 
 # A physical sliding classroom door. Navigation bakes the doorway itself;
 # pursuers open the leaf when they reach it instead of passing through it.
@@ -38,13 +39,18 @@ func set_open(value: bool) -> bool:
 		return false
 	if is_open != value and get_parent().get_parent().get("soundscape") != null:
 		get_parent().get_parent().soundscape.at("door", global_position, -18)
+	var changed := is_open != value
 	is_open = value
+	if changed:
+		toggled.emit(value)
 	return true
 
 func is_locked() -> bool:
-	# The service warehouse is the only door usable before acquiring its key.
+	# Story classrooms open in order; the remaining rooms use Lan's key.
 	var world := get_parent().get_parent()
 	var number := int(get_meta("room_number", 0))
+	if world.get("progression") != null and world.progression.room_available(number):
+		return false
 	return number != 990 and (world.get("has_master_key") != true or world.get("progression") != null and world.progression.door_locked(number))
 
 func interaction_text() -> String:
@@ -62,10 +68,7 @@ func request_toggle() -> bool:
 	if is_locked():
 		get_parent().get_parent().soundscape.cue("lock", -20)
 		var world := get_parent().get_parent()
-		if not world.has_master_key:
-			world.notify("Chìa tổng · Nhà kho")
-		else:
-			world.notify("≋ Sân dịch vụ / ↗ Hành lang A")
+		world.notify("Cửa đóng kín.")
 		return false
 	return set_open(not is_open)
 

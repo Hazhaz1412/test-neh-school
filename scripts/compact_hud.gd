@@ -33,8 +33,8 @@ func _draw() -> void:
 	var p: CharacterBody3D = world.player
 	var width := get_viewport_rect().size.x
 	var height := get_viewport_rect().size.y
-	text_at(world.survival.clock_text() if world.survival.active else "23:30", Vector2(width - 110, 40), ink, 22)
-	for i in range(4):
+	text_at(world.survival.clock_text() if world.survival.active else "22:30", Vector2(width - 110, 40), ink, 22)
+	for i in range(world.soul_quest.memories.size()):
 		var center := Vector2(width - 110 + i * 21, 63)
 		var diamond := PackedVector2Array([center + Vector2(0, -5), center + Vector2(5, 0), center + Vector2(0, 5), center + Vector2(-5, 0)])
 		var found: bool = world.soul_quest != null and world.soul_quest.found.has(i)
@@ -50,7 +50,7 @@ func _draw() -> void:
 	text_at("♥", Vector2(30, height - 36), Color(0.76, 0.47, 0.43), 20)
 	meter(Vector2(60, height - 42), p.health, Color(0.68, 0.76, 0.67), 105)
 	var stamina_percent: float = p.stamina / p.MAX_STAMINA * 100
-	if stamina_percent < 97:
+	if stamina_percent < 97 or world.progression.runner.active:
 		meter(Vector2(60, height - 31), stamina_percent, Color(0.45, 0.60, 0.60), 105)
 	if p.flashlight.visible or p.selected_item() == "camera" or p.selected_item() == "battery" or p.battery < 20:
 		var at := Vector2(width - 130, height - 44)
@@ -58,11 +58,6 @@ func _draw() -> void:
 		draw_rect(Rect2(at + Vector2(26, 4), Vector2(3, 4)), ink)
 		draw_rect(Rect2(at + Vector2(3, 3), Vector2(20 * p.battery / 100, 6)), ink)
 		text_at(str(int(p.battery)), at + Vector2(38, 12))
-	if world.progression != null and world.progression.roof_key and not world.survival.soul_rescued:
-		var key_at := Vector2(width - 168, 64)
-		draw_arc(key_at, 4, 0, TAU, 16, Color(0.94, 0.74, 0.40), 1.5)
-		draw_line(key_at + Vector2(4, 0), key_at + Vector2(13, 0), Color(0.94, 0.74, 0.40), 1.5)
-		draw_line(key_at + Vector2(11, 0), key_at + Vector2(11, 4), Color(0.94, 0.74, 0.40), 1.5)
 	if p.is_hidden():
 		meter(Vector2(width / 2 - 45, height - 91), p.breath, Color(0.46, 0.69, 0.78), 90)
 	if p.fear > 35:

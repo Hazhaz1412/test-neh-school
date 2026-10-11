@@ -53,10 +53,15 @@ func toggle() -> void:
 	world.paused_by_user = false
 	world.map_panel.hide()
 	world.soul_quest.close()
-	if world.survival.phase == world.survival.Phase.PREPARATION:
-		world.survival.begin_midnight()
+	world.progression.close()
 	enabled = true
 	used_this_run = true
+	world.progression.bypass_for_test()
+	if world.survival.phase == world.survival.Phase.PREPARATION:
+		world.survival.begin_midnight()
+	elif world.survival.phase == world.survival.Phase.NIGHT:
+		world.set_spirit_world(false, true)
+		world.set_spirit_world(true)
 	world.player.recover()
 	world.death_panel.hide()
 	prepare_exploration()
@@ -71,9 +76,6 @@ func prepare_exploration() -> void:
 	var quest: Node3D = world.soul_quest
 	for i in range(quest.memories.size()):
 		quest.found[i] = true
-		quest.fragments[i].collected = true
-		quest.fragments[i].hide()
-		quest.fragments[i].get_node("Interaction").collision_layer = 0
 	# Keep An's real dialogue available when the cheat chord is enabled.
 	quest.accepted.clear()
 	world.survival.soul_rescued = false
@@ -118,4 +120,4 @@ func finish_night() -> void:
 		return
 	world.paused_by_user = false
 	complete_objectives()
-	world.survival.advance_clock(world.night_duration_seconds)
+	world.survival.advance_clock(world.night_duration_seconds * 1.25)

@@ -46,7 +46,10 @@ func capture() -> void:
 	await frames(30)
 	school.set_process_unhandled_input(false)
 	school.survival.start_run(false)
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	await frames(8)
 	school.survival.set_physics_process(false)
 	var p: CharacterBody3D = school.player

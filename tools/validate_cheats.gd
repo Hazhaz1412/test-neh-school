@@ -60,7 +60,7 @@ func validate() -> void:
 	for ghost in school.enemies:
 		ghost.set_physics_process(false)
 		ghost.position = Vector3(54, 0.05, 65)
-	check(school.has_master_key and quest.found.size() == 4 and quest.accepted.is_empty() and not director.soul_rescued and not quest.soul.released and quest.soul.visible, "H plus P grants key and memories but keeps An visible and waiting for actual dialogue")
+	check(school.has_master_key and quest.found.size() == quest.memories.size() and quest.accepted.is_empty() and not director.soul_rescued and not quest.soul.released and quest.soul.visible, "H plus P grants key and memories but keeps An visible and waiting for actual dialogue")
 	check(not director.finished and not director.won and school.enemies.size() == 13, "Night remains playable for enemy and movement testing after objectives complete")
 	check(quest.fragments.all(func(fragment): return not fragment.visible and fragment.get_node("Interaction").collision_layer == 0), "Auto-completed physical memories cannot be collected again")
 	var damage_events := [0]
@@ -118,7 +118,7 @@ func validate() -> void:
 	check(school.cheat_ai_button.visible and school.cheat_finish_button.visible, "Esc exposes explicit AI-test and finish-night buttons only in test mode")
 	school.cheat_ai_button.pressed.emit()
 	await frames(3)
-	check(not school.paused_by_user and quest.found.size() == 4 and quest.accepted.is_empty() and not director.soul_rescued and not quest.soul.released, "AI-test button preserves exploration objectives but resets all real comfort progress")
+	check(not school.paused_by_user and quest.found.size() == quest.memories.size() and quest.accepted.is_empty() and not director.soul_rescued and not quest.soul.released, "AI-test button preserves exploration objectives but resets all real comfort progress")
 	check(p.get_interaction_target() == quest.soul and p.can_fit(p.position), "AI-test button places a collision-free player within the actual E ray to An")
 	check(quest.begin_comfort(p), "An can be approached and spoken to after AI-test preparation")
 	quest.reply.text = "Em không có lỗi. Anh sẽ lắng nghe em."

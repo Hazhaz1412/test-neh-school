@@ -11,6 +11,11 @@ extends Node3D
 @export var smart_spawn_enabled := true
 @export_range(1, 6, 1) var max_active_ghosts := 3
 @export_range(8.0, 60.0, 1.0) var encounter_interval_seconds := 22.0
+@export_group("Spirit realm · random scares")
+@export var random_scares_enabled := true
+@export_range(15.0, 120.0, 1.0) var scare_interval_min := 32.0
+@export_range(20.0, 180.0, 1.0) var scare_interval_max := 62.0
+@export_group("Survival · enemy tuning")
 var encounters: Node
 @export_range(5.0, 35.0, 0.5) var ghost_detection_range := 18.0
 @export_range(1.0, 6.0, 0.1) var ghost_chase_speed := 4.65
@@ -70,6 +75,7 @@ var stamina_bar: ProgressBar
 var map_panel: Control
 @export var comfort_ai_url := "http://127.0.0.1:8765/comfort"
 var progression: Node3D
+var scares: Node3D
 var soul_quest: Node3D
 var soundscape: Node
 var help_panel: PanelContainer
@@ -112,6 +118,12 @@ func _ready() -> void:
 	progression = preload("res://scripts/school_progression.gd").new()
 	survival.add_child(progression)
 	progression.setup(self)
+	scares = preload("res://scripts/scare_director.gd").new()
+	survival.add_child(scares)
+	scares.setup(self)
+	scares.enabled = random_scares_enabled
+	scares.interval_min = scare_interval_min
+	scares.interval_max = maxf(scare_interval_min, scare_interval_max)
 	test_cheats = preload("res://scripts/test_cheats.gd").new()
 	test_cheats.name = "TestCheats"
 	test_cheats.world = self
@@ -131,6 +143,7 @@ func _ready() -> void:
 			local_lights.append(child)
 			if child.has_meta("flicker"):
 				flicker_lights.append(child)
+	scares.cache_lamp_tubes()
 	var settings := ConfigFile.new()
 	if settings.load("user://settings.cfg") == OK:
 		quality_level = clampi(int(settings.get_value("graphics", "quality", quality_level)), 0, 2)
@@ -204,7 +217,8 @@ func _build_ui() -> void:
 	help_panel.size = Vector2(500, 340)
 	ui.add_child(help_panel)
 	var help_text := Label.new()
-	help_text.text = "TẠM DỪNG · Esc tiếp tục\n\nWASD đi · Shift chạy · Ctrl đi nhẹ\nE nhặt / mở / nấp · Space nín thở / QTE né\n1–6 / cuộn chuột chọn đồ · Chuột trái dùng\nQ thả đồ · F đèn pin · Giữ/thả G ném phấn\nPhấn tích 1,5 giây: tầm xa ×5 · Pin sạc 50%\nMáy ảnh: 20% pin / ảnh · Ma tan 6 giây\nJ ký ức · M sơ đồ · F6 chất lượng · F7 FPS\nR chơi lại · N mở đầu\n\nTìm chìa tổng, 4 ký ức và cứu An.\nSống tới 06:00 · Một đêm dài 12 phút."
+	help_text.text = "TẠM DỪNG · Esc tiếp tục\n\nWASD đi · Shift chạy · Ctrl đi nhẹ\nE nhặt / mở / nấp · Space nín thở / QTE né\n1–6 / cuộn chuột chọn đồ · Chuột trái dùng\nQ thả đồ · F đèn pin · Giữ/thả G ném phấn\nPhấn tích 1,5 giây: tầm xa ×5 · Pin sạc 50%\nMáy ảnh: 20% pin / ảnh · Ma tan 6 giây\nJ ký ức · M sơ đồ · F6 chất lượng · F7 FPS\nHội thoại: 1–6 chọn câu · Space / Enter hiện hết chữ\nR chơi lại · N mở đầu\n\nKhám phá → chạy trốn → gặp Lan → tìm hiểu An.\n22:30 → 06:00 · Đồng hồ chạy liên tục.
+Hành lang: WASD · Shift chạy / stamina · Space nhảy\nCtrl lấy đà trượt · Chuột quay đầu / giữ chuột phải nhìn sau."
 	help_text.add_theme_font_size_override("font_size", 18)
 	var help_stack := VBoxContainer.new()
 	help_panel.add_child(help_stack)
@@ -257,13 +271,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().reload_current_scene()
 		if survival.finished:
 			return
-		if event.keycode == KEY_M and not player.combat.busy():
+		if event.keycode == KEY_M and not player.combat.busy() and not progression.controls_player():
 			paused_by_user = false
 			map_panel.visible = not map_panel.visible
 			player.enabled = (not map_panel.visible or survival.active) and player.health > 0 and not survival.won
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if map_panel.visible else Input.MOUSE_MODE_CAPTURED
 		if event.keycode == KEY_ESCAPE and not map_panel.visible:
 			paused_by_user = not paused_by_user
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if paused_by_user else Input.MOUSE_MODE_CAPTURED
 		if event.keycode == KEY_ESCAPE and map_panel.visible:
 			map_panel.hide()
 			paused_by_user = false
@@ -274,6 +289,9 @@ func _process(delta: float) -> void:
 	if simulation_active():
 		elapsed += delta
 		startle_cooldown = maxf(0, startle_cooldown - delta)
+	var environmental_story: bool = survival.active and progression.stage <= progression.Stage.GATE_INTERFERENCE
+	objective_label.visible = false
+	objective_label.text = progression.current_goal()
 	var nearest := 16.0
 	if spirit_enabled and simulation_active() and not is_soul_sanctuary(player.global_position):
 		for ghost in enemies:
@@ -284,7 +302,8 @@ func _process(delta: float) -> void:
 	threat_audio.pitch_scale = 0.95 + threat * 0.55
 	if player.combat.adrenaline_remaining > 0:
 		threat_audio.volume_db = -60
-	realm_mix = move_toward(realm_mix, 1.0 if spirit_enabled else 0.0, delta * 2.5)
+	var curse_strength := 0.72 if survival.soul_rescued else 1.0
+	realm_mix = move_toward(realm_mix, curse_strength if spirit_enabled else 0.0, delta * 2.5)
 	hit_flash = maxf(0, hit_flash - delta * 1.8)
 	overlay_mat.set_shader_parameter("strength", realm_mix)
 	overlay_mat.set_shader_parameter("hit", hit_flash)
@@ -306,12 +325,9 @@ func _process(delta: float) -> void:
 	stamina_bar.value = player.stamina
 	var target: Node3D = player.get_interaction_target() if simulation_active() else null
 	interaction_label.text = ("ĐANG NÍN THỞ · Thả SPACE để hồi hơi · E ra" if player.holding_breath else "ĐANG NẤP · SPACE nín thở · E ra ngoài") if player.is_hidden() else (target.interaction_text() if target != null else "")
-	objective_label.text = "ĐÃ CÓ CHÌA KHÓA TỔNG · E mở các cửa phòng" if has_master_key else "01 / TÌM CHÌA KHÓA TỔNG · Nhà kho phía Tây khu B · M xem đường"
-	if survival.active and has_master_key:
-		objective_label.text = "ĐÊM 01 / Sống sót đến 06:00 · Giải cứu linh hồn học sinh" if not survival.soul_rescued else "ĐÃ GIẢI CỨU LINH HỒN · Giữ an toàn tới 06:00"
 	notice_time = maxf(0, notice_time - delta)
-	notice_label.visible = notice_time > 0 and not soul_quest.panel_visible()
-	interaction_label.visible = not soul_quest.panel_visible() and not map_panel.visible
+	notice_label.visible = notice_time > 0 and not environmental_story and not soul_quest.panel_visible() and not progression.panel_visible()
+	interaction_label.visible = not soul_quest.panel_visible() and not progression.panel_visible() and not map_panel.visible
 	help_panel.visible = paused_by_user and not survival.opening.playing
 	cheat_ai_button.visible = test_cheats.enabled and not survival.finished
 	cheat_finish_button.visible = test_cheats.enabled and not survival.finished
@@ -321,9 +337,17 @@ func _process(delta: float) -> void:
 		interaction_label.text = "E · Cửa khóa" if target.is_locked() else ("E · Đóng cửa" if target.is_open else "E · Mở cửa")
 	elif target != null and target.has_method("hide_position"):
 		interaction_label.text = "E · Nấp"
+	if environmental_story and target != null and not player.is_hidden():
+		interaction_label.text = "E"
 	for light in flicker_lights:
 		if light.visible:
-			light.light_energy = (0.18 if spirit_enabled else 0.40) * (0.70 + 0.30 * sin(elapsed * (19.0 if spirit_enabled else 7.0) + light.position.z))
+			light.light_energy = flicker_energy(light)
+
+func flicker_energy(light: OmniLight3D) -> float:
+	return (0.18 if spirit_enabled else 0.40) * campus_light_scale() * (0.70 + 0.30 * sin(elapsed * (19.0 if spirit_enabled else 7.0) + light.position.z))
+
+func campus_light_scale() -> float:
+	return 0.16 if survival.active and survival.phase == survival.Phase.PREPARATION and not progression.briefing_complete else 1.0
 
 func set_quality(level: int, persist := true) -> void:
 	quality_level = clampi(level, 0, 2)
@@ -341,16 +365,22 @@ func set_quality(level: int, persist := true) -> void:
 		settings.save("user://settings.cfg")
 
 func _update_light_budget() -> void:
+	if progression != null and progression.blackout:
+		for lamp in local_lights: lamp.hide()
+		return
 	var position_seen := player.global_position
 	local_lights.sort_custom(func(a: OmniLight3D, b: OmniLight3D) -> bool:
 		return a.global_position.distance_squared_to(position_seen) < b.global_position.distance_squared_to(position_seen))
 	for index in range(local_lights.size()):
 		local_lights[index].visible = index < light_budget
+		local_lights[index].light_energy = light_defaults[local_lights[index]][1] * (0.60 if spirit_enabled else 1.0) * campus_light_scale()
 
 func simulation_active() -> bool:
-	return player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)
+	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)
 
 func is_soul_sanctuary(feet: Vector3) -> bool:
+	if progression != null and progression.runner.room_hidden and progression.runner.in_refuge(feet):
+		return true
 	# The three wings of A's roof; do not include the open courtyard below.
 	return feet.y >= 11.35 and absf(feet.x) <= 38.5 and feet.z >= -12.5 and feet.z <= 56.2 and (feet.z <= 9.2 or absf(feet.x) >= 21.7)
 
@@ -428,6 +458,8 @@ func set_spirit_world(enabled: bool, glimpse := false) -> void:
 			return
 	if spirit_enabled == enabled:
 		return
+	if scares != null:
+		scares.reset()
 	if encounters != null:
 		encounters.reset()
 	if player.combat != null:
@@ -660,6 +692,7 @@ func _on_damage(_amount: float) -> void:
 func _on_death() -> void:
 	camera_flash.clear_light()
 	soul_quest.close()
+	progression.close()
 	death_text.text = "ĐÊM CHƯA HOÀN THÀNH\n\nR · Chơi lại"
 	map_panel.hide()
 	death_panel.show()

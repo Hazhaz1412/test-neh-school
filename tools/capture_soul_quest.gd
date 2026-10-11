@@ -22,7 +22,10 @@ func capture() -> void:
 	school.player.camera.look_at(Vector3(0, 3.8, 15))
 	school.notice_time = 0
 	await shot("compact-hud-preview")
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	await frames(8)
 	for ghost in school.enemies:
 		ghost.set_physics_process(false)
@@ -33,12 +36,8 @@ func capture() -> void:
 		if door.has_method("set_open"): door.set_open(true)
 	await frames(35)
 	var quest: Node3D = school.soul_quest
-	school.player.position = Vector3(-28.3, 7.85, -9.3)
-	school.player.camera.look_at(quest.fragments[0].global_position)
-	school.notice_time = 0
-	await shot("soul-memory-preview")
 	# Capture fixtures unlock the journal/dialog for visual review, not AI validation.
-	for i in range(4): quest.found[i] = true
+	for i in range(quest.memories.size()): quest.found[i] = true
 	quest.toggle_journal()
 	await shot("soul-journal-preview")
 	quest.close()
@@ -46,7 +45,10 @@ func capture() -> void:
 	school.player.camera.look_at(quest.soul.global_position + Vector3(0, 1.0, 0))
 	await frames()
 	quest.begin_comfort(school.player)
-	quest.reply.text = "Bức vẽ ấy rất quan trọng với em. Họ làm hỏng nó không phải lỗi của em. Anh sẽ ở đây lắng nghe nếu em muốn kể."
+	quest.ask_topic(0)
+	quest.dialog.reveal()
+	quest.dialog.select_choice(0)
+	quest.dialog.reveal()
 	await shot("soul-comfort-preview")
 	quest.close()
 	school.queue_free()

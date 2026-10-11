@@ -1,0 +1,82 @@
+{
+  "lan": {
+    "intro": "Suỵt... Đừng gây tiếng động. Tôi đã đóng cửa, nhưng chúng vẫn đang tìm ở ngoài hành lang.",
+    "questions": [
+      {
+        "id": "place",
+        "question": "Nơi này là đâu? Sao ngôi trường lại biến dạng?",
+        "answer": "Đây là thế giới được tạo nên từ oán niệm của những người đã chết trong trường. Những căn phòng, vết máu và tiếng cười đều là ký ức của họ. Thực tại đang bị thế giới này xâm lấn."
+      },
+      {
+        "id": "curse",
+        "question": "Nếu thoát được, chúng tôi còn bị kéo trở lại không?",
+        "answer": "Các bạn đã bị ràng buộc bởi lời nguyền. Bình minh chỉ đưa các bạn ra ngoài tạm thời. Đêm sau, các bạn lại bị kéo về. Muốn thoát hẳn, phải giúp những linh hồn ở đây buông được oán niệm."
+      },
+      {
+        "id": "souls",
+        "question": "Làm sao giúp những linh hồn mắc kẹt được giải thoát?",
+        "answer": "Phải tìm hiểu điều gì đang giữ họ lại. Lắng nghe và giúp họ đối diện với oán niệm của chính mình. Tôi không biết những linh hồn ấy là ai hay đã trải qua chuyện gì. Các bạn phải tự tìm họ và hiểu câu chuyện của họ."
+      },
+      {
+        "id": "identity",
+        "question": "Còn cô là ai? Sao cô biết đường ở đây?",
+        "answer": "... Tôi biết về lời nguyền và một vài cách sống sót ở đây. Còn những chuyện khác, bây giờ chưa phải lúc. Trước hết hãy tìm các linh hồn còn mắc kẹt."
+      },
+      {
+        "id": "escape",
+        "question": "Có cách nào trở lại ngôi trường không?",
+        "answer": "Cầm chìa phòng này. Chui xuống gầm bàn kia, đợi tiếng bên ngoài im đi rồi chui ra. Nó có thể đưa các bạn trở lại trường. Sau đó hãy tự tìm các linh hồn còn mắc kẹt. Tôi không biết họ đang ở đâu."
+      }
+    ],
+    "required": [
+      "place",
+      "curse",
+      "souls",
+      "escape"
+    ]
+  },
+  "an": {
+    "intro": "Anh... không đi cùng họ chứ? Đừng cười em. Em không biết phải nói thế nào nữa.",
+    "identity_question": "Em là Nguyễn Bình An phải không?",
+    "identity_answer": "Vâng... Mọi người hay gọi em là An. Anh tìm thấy tên em trong cuốn vở à?",
+    "farewell": "Cảm ơn anh đã ở lại nghe em. Lần này... em không còn phải ở một mình nữa.",
+    "topics": [
+      {
+        "id": "isolation",
+        "question": "Con gấu bông này của em à? Em đã phải ở đây một mình sao?",
+        "answer": "Nó là thứ duy nhất còn ở cạnh em. Họ không cho ai ngồi cùng em... Em cứ chờ, nhưng chẳng có ai quay lại.",
+        "replies": [
+          "Bị bỏ lại như vậy chắc em cô đơn lắm. Em không có lỗi. Anh sẽ ở đây nghe em, rồi cùng em tìm một người đáng tin để giúp.",
+          "Anh có thể ngồi ở đây cùng em không? Em không cần kể hết ngay. Em xứng đáng có người ở cạnh và bảo vệ em.",
+          "Em thử vui lên và làm quen với các bạn khác đi. Rồi sẽ ổn thôi."
+        ],
+        "accepted_line": "Anh thật sự sẽ ở lại à? ... Vậy em có thể kể thêm một chút. Em đã sợ anh cũng bỏ đi.",
+        "retry_line": "Em đã thử rồi... Nhưng họ vẫn bỏ em lại. Em chỉ muốn có ai đó hiểu vì sao em buồn."
+      },
+      {
+        "id": "fear",
+        "question": "Những cây gậy và tiếng cười đó... họ đã làm gì với em?",
+        "answer": "Họ đánh em rồi bảo không được kể. Nếu em nói ra, họ sẽ tìm em nữa. Cứ nghe tiếng cười là em lại sợ.",
+        "replies": [
+          "Em sợ bị trả đũa là điều anh hiểu. Đây không phải lỗi của em. Mình sẽ cùng chọn một người lớn đáng tin và tìm cách giữ em an toàn, từng bước thôi.",
+          "Em không phải tự đối mặt với họ. Anh sẽ nghe theo nhịp của em và cùng em tìm người lớn có thể bảo vệ em.",
+          "Nếu em im lặng thì họ sẽ không tìm tới nữa. Đừng kể với ai."
+        ],
+        "accepted_line": "Nếu có người ở cạnh... có lẽ em sẽ bớt sợ. Nhưng anh đừng bắt em quay lại gặp họ một mình nhé.",
+        "retry_line": "Em im lặng lâu lắm rồi mà họ vẫn đánh em. Em cần được an toàn... chứ không phải tiếp tục chịu đựng."
+      },
+      {
+        "id": "notebook",
+        "question": "Anh tìm thấy cuốn vở của em. Em muốn anh hiểu điều gì trong đó?",
+        "answer": "Em viết những điều không nói được. Có lúc tay em cứ run... Họ chỉ bảo chữ em xấu rồi cười. Chẳng ai hỏi em đang viết gì.",
+        "replies": [
+          "Em có quyền được lắng nghe. Em muốn viết hay nói đều được; không phải kể hết ngay. Anh sẽ đọc cùng em nếu em muốn và cùng tìm người đáng tin để giúp.",
+          "Anh không đánh giá em qua nét chữ. Em có thể chỉ cho anh một đoạn em muốn chia sẻ thôi; anh sẽ nghe và không ép em.",
+          "Anh chẳng hiểu chữ này. Khi nào em viết rõ hơn thì mình nói tiếp nhé."
+        ],
+        "accepted_line": "Vậy... em muốn anh đọc chỗ này trước. Em đã viết rằng em muốn được về nhà, nhưng không ai nhìn thấy.",
+        "retry_line": "Nét chữ không phải điều em muốn anh nhìn... Em chỉ cố viết ra những chuyện làm em đau thôi."
+      }
+    ]
+  }
+}

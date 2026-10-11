@@ -2,8 +2,7 @@ extends Node3D
 
 # Lightweight, deterministic cinematic using imported animated Quaternius characters.
 # Only the three companions remain after the camera returns to the player.
-const PRELUDE_DURATION := 36.0
-const DURATION := PRELUDE_DURATION + 34.0
+const DURATION := 34.0
 var director: Node3D
 var playing := false
 var paused := false
@@ -24,7 +23,7 @@ var foley: AudioStreamPlayer
 var previous_glimpse := false
 var latch_cut := false
 var cutters: Node3D
-var investigation: Node3D
+var equipment: Array[Node3D] = []
 var title_label: Label
 
 func start() -> void:
@@ -42,11 +41,24 @@ func start() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	director.world.get_node("Campus/ServiceEntry").set_open_amount(0)
 	_build_set()
-	investigation = preload("res://scripts/investigation_prologue.gd").new()
-	add_child(investigation)
-	investigation.setup(self)
+	_build_equipment()
 	_build_ui()
 	sample(0)
+
+func _build_equipment() -> void:
+	for i in range(4):
+		var kit := Node3D.new()
+		var bag := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.32, 0.36, 0.18)
+		bag.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.12, 0.17, 0.19)
+		bag.material_override = material
+		kit.add_child(bag)
+		actors[i].bone_frame("Fist.L", "Equipment").add_child(kit)
+		kit.position = Vector3(0, -0.18, 0)
+		equipment.append(kit)
 
 func _build_set() -> void:
 	scenery = Node3D.new()
@@ -211,20 +223,10 @@ func _shot(from: Vector3, to: Vector3, focus: Vector3, progress: float) -> void:
 	camera.look_at(focus)
 
 func sample(total_time: float) -> void:
-	if total_time < PRELUDE_DURATION:
-		scenery.hide()
-		investigation.show()
-		hint.visible = total_time < 4
-		title_label.text = "NEH / ĐÊM 01     ·     PHÒNG ĐIỀU TRA     ·     TRƯỚC CHUYẾN ĐI"
-		investigation.sample(total_time)
-		fade.color.a = maxf(clampf(1 - total_time / 0.9, 0, 1), clampf((total_time - 35.2) / 0.8, 0, 1))
-		return
-	var time := total_time - PRELUDE_DURATION
-	if investigation.visible:
-		investigation.hide()
-		scenery.show()
+	var time := total_time
+	if stage == -1:
 		engine.play()
-	title_label.text = "NEH / ĐÊM 01     ·     23:30     ·     CỔNG TRƯỜNG"
+	title_label.text = "NEH / ĐÊM 01     ·     22:30     ·     CỔNG TRƯỜNG"
 	var next_stage := 0 if time < 7 else (1 if time < 14 else (2 if time < 22 else (3 if time < 27 else 4)))
 	if next_stage != stage:
 		stage = next_stage
@@ -268,10 +270,10 @@ func sample(total_time: float) -> void:
 				actor.head_pitch = 0.18
 				actor.hand_target = Vector3(12.65, 0.80, 78.25) if time < 19.2 else Vector3(INF, INF, INF)
 				actor.reach = 0.0
-				investigation.equipment[2].hide()
+				equipment[2].hide()
 				actor.rotation.x = -0.08
 		else:
-			investigation.equipment[i].show()
+			equipment[i].show()
 			# Feet remain on the ground; the only crossing is through the open doorway.
 			var passage := clampf((time - 22 - i * 0.55) / 2.8, 0, 1)
 			if passage < 0.25:
@@ -292,10 +294,6 @@ func sample(total_time: float) -> void:
 			_shot(Vector3(14.5, 2.5, 75), Vector3(12, 1.67, 75.2), Vector3(12, 1.5, 79), (time - 22) / 5)
 		4:
 			_shot(Vector3(12, 1.67, 75.2), Vector3(12, 1.67, 75.2), Vector3(0, 3.0, 18), 1)
-	var glimpse := time >= 27.1 and time < 27.8 or time >= 30.0 and time < 31.0
-	if previous_glimpse != glimpse:
-		previous_glimpse = glimpse
-		director.world.set_spirit_world(glimpse, true)
 	var darkness := maxf(1 - time / 0.9, clampf((time - 33.2) / 0.8, 0, 1))
 	fade.color.a = clampf(darkness, 0, 1)
 
@@ -308,7 +306,7 @@ func finish() -> void:
 	for i in range(3):
 		actors[i].show()
 		actors[i].hand_target = Vector3(INF, INF, INF)
-		investigation.equipment[i].show()
+		equipment[i].show()
 		actors[i].position = Vector3(11.0 + i * 1.0, 0.05, 72.0 + i * 0.65)
 		animations[i].speed_scale = 1
 		_animate(i, "idle")
@@ -318,7 +316,6 @@ func finish() -> void:
 	engine.stop()
 	foley.stop()
 	_release_after_frame(scenery)
-	_release_after_frame(investigation)
 	layer.hide()
 	_release_after_frame(layer)
 	camera.current = false

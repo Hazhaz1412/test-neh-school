@@ -1,4 +1,5 @@
 {
-	"checks": 24,
-	"failures": 0
+	"checks": 17,
+	"failures": 0,
+	"lan_seconds": 75.0
 }

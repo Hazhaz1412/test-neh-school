@@ -36,7 +36,10 @@ func capture() -> void:
 	current_scene = school
 	await frames(25)
 	school.survival.start_run(false)
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	school.player.set_physics_process(false)
 	school.player.set_process_unhandled_input(false)
 	school.survival.set_physics_process(false)
@@ -96,8 +99,8 @@ func capture() -> void:
 	whisperer.position = Vector3(50, 0.05, 65)
 	school.survival.warning_time = 0
 	school.player.fear = 0
-	await place(Vector3(-45, 0.05, -54.5), school.master_key.global_position)
-	e()
+	# Fixture: Lan's room-access grant is covered by the story capture.
+	school.collect_master_key()
 	assert(school.has_master_key)
 	await place(Vector3(0, 0.05, 76), school.survival.gate.global_position)
 	e()

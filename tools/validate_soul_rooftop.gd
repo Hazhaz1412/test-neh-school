@@ -56,7 +56,10 @@ func validate() -> void:
 	check(school.soul_quest.soul.visible, "B spirit-world preview also shows An before starting a survival run")
 	school.set_spirit_world(false)
 	school.survival.start_run(false)
+	# Fixture: isolate this system after the Night 1 investigation/tutorial.
+	school.progression.bypass_for_test()
 	school.survival.begin_midnight()
+	school.progression.bypass_for_test()
 	# Fixture: progression itself is covered by validate_progression.gd.
 	school.progression.bypass_for_test()
 	school.survival.set_physics_process(false)
@@ -83,7 +86,7 @@ func validate() -> void:
 	p.camera.look_at(quest.soul.global_position + Vector3.UP)
 	await frames(3)
 	# Physical pickups are validated separately; unlock dialogue to test this location.
-	for i in range(4):
+	for i in range(quest.memories.size()):
 		quest.found[i] = true
 	var all_clear := true
 	var all_safe := true

@@ -50,29 +50,14 @@ func _draw() -> void:
 			caption(codes.get(room.kind, ""), point(room.center.x - 3, room.center.z), 10)
 	caption("KHU B", point(-8, -66), 14)
 	caption("NHÀ KHO", point(-57, -61), 12)
-	if not player.get_parent().has_master_key:
-		draw_arc(point(-45, -53), 21, 0, TAU, 32, Color(0.96, 0.75, 0.37), 2)
-		caption("01 / CHÌA KHÓA TỔNG → NHÀ KHO", Vector2(26, 540), 14)
-	else:
-		if player.get_parent().survival.active:
-			caption("ĐÊM 01 / SỐNG TỚI 06:00 · GIẢI CỨU LINH HỒN", Vector2(26, 540), 14)
-		else:
-			caption("01 / ĐÃ CÓ CHÌA KHÓA TỔNG · E mở cửa phòng", Vector2(26, 540), 14)
 	var progression: Node3D = player.get_parent().progression
-	if progression != null:
-		for i in range(4):
-			var pos: Vector3 = progression.terminals[i].global_position
-			var color := Color(0.38, 0.84, 0.70) if progression.completed.has(i) else Color(0.93, 0.55, 0.28)
-			draw_circle(point(pos.x, pos.z), 5, color)
-			caption(progression.SYMBOLS[i], point(pos.x, pos.z) + Vector2(7, -4), 13)
-		for gate in progression.gates:
-			if not gate.opened():
-				draw_line(point(gate.position.x - 1, gate.position.z), point(gate.position.x + 1, gate.position.z), Color(0.90, 0.27, 0.21), 3)
+	if progression != null and progression.briefing_complete:
+		caption(progression.current_goal(), Vector2(26, 540), 12)
 	caption("NỐI A–B", point(5, -21), 12)
 	caption("KHU A / CHỮ U", point(-21, -15), 14)
 	caption("CẦU THANG", point(-12, 3), 12)
 	var quest: Node3D = player.get_parent().soul_quest
-	if quest != null and not player.get_parent().survival.soul_rescued:
+	if quest != null and progression.briefing_complete and not player.get_parent().survival.soul_rescued:
 		var soul_point := point(quest.soul.position.x, quest.soul.position.z)
 		draw_circle(soul_point, 4, Color(0.52, 0.82, 0.91))
 		caption("AN · SÂN THƯỢNG", soul_point + Vector2(-18, -23), 11)

@@ -19,7 +19,7 @@ class Tests(unittest.TestCase):
         reply = Response(json.dumps({'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': json.dumps(score)}]}}]}).encode())
         overload = HTTPError('https://provider.test', 503, 'unavailable', {}, BytesIO(b'private-provider-body'))
         with patch.dict(os.environ, {'SOUL_AI_PROVIDER': 'gemini', 'SOUL_AI_MODEL': 'gemini-3.8-flash', 'GOOGLE_API_KEY': 'fixture-google-key'}), patch.object(bridge, 'urlopen', side_effect=[overload, reply]) as http, patch.object(bridge.time, 'sleep') as delay:
-            result = bridge.grade(bridge.MEMORIES['drawing'], 'Em không có lỗi.')
+            result = bridge.grade(bridge.MEMORIES['isolation'], 'Em không có lỗi.')
         self.assertEqual(result['scores']['validation'], 2)
         self.assertEqual(http.call_count, 2)
         delay.assert_called_once_with(0.5)
@@ -46,7 +46,7 @@ class Tests(unittest.TestCase):
     def test_missing_gemini_key_has_actionable_reason(self):
         with patch.dict(os.environ, {'SOUL_AI_PROVIDER': 'gemini', 'SOUL_AI_MODEL': 'gemini-3.8-flash', 'GOOGLE_API_KEY': '', 'GEMINI_API_KEY': ''}), patch.object(bridge, 'read_settings', return_value={'provider': 'gemini', 'api_key': ''}):
             with self.assertRaises(bridge.GradingUnavailable) as context:
-                bridge.grade(bridge.MEMORIES['drawing'], 'Em không có lỗi.')
+                bridge.grade(bridge.MEMORIES['isolation'], 'Em không có lỗi.')
             self.assertEqual(bridge.failure_reason(context.exception), 'missing_api_key')
 
     def test_provider_errors_are_fixed_codes_without_provider_secrets(self):
@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
 
     def test_post_returns_reason_and_request_id_without_fabricating_score(self):
         from urllib.error import HTTPError
-        data = json.dumps({'memory_id': 'drawing', 'text': 'Em không có lỗi.', 'request_id': 'fixture-error'}).encode()
+        data = json.dumps({'memory_id': 'isolation', 'text': 'Em không có lỗi.', 'request_id': 'fixture-error'}).encode()
         for error, expected in [(bridge.GradingUnavailable('missing_api_key'), 'missing_api_key'), (HTTPError('https://provider.test?key=fixture-secret', 429, 'fixture-secret', {}, BytesIO(b'fixture-secret')), 'quota_exceeded')]:
             handler = bridge.Handler.__new__(bridge.Handler)
             handler.path = '/comfort'
@@ -101,7 +101,7 @@ class Tests(unittest.TestCase):
             # Thought text must never be mistaken for the grading answer.
             return Response(json.dumps({'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'thought': True, 'text': 'not JSON'}, {'text': json.dumps(score)}]}}]}).encode())
         with patch.dict(os.environ, {'SOUL_AI_PROVIDER': 'gemini', 'SOUL_AI_MODEL': 'gemini-3.8-flash', 'GOOGLE_API_KEY': 'fixture-google-key'}), patch.object(bridge, 'urlopen', fake):
-            result = bridge.grade(bridge.MEMORIES['drawing'], 'Em không có lỗi.')
+            result = bridge.grade(bridge.MEMORIES['isolation'], 'Em không có lỗi.')
             self.assertEqual(result['scores']['validation'], 2)
             self.assertEqual(result['source'], 'ai')
 
@@ -129,7 +129,7 @@ class Tests(unittest.TestCase):
     def test_invalid_scores_fail_closed(self):
         invalid = {'understanding':True,'validation':2,'support':2,'unsafe':False,'feedback':'x'}
         with patch.dict(os.environ, {'SOUL_AI_PROVIDER':'local','SOUL_AI_MODEL':'fixture'}), patch.object(bridge, 'urlopen', return_value=Response(json.dumps({'choices':[{'message':{'content':json.dumps(invalid)}}]}).encode())):
-            with self.assertRaises(ValueError): bridge.grade(bridge.MEMORIES['drawing'], 'x')
+            with self.assertRaises(ValueError): bridge.grade(bridge.MEMORIES['isolation'], 'x')
     def test_missing_key_does_not_grade(self):
         with patch.dict(os.environ, {'SOUL_AI_PROVIDER':'opencode','SOUL_AI_MODEL':'mimo-v2.5-free','OPENCODE_API_KEY':''}), patch.object(bridge, 'read_settings', return_value={}):
             with self.assertRaises(RuntimeError): bridge.grade(bridge.MEMORIES['isolation'], 'x')

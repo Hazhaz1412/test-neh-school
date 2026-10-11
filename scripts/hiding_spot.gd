@@ -8,7 +8,7 @@ var entry_position := Vector3.ZERO
 var inspection_time := 0.0
 
 func _ready() -> void:
-	world = get_parent().get_parent()
+	if world == null: world = get_parent().get_parent()
 	add_to_group("hiding_spots")
 	if not has_node("Cover"):
 		build_cover()
