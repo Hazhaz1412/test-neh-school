@@ -218,7 +218,7 @@ func _build_ui() -> void:
 	ui.add_child(help_panel)
 	var help_text := Label.new()
 	help_text.text = "TẠM DỪNG · Esc tiếp tục\n\nWASD đi · Shift chạy · Ctrl đi nhẹ\nE nhặt / mở / nấp · Space nín thở / QTE né\n1–6 / cuộn chuột chọn đồ · Chuột trái dùng\nQ thả đồ · F đèn pin · Giữ/thả G ném phấn\nPhấn tích 1,5 giây: tầm xa ×5 · Pin sạc 50%\nMáy ảnh: 20% pin / ảnh · Ma tan 6 giây\nJ ký ức · M sơ đồ · F6 chất lượng · F7 FPS\nHội thoại: 1–6 chọn câu · Space / Enter hiện hết chữ\nR chơi lại · N mở đầu\n\nKhám phá → chạy trốn → gặp Lan → tìm hiểu An.\n22:30 → 06:00 · Đồng hồ chạy liên tục.
-Hành lang: WASD · Shift chạy / stamina · Space nhảy\nCtrl lấy đà trượt · Chuột quay đầu / giữ chuột phải nhìn sau."
+Hành lang: WASD · Shift chạy / stamina · Space nhảy\nCtrl lấy đà trượt · Chuột quay đầu / giữ chuột phải nhìn sau.\nThoát thân: A D né · Space nhảy / theo nhịp tim · Ctrl cúi\nSân: chạy về đèn còn sáng · Chuột phải soi đèn pin ra sau."
 	help_text.add_theme_font_size_override("font_size", 18)
 	var help_stack := VBoxContainer.new()
 	help_panel.add_child(help_stack)
@@ -347,6 +347,7 @@ func flicker_energy(light: OmniLight3D) -> float:
 	return (0.18 if spirit_enabled else 0.40) * campus_light_scale() * (0.70 + 0.30 * sin(elapsed * (19.0 if spirit_enabled else 7.0) + light.position.z))
 
 func campus_light_scale() -> float:
+	if progression != null and progression.power_surge: return 1.0
 	return 0.16 if survival.active and survival.phase == survival.Phase.PREPARATION and not progression.briefing_complete else 1.0
 
 func set_quality(level: int, persist := true) -> void:

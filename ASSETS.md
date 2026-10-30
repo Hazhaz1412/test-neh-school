@@ -106,6 +106,8 @@ Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được gh
 
 `corridor_chase.wav`, `strange_knock.wav`, `door_jumpscare.wav`, `gate_static.wav` là âm/nhạc nguyên bản tổng hợp bằng `tools/build_story_audio.py` (sin, bass, percussion và noise seed cố định). Nhạc chạy loop, không dùng bản ghi nhạc bên ngoài. Tiếng cười dùng asset `teasing_giggle.ogg` có nguồn/giấy phép trong `assets/audio/teasing_giggle-source.json`; tiếng chân/gầm dùng các WAV tổng hợp đã có.
 
+`eerie_lullaby.wav`, `ghost_shriek.wav`, `door_bang.wav`, `heartbeat_single.wav` là âm nguyên bản tổng hợp bằng `tools/build_night1_audio.py` (seed cố định), không dùng bản ghi ngoài.
+
 ## Nội thất hành lang — cập nhật 2026-10-11
 
 - Tải thêm `table.glb` và `bookcaseClosedWide.glb` từ [Kenney Furniture Kit](https://kenney.nl/assets/furniture-kit), **CC0 1.0**. URL archive, SHA-256 và kích thước trong `assets/kenney_furniture/chase_sources.json`; giấy phép gốc tiếp tục lưu ở `License.txt`.

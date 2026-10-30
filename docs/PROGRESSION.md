@@ -1,16 +1,23 @@
 # Đêm 1: Ba manh mối và hành lang linh hồn
 
-Flow này thay toàn bộ manh mối và nhiệm vụ cũ. Kịch bản: [Demo-Idea.md](../Demo-Idea.md). Gameplay: `school_progression.gd`, `classroom_lure.gd`, `an_notebook.gd`, `escape_pressure.gd`, `night_story_interactable.gd`, `endless_corridor.gd`.
+Flow này thay toàn bộ manh mối và nhiệm vụ cũ. Kịch bản: [Demo-Idea.md](../Demo-Idea.md). Gameplay: `school_progression.gd`, `classroom_lure.gd`, `club_scare.gd`, `classroom_shadow.gd`, `door_siege.gd`, `school_escape.gd`, `seal_trace.gd`, `progression_gate.gd`, `fear_overlay.gd`, `an_notebook.gd`, `night_story_interactable.gd`, `endless_corridor.gd`.
 
-Ánh sáng, bóng người, máu và âm thanh dẫn dắt; HUD không hiện mục tiêu kể lại sự kiện, bản đồ không đánh dấu gấu. Gần cửa/đồ vật chỉ hiện E. J vẫn lưu vật chứng khi người chơi tự mở. Ánh sáng nền sân được giảm trong đoạn khám phá và khôi phục sau phần tiền truyện. Phòng đầu chỉ sáng đèn; bóng nữ chỉ xuất hiện ở cửa sổ lầu 2 sau khi nhặt gấu. Nhìn từ xa không khiến bóng bỏ đi. Bóng rút vào phòng ngay khi player tới lầu 2, không cần tiến sát. Trong phòng có vở Nguyễn Bình An với chữ viết tay hỗn loạn. Bóng mở cửa 205 thật, đi dọc hành lang rồi qua cửa vào phòng; người chơi có thể theo vào. Pause giữ chuyển động, chơi lại ẩn bóng và khóa lại phòng này.
+Ánh sáng, bóng người, máu và âm thanh dẫn dắt; HUD không hiện mục tiêu kể lại sự kiện, bản đồ không đánh dấu gấu. Gần cửa/đồ vật chỉ hiện E. J vẫn lưu vật chứng khi người chơi tự mở. Ánh sáng nền sân được giảm trong đoạn khám phá và khôi phục sau phần tiền truyện. Chữ chỉ xuất hiện ở các gợi ý phím ngắn của bốn đoạn chạy, vì đó là thao tác mới.
 
 | Chặng | Tương tác và chuyển tiếp |
 | --- | --- |
 | Sự kiện 1: 22:30 / ánh đèn | Hai ô cửa kính phòng 103 khu A sáng vàng, ánh sáng hắt xuống sân, không có bóng người. Trong phòng chỉ có gấu bông. E mở cửa và nhặt gấu là xong manh mối 1, đèn tắt. |
-| Sự kiện 2: bóng nữ / vở | Bóng nữ đứng ở cửa sổ lầu 2 khu đối diện, nhìn được từ tầng trệt. Player lên lầu 2 thì bóng mở cửa 205 rồi đi vào. E đọc cuốn vở Nguyễn Bình An, trang đầy chữ viết tay nguệch ngoạc, gạch xóa và mắt vẽ lặp lại. |
-| Mở cửa | Máu và tiếng gõ dưới tầng trệt dẫn tới phòng 102. E mở cửa gây jumpscare; sau đó mới hiện gậy dính máu. Nhìn gần hoặc E kiểm tra ghi nhận gậy. Vở và gậy có thể thu theo bất kỳ thứ tự nào sau gấu. |
-| Mất điện | Chỉ kích hoạt khi có cả gấu, vở và gậy. Tiếng cười chồng lớp và vọng nhiều hướng, đồ vật va đập phía sau, đèn lóe, cửa đóng sầm và ngột ngạt ở rìa màn hình. Không spawn ma đuổi trong trường. Hơi thở/tim tăng, đứng yên có thể mất máu sau ít nhất 10 giây cảnh báo; tiến về cổng làm dịu sức ép. Đèn và biểu tượng thoát hiểm xanh dẫn đường, mục tiêu lưu trong J. Cửa lớp vẫn mở lại được. |
-| Cổng chính | Chạy ra cổng trong lúc trường chập chờn giữa hai thế giới. Chạm cổng gây tiếng điện rè và nhiễu trong 2,6 giây, rồi vào hành lang linh hồn. |
+| Cửa cầu thang | Trường chỉ có một cầu thang, bị cửa sắt xếp chặn thật bằng collider. Không có tường vô hình và không qua được bằng mép cầu thang. E chỉ làm cửa kêu lạch cạch. |
+| Vết máu | Máu và tiếng gõ dưới tầng trệt dẫn tới phòng 102. Mở cửa không gây jumpscare; những cây gậy nằm trong phòng. |
+| Jumpscare | E nhặt gậy → im lặng 1,5 giây → tiếng ghế sau lưng (âm 3D) → chờ người chơi tự quay, dưới 30° thì ma lao tới với tiếng thét; sau mỗi 6 giây chưa quay có tiếng to hơn kèm thì thầm → đỏ màn hình, tim đập, khóa điều khiển 2,6 giây, viền co bóp theo nhịp, đỏ tan khi tim chậm lại → nhạc rờn rợn lặp, bóng ở cửa sổ tầng 3 → sau 1,4 giây tiếng “cạch”, cửa sắt xếp lại. |
+| Lên tầng | Nhạc từ −24 dB ở tầng 1 lên −8 dB ở tầng 3. Lên tới tầng 3, bóng chuyển ra cuối cánh Tây, trước cửa 306. Bóng đứng yên tới khi tia nhìn từ camera tới nó không bị chặn và nằm trong 33° quanh hướng nhìn; ở xa trên 15 m chờ 0,5 giây rồi lướt vào phòng; gần hơn 15 m thì đi ngay. Cửa 306 mở thật, đóng sầm thật, chỉ khi đó vở mới xuất hiện. |
+| Cuốn vở | E nhặt vở: ghi manh mối 3, nhạc tắt hẳn, cửa đóng. Vở nằm sâu trong phòng nên cửa luôn đóng được. Trang vở có ký hiệu con mắt khóc dùng ở cổng. Sự kiện kế tiếp chờ người chơi đóng vở. |
+| Đập cửa | 1,4 giây sau khi đóng vở có một tiếng đập; từ 3,2 giây đập liên tục và nhanh dần, tiếng khóc tiến lại dọc hành lang; từ 7,2 giây điện toàn trường chập chờn; 9 giây cửa bật tung, mất điện hẳn, bắt đầu chạy. Cửa khóa trong lúc này. |
+| Đoạn 1: hành lang | Chạy tự động 5,6 m/s trên đường ray cách tường, hành lang rộng 3 m. Bàn ghế bay ra và rơi vào làn: A/D né bàn, Space nhảy ghế dài, Ctrl cúi dưới tủ lơ lửng. Chạm phải khựng 0,5 giây. |
+| Đoạn 2: cầu thang | Đi đúng đường cầu thang thật qua ba tầng, khoảng 55 m. Tim 91 nhịp/phút và nhanh dần tới 115. Space trong ±0,15 giây quanh nhịp; ba nhịp đầu để nghe, không phạt. Sai nhịp hoặc bỏ nhịp thì hụt chân. Màn hình tối theo độ sâu và theo hơi thở. Có vòng tròn thu vào tâm đúng nhịp cho người không nghe được âm thanh. |
+| Đoạn 3: quảng trường | Vật lý thật, tự chạy 6,1 m/s, chuột hoặc A/D lái. Chỉ hai đèn trên lộ trình còn sáng; tới gần một đèn thì nó nổ tắt và đèn kế tiếp sáng. Không tiến về đèn với ít nhất 2,2 m/s thì ma áp sát 2,4 m/giây. Đài phun nước nằm giữa đèn 1 và 2 nên phải tự lái vòng. Giữ chuột phải quay đèn pin ra sau: nếu trúng ma thì đẩy nó lùi 2,8 m/giây, tốn 14% pin/giây. |
+| Đoạn 4: cổng | Nhân vật dừng trước cổng có xích và ký hiệu phát sáng. Bảng đen hiện ký hiệu mờ, giữ chuột trái vẽ theo đúng thứ tự. Ma tiến 0,62 m/giây. Lệch khỏi nét quá 78 px thì đứt nét, lùi lại sáu điểm và mất 1,2 m. Nhấc phấn thì không phạt. |
+| Cổng chính | Phong ấn vỡ, tiếng điện rè và nhiễu trong 2,6 giây rồi vào hành lang linh hồn. |
 | Hành lang | WASD tự di chuyển, Shift 10,5 m/s; đi bộ 6 m/s hồi stamina. Chuột quay tự do, chuột phải nhìn sau. Bốn ngã rẽ, tám đường cụt có tủ chắn cuối đường; dấu chân máu/vải rách gợi đường đúng. Tủ cao để né, ghế dài thấp để nhảy và bàn gầm trống khoảng 0,94 m có ánh lạnh phía sau để Ctrl trượt. Có né hai tủ liên tiếp, tủ đổi chỗ và chướng ngại hạ xuống. Năm ma đuổi theo chính đường player đã chạy, kể cả khi chọn nhầm nhánh. Va cạnh mất 8 HP/khựng 0,55 giây; nhảy đáp trên ghế không tính là va đập. Đèn pin không tiêu pin. |
 | Lan xuất hiện | Sau ít nhất 75 giây di chuyển và qua góc thứ tư ở 680 m. Lan quay lưng với player, mặt hướng đúng chiều chạy/rẽ; dừng chờ nếu player chậm. Player theo thêm khoảng 140 m, tự vào phòng cô mở. Cửa đóng và núp trước khi trò chuyện. |
 | Hiểu lời nguyền | Visual novel với năm câu hỏi tự chọn: thế giới này, lời nguyền, giải thoát linh hồn, danh tính Lan và đường về trường. Lan không biết An, manh mối hay vị trí em. Nghe bốn giải thích cần thiết rồi chọn lời đáp cuối để mở gầm bàn; danh tính là nhánh tùy chọn. Esc đóng, E tiếp tục, giữ câu đã nghe. |
@@ -20,7 +27,16 @@ Flow này thay toàn bộ manh mối và nhiệm vụ cũ. Kịch bản: [Demo-I
 
 Đồng hồ bắt đầu 22:30, chạy liên tục qua nửa đêm và giữ nguyên khi chuyển thế giới. Mặc định mỗi giây chơi tương ứng nửa phút trong game, nên 22:30–06:00 là 15 phút thực. Thời điểm biến cố phụ thuộc vào hành động trong chuỗi, không phụ thuộc mốc 00:00. Màn kết chờ phần hướng dẫn Lan hoàn tất để không cắt mất đoạn chạy tối thiểu nếu người chơi khám phá quá lâu. Esc tạm dừng đồng hồ và minigame; J, M và hội thoại không dừng thời gian.
 
-Ngột ngạt giảm khi khoảng cách tới cổng đạt một mốc gần hơn. Đi vòng không trì hoãn được mãi: sau 55 giây sức ép tối thiểu bắt đầu tăng. Chạm cổng dừng sát thương trước khi nhiễu điện khóa điều khiển. Reset dừng toàn bộ loop, ánh chớp và màn hình ngột ngạt.
+## Dynamic Difficulty Adjustment
+
+Cả bốn đoạn dùng chung một giá trị: `gap`, khoảng cách tính bằng mét giữa ma và người chơi trên đúng đường người chơi vừa chạy. Lỗi trừ `gap`; ma bị bắt khi `gap` về 0.
+
+- **Rubber-banding:** `gap` trên 7,5 m thì ma tăng tốc 1,4 m/giây, nên chơi tốt không cắt đuôi được; `gap` dưới 3 m thì ma chậm lại 1,1 m/giây, nên chơi kém không bị bắt ngay. Chỉ nhiều lỗi liên tiếp mới đưa `gap` về 0. Đoạn 4 tắt cơ chế này vì áp lực ở đó là thời gian.
+- **Điểm lưu theo đoạn:** bị bắt chỉ chơi lại đoạn đang chạy, không mất máu; vị trí, đường ma đuổi và pin trở về đầu đoạn.
+- **Trợ giúp theo số lần thua:** mỗi lần thua cùng một đoạn tăng mức trợ giúp, tối đa 2. Mỗi mức giảm 18% hình phạt, giãn khoảng cách chướng ngại thêm 25%, nới cửa sổ nhịp tim thêm 0,05 giây và nới vùng vẽ thêm 10 px.
+- **Số liệu:** `escape.report` lưu số lỗi, `gap` thấp nhất và thời gian từng đoạn; `escape.attempts` lưu số lần thua. Bài kiểm tra in dòng `DDA / ...` để đưa vào báo cáo.
+
+Bản co-op (một người cầm đèn, một người phá khóa) chưa làm vì game chưa có multiplayer.
 
 Trong hành lang, không nhấn di chuyển thì nhân vật đứng lại. Sprint tiêu 9 stamina/giây, đi bộ hồi 11/giây; khi cạn phải hồi trên 30 mới chạy nhanh lại. Trượt cần ít nhất 7,5 m/s và lấy đà 0,35 giây, kéo dài 0,95 giây; capsule và camera thực sự hạ thấp, không đứng dậy khi còn vướng gầm bàn. Ma vẫn tiến tới độc lập với chuyển động của người chơi; dừng quá lâu có thể chết. Nội thất đổi chỗ bắt đầu ở khoảng cách 22 m, trượt trong 0,77 giây; chướng ngại hạ xuống trong 0,55 giây nhưng giữ khe thấp. Bản bàn Kenney loại bỏ thanh giằng ngang ở gầm tại runtime, giữ nguyên file GLB nguồn. Nhạc và tiếng chân dừng khi núp, tạm dừng hoặc chơi lại.
 
@@ -34,22 +50,23 @@ H+P là bypass TEST có nhãn: bỏ qua chuỗi mở đầu, cấp ba manh mối
 godot --headless --path . --script tools/validate_progression.gd
 godot --headless --fixed-fps 60 --path . --script tools/validate_story_chase.gd
 godot --headless --fixed-fps 60 --path . --script tools/validate_corridor_choices.gd
-godot --headless --fixed-fps 60 --path . --script tools/validate_escape_pressure.gd
+godot --headless --fixed-fps 60 --path . --script tools/validate_night1_escape.gd
 godot --headless --path . --script tools/validate_opening.gd
 godot --headless --path . --script tools/validate_soul_quest.gd
 godot --path . --script tools/capture_progression.gd --resolution 1280x720
 godot --path . --script tools/capture_classroom_lure.gd --resolution 1280x720
 godot --path . --script tools/capture_chase_redesign.gd --resolution 1280x720
+godot --path . --script tools/capture_night1_escape.gd --resolution 1280x720
 ```
 
-Validation kiểm tra ray E thật của cửa/gấu/vở/gậy, thứ tự jumpscare–gậy và đủ ba manh mối mới mất điện, đồng hồ và reset. Chase dùng va chạm vật lý từng bước 1/60 giây, đưa WASD/Shift/Space/Ctrl vào handler thực, không cheat; kiểm tra stamina, bốn góc rẽ, nội thất chuyển động, đủ thời gian gặp Lan, tự vào phòng, cổng gầm bàn và đứng lại thì chết. Capture lớp học kiểm tra nhìn lâu từ xa vẫn đứng, nửa cầu thang chưa trigger, tới lầu 2 thì rút đi, cửa 205 tương tác được và nhân vật đi qua được. Bài choices kiểm tra tam giác model thật để đảm bảo gầm nhìn xuyên được, khe không có collider, Ctrl qua được còn nhảy không qua, đi nhầm nhánh không bị đánh từ xa và quay lại chọn đường được. Bài pressure kiểm tra cảnh báo, tạm dừng, chạy tới cổng giảm áp lực, đứng yên chết và reset. Capture redesign lưu các cảnh dựng kiểm tra riêng; không thay cho bài traversal toàn chặng. Bài AI dùng phản hồi protocol cố định, không khẳng định chất lượng hay khả năng truy cập API thật.
+Validation kiểm tra ray E thật của cửa/gấu/vở/gậy, thứ tự gấu–gậy–vở, đồng hồ và reset. Bài `validate_night1_escape.gd` chạy nguyên chuỗi mới: capsule thật không vượt được cửa sắt, từng nhịp jumpscare, nhạc tăng theo tầng, raycast nhìn thấy bóng, đập cửa, 300 seed × 3 mức trợ giúp đều có đường né, rồi bot đưa input vào handler thật qua cả bốn đoạn, kể cả thua ở từng đoạn và chơi lại đúng đoạn đó. Chase dùng va chạm vật lý từng bước 1/60 giây, đưa WASD/Shift/Space/Ctrl vào handler thực, không cheat; kiểm tra stamina, bốn góc rẽ, nội thất chuyển động, đủ thời gian gặp Lan, tự vào phòng, cổng gầm bàn và đứng lại thì chết. Capture lớp học kiểm tra phòng sáng đèn và bóng ở cửa sổ tầng 3. Bài choices kiểm tra tam giác model thật để đảm bảo gầm nhìn xuyên được, khe không có collider, Ctrl qua được còn nhảy không qua, đi nhầm nhánh không bị đánh từ xa và quay lại chọn đường được. Capture redesign lưu các cảnh dựng kiểm tra riêng; không thay cho bài traversal toàn chặng. Bài AI dùng phản hồi protocol cố định, không khẳng định chất lượng hay khả năng truy cập API thật.
 
-Kết quả: `progression-validation.json`, `chase-validation.json`, `progression-rendered-validation.json`, `classroom-lure-validation.json`, `chase-rendered-validation.json`, `corridor-choices-validation.json`, `escape-pressure-validation.json`.
+Kết quả: `progression-validation.json`, `chase-validation.json`, `progression-rendered-validation.json`, `classroom-lure-validation.json`, `chase-rendered-validation.json`, `corridor-choices-validation.json`, `night1-escape-validation.json`.
 
-Ảnh hai sự kiện: [phòng sáng từ cổng](night1-lure-arrival.png), [phòng sáng từ sân](night1-lure-courtyard.png), [bóng người phía đối diện](night1-opposite-shadow.png), [bóng biến mất / vết máu](night1-shadow-withdrawn.png). Kiểm tra riêng: `classroom-lure-validation.json`.
+Ảnh mở đầu: [phòng sáng từ cổng](night1-lure-arrival.png), [phòng sáng từ sân](night1-lure-courtyard.png). Kiểm tra riêng: `classroom-lure-validation.json`.
 
-Ảnh mới: [vở của An](night1-an-notebook.png), [ngột ngạt khi mất điện](night1-blackout-pressure.png).
+Ảnh chuỗi mới: [cửa sắt](night1-stair-gate.png), [ma lao tới](night1-jumpscare-lunge.png), [màn hình đỏ](night1-jumpscare-red.png), [bóng ở cửa sổ tầng 3](night1-opposite-shadow.png), [bóng cuối hành lang](night1-hall-shadow.png), [vở của An](night1-an-notebook.png), [đèn chớp](night1-siege-flicker.png), [né đồ](night1-escape-corridor.png), [cầu thang](night1-escape-stairs.png), [đèn quảng trường](night1-escape-lamps.png), [phong ấn cổng](night1-gate-seal.png), [bảng đen](night1-gate-chalkboard.png).
 
-Ảnh phần sau: [cổng thoát hiểm](night1-emergency-exit.png), [hành lang đỏ](night1-corridor-run.png), [ma phía sau](night1-corridor-ghosts.png), [góc rẽ](night1-corridor-corner.png), [khe trượt nhìn xuyên được](night1-corridor-furniture.png), [Lan chạy quay lưng](night1-lan-back-facing.png), [bàn của Lan](night1-lan-table.png), [dưới bàn trong trường](night1-school-under-table.png).
+Ảnh phần sau: [hành lang đỏ](night1-corridor-run.png), [ma phía sau](night1-corridor-ghosts.png), [góc rẽ](night1-corridor-corner.png), [khe trượt nhìn xuyên được](night1-corridor-furniture.png), [Lan chạy quay lưng](night1-lan-back-facing.png), [bàn của Lan](night1-lan-table.png), [dưới bàn trong trường](night1-school-under-table.png).
 
 Hội thoại: [giao diện, lựa chọn và phạm vi hiểu biết của Lan](VISUAL_NOVEL.md). Ảnh [Lan](night1-vn-lan-questions.png), [An](night1-vn-an-replies.png).

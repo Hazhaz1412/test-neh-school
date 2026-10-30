@@ -66,8 +66,6 @@ func interact(actor: CharacterBody3D) -> bool:
 	if collected or actor != world.player or not world.simulation_active() or actor.get_interaction_target() != self:
 		return false
 	if kind == "gate":
-		if world.progression.touch_gate():
-			return true
 		world.notify("Cổng khóa từ bên ngoài.")
 		return false
 	if not actor.add_item(kind):

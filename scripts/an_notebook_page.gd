@@ -60,6 +60,10 @@ func _draw() -> void:
 	for eye in [Vector2(350,245),Vector2(425,242)]:
 		draw_arc(eye,25,0,TAU,28,ink,1.8,true)
 		draw_circle(eye,7,ink)
+	# The crying eye, pressed in so hard it stands out from every other mark.
+	var sigil := PackedVector2Array()
+	for point in preload("res://scripts/seal_trace.gd").STROKE: sigil.append(Vector2(555,270)+point*78)
+	draw_polyline(sigil,Color(0.42,0.02,0.015),5,true)
 	for i in range(16):
 		var y := i*26.0
 		draw_colored_polygon(PackedVector2Array([Vector2(680,y),Vector2(668,y+5),Vector2(680,y+13)]),Color(0.18,.13,.1))

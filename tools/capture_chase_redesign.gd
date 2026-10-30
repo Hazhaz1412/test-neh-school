@@ -21,7 +21,8 @@ func validate() -> void:
 	check(await approach(school.get_node("Architecture/ClassroomDoor103"),1.25) and school.get_node("Architecture/ClassroomDoor103").interact(school.player),"First classroom is reachable")
 	await frames(35)
 	check(await approach(story.bear) and story.bear.interact(school.player),"Teddy pickup starts the separate upper-window event")
-	school.player.position = Vector3(14.5,0.05,7.5)
+	story.room_shadow.show_at_window()
+	school.player.position = Vector3(-8,0.05,8.1)
 	school.player.camera.look_at(story.room_shadow.WINDOW+Vector3.UP*1.85)
 	await shot("night1-upper-window-shadow")
 	var unobstructed := true
@@ -37,18 +38,7 @@ func validate() -> void:
 			var point = batch.multimesh.mesh.get_aabb().intersects_segment(inv*school.player.camera.global_position,inv*(story.room_shadow.WINDOW+Vector3.UP*1.85))
 			if point == null: continue
 			unobstructed = false
-	check(story.room_shadow.visible and story.room_shadow.global_position.y>3.8 and unobstructed,"Upper-floor shadow is visible through the ground-floor window without a frame covering its head")
-	story.stage = story.Stage.BLOODY_CLUBS
-	story.collect_notebook()
-	story.discover_clubs()
-	school.player.position = Vector3(-8,0.05,7.5)
-	school.player.camera.look_at(Vector3(-14.5,1.5,7.5))
-	story.escape_pressure.tick(7)
-	await shot("night1-blackout-pressure")
-	check(school.enemies.is_empty() and story.escape_pressure.active and story.exit_beacon.visible and story.laughter_echo.playing,"Blackout uses suffocation, spatial laughter and exit lighting without chasing campus ghosts")
-	school.player.position = Vector3(0,0.05,28)
-	school.player.camera.look_at(Vector3(0,2.2,77.4))
-	await shot("night1-emergency-exit")
+	check(story.room_shadow.model.visible and story.room_shadow.model.position.y>7.5 and unobstructed,"Top-floor shadow is visible from the ground-floor hall without a frame covering its head")
 	story.stage = story.Stage.GATE_INTERFERENCE
 	story.stage_time = 3
 	school.survival.begin_midnight()

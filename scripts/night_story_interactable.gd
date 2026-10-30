@@ -86,7 +86,7 @@ func set_available(value: bool) -> void:
 	$Interaction.collision_layer = 16 if value else 0
 
 func interaction_text() -> String:
-	return "E · Lan" if kind == "lan" else ("E · Nhặt gấu bông" if kind == "bear" else "E · Kiểm tra gậy dính máu")
+	return "E · Lan" if kind == "lan" else ("E · Nhặt gấu bông" if kind == "bear" else "E · Nhặt gậy dính máu")
 
 func interact(actor: CharacterBody3D) -> bool:
 	if actor != story.world.player or not story.world.simulation_active() or actor.get_interaction_target() != self:

@@ -1,6 +1,8 @@
 extends Node3D
 
-enum Stage { ROOM_LURE, BLOOD_TRAIL, DOOR_SCARE, BLOODY_CLUBS, BLACKOUT, ESCAPE_GATE, GATE_INTERFERENCE, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE }
+enum Stage { ROOM_LURE, BLOOD_TRAIL, CLUB_SCARE, ASCEND, DOOR_SIEGE, ESCAPE_RUN, GATE_INTERFERENCE, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE }
+const NOTEBOOK_SPOT := Vector3(-29.4,7.85,49.6)
+const TOP_FLOOR_HEIGHT := 7.8
 var world: Node3D
 var stage := Stage.ROOM_LURE
 var evidence := {}
@@ -15,17 +17,21 @@ var notebook: Node3D
 var notebook_page: Control
 var return_table: Node3D
 var portal_arrived := false
-var escape_pressure: Node
-var exit_beacon: Node3D
+var stair_gate: Node3D
+var club_scare: Node3D
+var door_siege: Node3D
+var escape: Node3D
+var fear: CanvasLayer
+var uneasy_music: AudioStreamPlayer
 var laughter_echo: AudioStreamPlayer3D
 var blood: Node3D
-var apparition: Node3D
 var stage_time := 0.0
 var blink_time := 0.0
 var blackout := false
+var power_surge := false
 var briefing_complete := false
-var roof_open := false
-var gates: Array[Node3D] = []
+var stairs_open := false
+var shadow_room_open := false
 var lan_seen := {}
 var lan_node := "hub"
 var dialogue_data: Dictionary
@@ -38,7 +44,6 @@ var panel_kind := ""
 var strange_sound: AudioStreamPlayer3D
 var laugh: AudioStreamPlayer
 var static_sound: AudioStreamPlayer
-var shock: AudioStreamPlayer
 var interference: ColorRect
 var interference_material: ShaderMaterial
 
@@ -67,7 +72,7 @@ func setup(school: Node3D) -> void:
 	room_shadow.setup(world, self)
 	notebook = preload("res://scripts/an_notebook.gd").new()
 	notebook.story = self
-	notebook.position = Vector3(-26.7,3.95,24.4)
+	notebook.position = NOTEBOOK_SPOT
 	add_child(notebook)
 	return_table = preload("res://scripts/story_table.gd").new()
 	return_table.world = world
@@ -95,8 +100,12 @@ func setup(school: Node3D) -> void:
 		material.roughness = 0.35
 		patch.material_override = material
 		blood.add_child(patch)
-	apparition = preload("res://scripts/teasing_apparition.gd").new()
-	add_child(apparition)
+	stair_gate = preload("res://scripts/progression_gate.gd").new()
+	stair_gate.progression = self
+	stair_gate.position = Vector3(-5.1, 0, 5.3)
+	add_child(stair_gate)
+	fear = preload("res://scripts/fear_overlay.gd").new()
+	add_child(fear)
 	strange_sound = AudioStreamPlayer3D.new()
 	strange_sound.stream = loop_wav("res://assets/audio/strange_knock.wav")
 	strange_sound.position = Vector3(-14.5, 1.2, 2.5)
@@ -116,18 +125,13 @@ func setup(school: Node3D) -> void:
 	laughter_echo.pitch_scale = 0.86
 	laughter_echo.volume_db = -10
 	add_child(laughter_echo)
-	_build_exit_beacon()
-	escape_pressure = preload("res://scripts/escape_pressure.gd").new()
-	add_child(escape_pressure)
-	escape_pressure.setup(self)
+	uneasy_music = AudioStreamPlayer.new()
+	uneasy_music.stream = loop_wav("res://assets/audio/eerie_lullaby.wav")
+	add_child(uneasy_music)
 	static_sound = AudioStreamPlayer.new()
 	static_sound.stream = loop_wav("res://assets/audio/gate_static.wav")
 	static_sound.volume_db = -12
 	add_child(static_sound)
-	shock = AudioStreamPlayer.new()
-	shock.stream = load("res://assets/audio/door_jumpscare.wav")
-	shock.volume_db = -6
-	add_child(shock)
 	interference = ColorRect.new()
 	interference.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	interference.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -141,9 +145,17 @@ func setup(school: Node3D) -> void:
 	runner = preload("res://scripts/endless_corridor.gd").new()
 	add_child(runner)
 	runner.setup(self)
+	club_scare = preload("res://scripts/club_scare.gd").new()
+	add_child(club_scare)
+	club_scare.setup(self)
+	door_siege = preload("res://scripts/door_siege.gd").new()
+	add_child(door_siege)
+	door_siege.setup(self)
+	escape = preload("res://scripts/school_escape.gd").new()
+	add_child(escape)
+	escape.setup(self)
 	_build_ui()
 	world.player.died.connect(close)
-	world.get_node("Architecture/ClassroomDoor102").toggled.connect(on_blood_door)
 	reset()
 
 func in_lure_room(at: Vector3) -> bool:
@@ -199,45 +211,6 @@ func make_interactable(kind: String, pos: Vector3) -> Node3D:
 	add_child(item)
 	return item
 
-func _build_exit_beacon() -> void:
-	exit_beacon = Node3D.new()
-	exit_beacon.name = "EmergencyExit"
-	exit_beacon.position = Vector3(0, 3.2, 77.4)
-	add_child(exit_beacon)
-	var green := StandardMaterial3D.new()
-	green.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	green.albedo_color = Color(0.025, 0.52, 0.18)
-	var white := StandardMaterial3D.new()
-	white.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	white.albedo_color = Color(0.79, 1.0, 0.78)
-	for part in [[Vector3.ZERO,Vector3(2.8,1.1,0.12),green], [Vector3(0.45,0, -0.09),Vector3(1.05,0.12,0.03),white], [Vector3(0.9,0.18,-0.09),Vector3(0.14,0.5,0.03),white], [Vector3(0.9,-0.18,-0.09),Vector3(0.14,0.5,0.03),white], [Vector3(-0.65,0.27,-0.09),Vector3(0.17,0.17,0.03),white], [Vector3(-0.65,0.02,-0.09),Vector3(0.14,0.35,0.03),white]]:
-		var mesh := MeshInstance3D.new()
-		var shape := BoxMesh.new()
-		shape.size = part[1]
-		mesh.mesh = shape
-		mesh.position = part[0]
-		mesh.material_override = part[2]
-		exit_beacon.add_child(mesh)
-		if part[0].x == 0.9: mesh.rotation.z = PI/4 if part[0].y > 0 else -PI/4
-	var light := OmniLight3D.new()
-	light.name = "Light"
-	light.position = Vector3(0, -1, -1.5)
-	light.light_color = Color(0.32, 1.0, 0.48)
-	light.omni_range = 16
-	light.light_energy = 2.5
-	exit_beacon.add_child(light)
-	for z in [9.5, 25.0, 43.0, 61.0]:
-		var path_light := OmniLight3D.new()
-		path_light.position = Vector3(0, 1, z-77.4)
-		path_light.light_color = Color(0.34, 0.68, 0.48)
-		path_light.light_energy = 0.6
-		path_light.omni_range = 8
-		exit_beacon.add_child(path_light)
-
-func _clear_escape_pressure() -> void:
-	if escape_pressure!=null: escape_pressure.reset()
-	if exit_beacon != null: exit_beacon.hide()
-
 func panel_visible() -> bool:
 	return panel != null and panel.visible or lan_view!=null and lan_view.visible
 
@@ -248,10 +221,10 @@ func tutorial_active() -> bool:
 	return world.survival.active and stage < Stage.INVESTIGATE_AN
 
 func controls_player() -> bool:
-	return runner.active or stage in [Stage.DOOR_SCARE, Stage.GATE_INTERFERENCE] or stage == Stage.UNDER_TABLE and not portal_arrived
+	return runner.active or escape.active or club_scare.locks_player() or stage == Stage.GATE_INTERFERENCE or stage == Stage.UNDER_TABLE and not portal_arrived
 
 func room_available(number: int) -> bool:
-	return number == 103 or number in [102,205] and evidence.has("bear")
+	return number == 103 or number == 102 and evidence.has("bear") or number == 306 and shadow_room_open and not door_siege.active
 
 func door_locked(_room_number: int) -> bool:
 	return false
@@ -269,9 +242,10 @@ func current_goal() -> String:
 	match stage:
 		Stage.ROOM_LURE: return "Khám phá ngôi trường"
 		Stage.BLOOD_TRAIL: return "Vết máu ở phía đối diện... tiếng gì đang lặp lại sau cánh cửa?"
-		Stage.DOOR_SCARE: return "..."
-		Stage.BLOODY_CLUBS: return "Cuốn vở trong phòng 205 vẫn chưa được tìm thấy" if evidence.has("clubs") else "Nhìn vào trong phòng... những cây gậy dính máu"
-		Stage.BLACKOUT, Stage.ESCAPE_GATE: return "THOÁT KHỎI ĐÂY · Chạy ra cổng chính!"
+		Stage.CLUB_SCARE: return "..."
+		Stage.ASCEND: return "Có người đứng ở cửa sổ tầng trên cùng"
+		Stage.DOOR_SIEGE: return "..."
+		Stage.ESCAPE_RUN: return "THOÁT KHỎI ĐÂY · Chạy ra cổng chính!"
 		Stage.GATE_INTERFERENCE: return "Cổng không mở... tiếng rè đang nuốt mọi thứ"
 		Stage.CORRIDOR_RUN: return "CHẠY! · WASD di chuyển · SHIFT chạy · SPACE nhảy · CTRL trượt khi lấy đà"
 		Stage.FOLLOW_LAN: return "LAN: CHẠY THEO TÔI!"
@@ -287,8 +261,8 @@ func journal_context() -> String:
 	var text := "ĐÊM 1 · BẠO LỰC HỌC ĐƯỜNG\n" + current_goal()
 	if evidence.has("bear"): text += "\n\nĐã nhặt một con gấu bông bị bỏ lại trong phòng học sáng đèn."
 	if evidence.has("clubs"): text += "\n\nBên kia hành lang có vết máu, tiếng gõ lặp lại và những cây gậy dính máu."
-	if evidence.has("notebook"): text += "\n\nCuốn vở trong phòng 205 ghi tên Nguyễn Bình An. Các trang đầy chữ nguệch ngoạc, gạch xóa và những đôi mắt vẽ lặp lại."
-	if blackout: text += "\n\nSau khi tìm đủ ba manh mối, điện tắt. Tiếng cười vang khắp trường và không khí trở nên ngột ngạt."
+	if evidence.has("notebook"): text += "\n\nCuốn vở trong phòng 306 ghi tên Nguyễn Bình An. Các trang đầy chữ nguệch ngoạc, gạch xóa và một ký hiệu con mắt khóc vẽ bằng máu."
+	if blackout: text += "\n\nKhi tìm đủ ba manh mối, điện toàn trường chập chờn rồi tắt hẳn và thứ đó phá cửa xông vào."
 	if briefing_complete: text += "\n\nLan: Bình minh chỉ đưa nhóm ra ngoài tạm thời. Hãy giúp các linh hồn thoát khỏi oán niệm để phá lời nguyền. Danh tính của Lan vẫn là bí ẩn."
 	return text
 
@@ -302,11 +276,16 @@ func reset() -> void:
 	blink_time = 0
 	evidence.clear()
 	briefing_complete = false
-	roof_open = false
+	stairs_open = false
+	shadow_room_open = false
 	blackout = false
+	power_surge = false
 	portal_arrived = false
 	return_table.set_available(false)
-	_clear_escape_pressure()
+	club_scare.reset()
+	door_siege.reset()
+	escape.reset()
+	fear.clear()
 	lan_seen.clear()
 	lan_node = "hub"
 	bear.set_available(true)
@@ -318,20 +297,19 @@ func reset() -> void:
 	room_shadow.reset()
 	notebook.inspected = false
 	notebook.set_available(false)
-	apparition.vanish()
 	strange_sound.stop()
+	uneasy_music.stop()
 	laugh.stop()
 	laughter_echo.stop()
 	static_sound.stop()
 	static_sound.volume_db = -12
-	shock.stop()
 	interference.hide()
 	interference_material.set_shader_parameter("strength", 0.0)
 
-func record_evidence(index: int) -> void:
+func record_evidence(index: int, silent := false) -> void:
 	world.soul_quest.found[index] = true
 	world.soul_quest.selected_page = index
-	world.soundscape.cue("memory")
+	if not silent: world.soundscape.cue("memory")
 
 func interact_with(item: Node3D) -> bool:
 	if not world.survival.active or world.survival.finished:
@@ -340,76 +318,74 @@ func interact_with(item: Node3D) -> bool:
 		evidence["bear"] = true
 		record_evidence(0)
 		bear.set_available(false)
+		clubs.set_available(true)
 		stage = Stage.BLOOD_TRAIL
 		stage_time = 0
 		lure_light.hide()
 		blood.show()
-		room_shadow.activate()
-		notebook.set_available(true)
 		return true
-	if item == clubs and stage == Stage.BLOODY_CLUBS:
-		discover_clubs()
+	if item == clubs and stage == Stage.BLOOD_TRAIL:
+		collect_clubs()
 		return true
 	if item == lan and stage == Stage.LAN_DIALOGUE:
 		show_lan_page()
 		return true
 	return false
 
-func on_blood_door(opened: bool) -> void:
-	if not opened or stage != Stage.BLOOD_TRAIL: return
-	stage = Stage.DOOR_SCARE
-	stage_time = 0
-	strange_sound.stop()
-	var p: CharacterBody3D = world.player
-	apparition.appear(p.global_position-p.camera.global_basis.z*0.9, p.camera.global_position)
-	shock.play()
-	world.hit_flash = 0.7
-	p.startle = 1.0
-
-func discover_clubs() -> void:
-	if stage != Stage.BLOODY_CLUBS or evidence.has("clubs"): return
+func collect_clubs() -> void:
 	evidence["clubs"] = true
-	record_evidence(1)
-	clubs.get_node("Interaction").collision_layer = 0
-	try_begin_blackout()
+	# The silence is the first beat of the scare, so no pickup sound plays.
+	record_evidence(1,true)
+	clubs.set_available(false)
+	strange_sound.stop()
+	world.soundscape.voice.stop()
+	stage = Stage.CLUB_SCARE
+	stage_time = 0
+	club_scare.start()
+
+func begin_uneasy_music() -> void:
+	uneasy_music.volume_db = -30
+	uneasy_music.play()
+	room_shadow.show_at_window()
+
+func release_stairs() -> void:
+	stairs_open = true
+	stage = Stage.ASCEND
+	stage_time = 0
+	world.soundscape.at("lock", stair_gate.global_position+Vector3.UP*1.2, -4)
+
+func on_shadow_entered() -> void:
+	notebook.set_available(true)
 
 func collect_notebook() -> void:
-	if not evidence.has("notebook"):
-		evidence["notebook"] = true
-		record_evidence(2)
-	try_begin_blackout()
-
-func try_begin_blackout() -> bool:
-	if blackout or not ["bear","clubs","notebook"].all(func(item):return evidence.has(item)): return false
-	stage = Stage.BLACKOUT
-	stage_time = 0
-	blackout = true
-	lure_light.hide()
-	world._update_light_budget()
-	world.soundscape.cue("torch", -8)
-	laugh.play()
-	laughter_echo.play(2.0)
-	exit_beacon.show()
+	if evidence.has("notebook"): return
+	evidence["notebook"] = true
+	record_evidence(2,true)
+	uneasy_music.stop()
+	notebook.set_available(false)
 	room_shadow.conceal()
-	escape_pressure.start()
-	return true
+	# Shut the player in; the notebook sits too far inside to reach from the doorway.
+	world.get_node("Architecture/ClassroomDoor306").set_open(false)
+	door_siege.active = true
 
-func touch_gate() -> bool:
-	if stage != Stage.ESCAPE_GATE: return false
-	escape_pressure.reset()
+func begin_escape() -> void:
+	stage = Stage.ESCAPE_RUN
+	stage_time = 0
+	escape.start()
+
+func seal_broken() -> void:
 	stage = Stage.GATE_INTERFERENCE
 	stage_time = 0
+	blink_time = 0.4
 	static_sound.play()
 	interference.show()
 	world.player.velocity = Vector3.ZERO
-	return true
 
 func begin_first_chase() -> void:
 	stage = Stage.CORRIDOR_RUN
 	stage_time = 0
 	laugh.stop()
 	laughter_echo.stop()
-	_clear_escape_pressure()
 	static_sound.stop()
 	interference.hide()
 	runner.start()
@@ -487,7 +463,6 @@ func arrive_under_table() -> void:
 	lan.set_available(false)
 	blackout = false
 	briefing_complete = true
-	roof_open = true
 	return_table.set_available(true)
 	return_table.occupant = p
 	return_table.entry_position = return_table.approach_position()
@@ -522,9 +497,15 @@ func bypass_for_test() -> void:
 	if world.player.position.x > 100:
 		world.player.global_position = Vector3(17, 0.05, 7.5)
 	runner.reset()
+	club_scare.reset()
+	door_siege.reset()
+	escape.reset()
+	fear.clear()
 	briefing_complete = true
-	roof_open = true
+	stairs_open = true
+	shadow_room_open = true
 	blackout = false
+	power_surge = false
 	stage = Stage.COMFORT_AN
 	evidence["bear"] = true
 	evidence["clubs"] = true
@@ -538,59 +519,53 @@ func bypass_for_test() -> void:
 	room_shadow.conceal()
 	laugh.stop()
 	laughter_echo.stop()
-	_clear_escape_pressure()
 	strange_sound.stop()
+	uneasy_music.stop()
 	static_sound.stop()
 	interference.hide()
 	runner.restore_pose()
 
 func tick_player(delta: float) -> void:
 	if runner.active: runner.tick(delta)
+	elif escape.active: escape.tick(delta)
 	else: world.player.velocity = Vector3.ZERO
 
 func _physics_process(delta: float) -> void:
 	if not world.simulation_active() or not world.survival.active: return
 	stage_time += delta
 	var p: CharacterBody3D = world.player
-	if stage == Stage.ESCAPE_GATE and Vector2(p.position.x,p.position.z-77.72).length()<1.55: touch_gate()
-	if stage in [Stage.BLACKOUT,Stage.ESCAPE_GATE]: escape_pressure.tick(delta)
 	if stage == Stage.BLOOD_TRAIL and p.global_position.distance_to(Vector3(-14.5, 0.05, 7.5)) < 14 and not strange_sound.playing:
 		strange_sound.play()
-	elif stage == Stage.DOOR_SCARE:
-		if stage_time >= 1.1:
-			apparition.vanish()
-			clubs.set_available(true)
-			stage = Stage.BLOODY_CLUBS
+	elif stage == Stage.CLUB_SCARE:
+		club_scare.tick(delta)
+	elif stage == Stage.ASCEND:
+		room_shadow.tick(delta)
+		# The lullaby is what draws the player up, so it grows floor by floor.
+		var height := clampf(p.global_position.y/TOP_FLOOR_HEIGHT,0,1)
+		if uneasy_music.playing: uneasy_music.volume_db = move_toward(uneasy_music.volume_db,lerpf(-24,-8,height),delta*5)
+		if door_siege.active and not panel_visible():
+			stage = Stage.DOOR_SIEGE
 			stage_time = 0
-	elif stage == Stage.BLOODY_CLUBS and stage_time >= 0.5 and p.global_position.z < 5.5 and p.get_interaction_target() == clubs:
-		discover_clubs()
-	elif stage == Stage.BLACKOUT and stage_time >= 1.5:
-		stage = Stage.ESCAPE_GATE
-		stage_time = 0
-		blink_time = 0.4
-	if stage in [Stage.ESCAPE_GATE, Stage.GATE_INTERFERENCE]:
+			door_siege.start()
+	elif stage == Stage.DOOR_SIEGE:
+		door_siege.tick(delta)
+	if stage == Stage.GATE_INTERFERENCE:
 		blink_time -= delta
 		if blink_time <= 0:
 			blink_time = 0.8 if world.spirit_enabled else 1.5
 			world.set_spirit_world(not world.spirit_enabled, true)
-		if stage == Stage.GATE_INTERFERENCE:
-			interference_material.set_shader_parameter("strength", minf(1, stage_time/1.3))
-			if stage_time >= 2.6:
-				world.survival.begin_midnight()
+		interference_material.set_shader_parameter("strength", minf(1, stage_time/1.3))
+		if stage_time >= 2.6:
+			world.survival.begin_midnight()
 	if stage == Stage.UNDER_TABLE and not portal_arrived and stage_time >= 1.8:
 		arrive_under_table()
 	if world.survival.soul_rescued: stage = Stage.SURVIVE_DAWN
 
 func _process(_delta: float) -> void:
-	if stage == Stage.DOOR_SCARE and apparition.visible:
-		var camera: Camera3D = world.player.camera
-		var face_target := camera.global_position - camera.global_basis.z * 0.70 - Vector3.UP * 0.12
-		apparition.global_position += face_target - apparition.face.global_position
 	var paused: bool = not world.simulation_active()
-	for audio in [strange_sound, laugh, laughter_echo, static_sound, shock]: audio.stream_paused = paused
-	if exit_beacon.visible:
-		exit_beacon.get_node("Light").light_energy = 2.5 + sin(stage_time * 2.2) * 0.6
-		laughter_echo.global_position = Vector3(-14.5+sin(stage_time*0.16)*9, 2.3, 8+absf(sin(stage_time*0.1))*20)
+	for audio in [strange_sound, laugh, laughter_echo, static_sound, uneasy_music]: audio.stream_paused = paused
+	if laughter_echo.playing:
+		laughter_echo.global_position = Vector3(-14.5+sin(stage_time*0.16)*9, 2.3, 30+absf(sin(stage_time*0.1))*30)
 	if world.survival.finished: stage = Stage.COMPLETE
 
 func _input(event: InputEvent) -> void:
@@ -599,7 +574,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _exit_tree() -> void:
-	for audio in [strange_sound, laugh, laughter_echo, static_sound, shock]:
+	for audio in [strange_sound, laugh, laughter_echo, static_sound, uneasy_music]:
 		if audio != null:
 			audio.stream_paused = false
 			audio.stop()
