@@ -8,6 +8,7 @@ func press(code: int, down := true) -> void:
 	story.runner._input(event)
 
 func validate() -> void:
+	root.get_tree().set_meta("story_stay_in_school", true)
 	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
@@ -104,7 +105,7 @@ func validate() -> void:
 		story._physics_process(1.9)
 		await frames(4)
 		check(story.portal_arrived and school.player.hidden_spot==story.return_table and school.player.position.x<50 and school.player.get_node("Collision").shape.height<1,"Player arrives crouched under an actual table in the school")
-		check(school.player.end_hide() and story.stage==story.Stage.COMFORT_AN and school.player.can_fit(school.player.position),"E exits the school table into a clear standing position")
+		check(school.player.end_hide() and story.stage==story.Stage.LAN_FAREWELL and school.player.can_fit(school.player.position),"E exits the school table into a clear standing position")
 		check(story.briefing_complete and school.has_master_key and not runner.active,"Table crossing resumes An's school investigation")
 	else:
 		check(false,"Lan dialogue and table portal were reachable")

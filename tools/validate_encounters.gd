@@ -25,6 +25,7 @@ func check(ok: bool, description: String) -> void:
 
 func validate() -> void:
 	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school.envy_enabled = false # This suite covers the legacy ghosts.
 	root.add_child(school)
 	current_scene = school
 	school.set_process_unhandled_input(false)

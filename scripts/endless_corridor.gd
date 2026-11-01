@@ -653,6 +653,16 @@ func _tick_ghosts(delta: float) -> void:
 		p.startle = 1
 		attack_clock = 1.0
 
+# Test shortcut: F10 during the red corridor goes straight to Lan's room.
+func skip_to_refuge() -> void:
+	active = false
+	restore_pose()
+	for audio in [chase_steps, snarls, breathing, music]:
+		audio.stop()
+	room_hidden = true
+	world.player.global_position = refuge.to_global(Vector3(-5, 0.05, 1.7))
+	story.enter_lan_room()
+
 func _tick_lan(delta: float) -> void:
 	if not lan.visible: return
 	var p: CharacterBody3D = world.player
@@ -708,6 +718,10 @@ func _process(_delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not active: return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F10:
+		skip_to_refuge()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventKey and not event.pressed:
 		var released: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
 		held_keys[released] = false

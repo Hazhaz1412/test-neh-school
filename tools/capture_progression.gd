@@ -35,6 +35,7 @@ func shot(title: String) -> void:
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://docs/"+title+".png")
 func validate() -> void:
+	root.get_tree().set_meta("story_stay_in_school", true)
 	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
@@ -130,7 +131,7 @@ func validate() -> void:
 	await frames(4)
 	check(story.portal_arrived and school.player.hidden_spot == story.return_table, "E enters the portal and arrives beneath the school table")
 	await key(KEY_E)
-	check(story.briefing_complete and story.stage == story.Stage.COMFORT_AN and not school.player.is_hidden(), "E leaves the school table and resumes An's story")
+	check(story.briefing_complete and story.stage == story.Stage.LAN_FAREWELL and not school.player.is_hidden(), "E leaves the school table and resumes An's story")
 	await key(KEY_J)
 	await shot("night1-journal")
 	await key(KEY_ESCAPE)

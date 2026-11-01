@@ -140,3 +140,24 @@ Lan và An dùng bản portrait riêng của rig Casual_Female Quaternius CC0 đ
 
 - js-aruco2 (MIT): https://www.npmjs.com/package/js-aruco2, dò dấu ArUco trên điện thoại. `assets/lens/markers.json` sinh bằng `tools/build_lens_markers.js`.
 - selfsigned (MIT), qrcode (MIT): chứng chỉ LAN và mã QR.
+
+## Khu phố ban ngày
+
+URL tải và SHA-256 của từng file nằm ở `assets/town_sources.json`, tải lại bằng `tools/fetch_town_assets.py`.
+
+- **Poly Haven (CC0):** texture trong `assets/polyhaven_town/textures/`, model trong `models/`, bầu trời HDRI Qwantani trong `sky/`. Giấy phép: https://polyhaven.com/license . Nhà ống, đường, cầu và dây điện là mesh sinh bằng code, chỉ dùng các texture này. `models/jacaranda_street.glb` là bản rút gọn từ `jacaranda_tree` của Poly Haven (CC0) bằng `tools/build_town_tree.py`.
+- **Microsoft Rocketbox (MIT):** 9 avatar người lớn trong `assets/rocketbox/townsfolk/` và các clip `f_*`, `m_gestic_*`, `m_sit_*` trong `assets/rocketbox/animations/`. Texture được thu nhỏ còn 1024 JPG. Giấy phép: `assets/rocketbox/LICENSE.txt`.
+- **"low poly scooter", Thomas Saint Pierre (s1pierro), CC BY 3.0:** `assets/polypizza_town/low_poly_scooter.glb`. Trang model: https://poly.pizza/m/awXCP7LUcz6 ; giấy phép: https://creativecommons.org/licenses/by/3.0/ . Bắt buộc ghi công khi phân phối. Runtime đổi tỷ lệ và màu thân xe, không sửa file gốc.
+- **Âm thanh:** `town_engine.wav`, `town_horn.wav`, `town_street.wav` do `tools/build_town_audio.py` tổng hợp, không có bản ghi ngoài.
+
+Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và hẻm theo [Hẻm](https://en.wikipedia.org/wiki/H%E1%BA%BBm), [Vietnamese urban fabric, IIAS](https://iias.asia/the-newsletter/article/vietnamese-urban-fabric). Tên quán, đường và người trong khu phố đều hư cấu.
+
+## Quỷ Ghen Tị
+
+`assets/envy_demon/envy_demon.glb` do `tools/build_envy_demon.py` xuất từ Blender. Nguồn là avatar `Male_Adult_01` và các clip Rocketbox (MIT); script đổi tỉ lệ, phủ đen và thêm sừng, gai vai, vuốt, đuôi, áo dài, ba mắt, răng. Huy chương là mesh trong `scripts/envy_demon_model.gd`. Chạy lại: `blender --background --python tools/build_envy_demon.py`.
+
+`envy_step.wav`, `envy_clink.wav`, `envy_rattle.wav` do `tools/build_envy_audio.py` tổng hợp, không có bản ghi ngoài.
+
+## Nhà của Peter
+
+`assets/home/`: giường, tủ lạnh, bồn cầu, chậu rửa từ Poly Pizza, CC0, URL và mã băm ở `assets/town_sources.json`. Sofa, bàn ăn, ghế, bếp, TV, lò vi sóng từ Poly Haven (CC0), nội thất còn lại từ Kenney (CC0). `hub/assets/gaaglu.png` do `tools/build_gaaglu_icon.py` vẽ. `phone_buzz.wav`, `phone_ding.wav` do `tools/build_town_audio.py` tổng hợp.

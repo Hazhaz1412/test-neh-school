@@ -32,6 +32,8 @@ func interact(actor: CharacterBody3D) -> bool:
 	# Evaluate sight BEFORE lowering the camera or concealing the player.
 	for ghost in world.enemies:
 		ghost.witness_hiding(self)
+	if world.get("envy") != null and world.envy.demon != null:
+		world.envy.demon.witness(self)
 	occupant = actor
 	actor.begin_hide(self)
 	return true

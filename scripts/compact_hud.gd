@@ -112,3 +112,10 @@ func _draw_item(kind: String, at: Vector2, color: Color) -> void:
 			draw_rect(Rect2(at - Vector2(6, 2), Vector2(12, 4)), color)
 		"chalk":
 			draw_line(at + Vector2(-7, 8), at + Vector2(7, -8), color, 6)
+		"salt_gun":
+			draw_rect(Rect2(at + Vector2(-13, -6), Vector2(26, 7)), color)
+			draw_line(at + Vector2(-8, 1), at + Vector2(-12, 11), color, 5)
+		"medal":
+			draw_arc(at + Vector2(0, 3), 7, 0, TAU, 20, color, 2)
+			draw_line(at + Vector2(-5, -12), at + Vector2(0, -4), color, 2)
+			draw_line(at + Vector2(5, -12), at + Vector2(0, -4), color, 2)

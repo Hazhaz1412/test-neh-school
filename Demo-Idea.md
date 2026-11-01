@@ -1,4 +1,4 @@
-# ĐÊM 1: BẠO LỰC HỌC ĐƯỜNG
+# ĐÊM 0 (INTRO): BẠO LỰC HỌC ĐƯỜNG
 
 **Nhân vật trung tâm:** Bé An. **Chủ đề:** Bạo lực học đường, cô lập, tổn thương tâm lý và oán niệm.
 

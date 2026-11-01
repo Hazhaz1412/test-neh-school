@@ -36,7 +36,7 @@ static func torch_model() -> Node3D:
 static func prop(kind: String) -> MeshInstance3D:
 	var visual := MeshInstance3D.new()
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = {"battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73)}[kind]
+	mat.albedo_color = {"battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73), "salt_gun": Color(0.34, 0.30, 0.26), "medal": Color(0.86, 0.68, 0.24)}[kind]
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	visual.material_override = mat
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -46,8 +46,8 @@ static func prop(kind: String) -> MeshInstance3D:
 		visual.mesh = mesh
 	else:
 		var mesh := CylinderMesh.new()
-		mesh.height = {"battery": 0.10, "chalk": 0.12}[kind]
-		mesh.top_radius = {"battery": 0.021, "chalk": 0.009}[kind]
+		mesh.height = {"battery": 0.10, "chalk": 0.12, "salt_gun": 0.34, "medal": 0.012}[kind]
+		mesh.top_radius = {"battery": 0.021, "chalk": 0.009, "salt_gun": 0.034, "medal": 0.05}[kind]
 		mesh.bottom_radius = mesh.top_radius
 		mesh.radial_segments = 12
 		visual.mesh = mesh
@@ -60,7 +60,7 @@ func _ready() -> void:
 	models["camera"].rotation.y = -0.28
 	models["torch"] = torch_model()
 	player.flashlight.light_cull_mask &= ~HELD_LAYER
-	for kind in ["battery", "medicine", "chalk"]:
+	for kind in ["battery", "medicine", "chalk", "salt_gun", "medal"]:
 		models[kind] = prop(kind)
 	for model in models.values():
 		add_child(model)
@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 	if world.get("survival") == null:
 		hide()
 		return
-	visible = player.enabled and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished
+	visible = player.enabled and not player.seized and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished
 	var kind: String = player.selected_item()
 	if kind != shown_kind:
 		shown_kind = kind

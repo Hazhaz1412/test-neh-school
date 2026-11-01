@@ -23,7 +23,8 @@ func style(color: Color, border: Color, padding := 16) -> StyleBoxFlat:
 	box.set_content_margin_all(padding)
 	return box
 
-func setup(ui: Control, character: String, close_action: Callable) -> void:
+# A custom actor replaces the Lan/An portrait; town NPCs use their own avatars.
+func setup(ui: Control, character: String, close_action: Callable, custom_actor: Node3D = null) -> void:
 	name = character+"Dialogue"
 	z_index = 40
 	leave = close_action
@@ -36,7 +37,7 @@ func setup(ui: Control, character: String, close_action: Callable) -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
-	_build_portrait(character)
+	_build_portrait(character, custom_actor)
 	var box := PanelContainer.new()
 	add_child(box)
 	box.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -103,7 +104,7 @@ func setup(ui: Control, character: String, close_action: Callable) -> void:
 	visibility_changed.connect(_visibility_changed)
 	_visibility_changed()
 
-func _build_portrait(character: String) -> void:
+func _build_portrait(character: String, custom_actor: Node3D) -> void:
 	portrait_viewport = SubViewport.new()
 	portrait_viewport.size = Vector2i(360,480)
 	portrait_viewport.own_world_3d = true
@@ -117,13 +118,15 @@ func _build_portrait(character: String) -> void:
 	environment.environment.ambient_light_color = Color(.72,.77,.80)
 	environment.environment.ambient_light_energy = .8
 	portrait_viewport.add_child(environment)
-	actor = preload("res://scripts/humanoid_model.gd").new()
-	actor.variant = "Casual_Female"
-	actor.target_height = 1.68 if character=="Lan" else 1.48
-	actor.shirt_color = Color(.38,.29,.48) if character=="Lan" else Color(.25,.36,.38)
+	actor = custom_actor
+	if actor == null:
+		actor = preload("res://scripts/humanoid_model.gd").new()
+		actor.variant = "Casual_Female"
+		actor.target_height = 1.68 if character=="Lan" else 1.48
+		actor.shirt_color = Color(.38,.29,.48) if character=="Lan" else Color(.25,.36,.38)
+		actor.head_pitch = .08 if character=="Lan" else .20
 	portrait_viewport.add_child(actor)
 	actor.rotation.y = -.12
-	actor.head_pitch = .08 if character=="Lan" else .20
 	var light := DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-25,-35,0)
 	light.light_color = Color(.94,.82,.73)

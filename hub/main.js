@@ -1,12 +1,13 @@
 // Fake browser shell. The address bar is our own UI; requests to the fake domains
 // are answered here and never leave the machine.
-const { app, BaseWindow, WebContentsView, ipcMain, session, Menu } = require('electron');
+const { app, BaseWindow, WebContentsView, ipcMain, session, Menu, Notification, shell } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
 const { Readable } = require('stream');
+const desktop = require('./desktop');
 const web = require('./web/server');
 const sites = require('./web/sites');
 const { DEFAULT, PROFILES } = require('./profiles');
@@ -391,7 +392,10 @@ function openBrowser() {
     layout();
     pushState();
   });
-  win.on('closed', () => app.quit());
+  win.on('closed', () => {
+    browserOpen = false;
+    if (!background) app.quit();
+  });
   bar.webContents.on('before-input-event', shortcuts);
   menu.webContents.on('blur', closeMenu);
   bar.webContents.once('did-finish-load', () => openTab(sites.HOME));
@@ -412,15 +416,51 @@ function launchGame() {
   game.on('error', (error) => console.error(`Cannot start game: ${error.message}`));
 }
 
+const background = process.argv.includes('--background');
+let browserOpen = false;
+if (!app.requestSingleInstanceLock()) app.quit();
+// The desktop shortcut starts a second copy; it only asks the first one for a window.
+app.on('second-instance', () => showBrowser());
+app.on('window-all-closed', () => {});
+
+function showBrowser() {
+  if (browserOpen) return;
+  browserOpen = true;
+  openBrowser();
+  stack?.sendToGame({ type: 'gaaglu_opened' });
+}
+
+// Started by the game, it leaves with the game. Scene changes reconnect within seconds.
+function quitWithGame() {
+  if (!background) return;
+  setTimeout(() => {
+    if (!stack?.story.game && !browserOpen) app.quit();
+  }, 20000);
+}
+
+function installGaaglu() {
+  const icon = path.join(__dirname, 'assets', 'gaaglu.png');
+  const launch = [process.execPath, app.getAppPath(), '--open'];
+  desktop.install({
+    launch,
+    icon,
+    makeWindowsLink: (file) => shell.writeShortcutLink(file, { target: process.execPath, args: `"${app.getAppPath()}" --open`, icon, iconIndex: 0 }),
+  });
+  if (!Notification.isSupported()) return;
+  const notice = new Notification({ title: 'Gaaglu đã được cài đặt', body: 'Xem ghi chú trên màn hình nền của bạn.', icon });
+  notice.on('click', showBrowser);
+  notice.show();
+}
+
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   app.userAgentFallback = app.userAgentFallback.replace(/ (neh-hub|Electron)\/\S+/g, '');
-  stack = await web.start({ onProfile: (id) => setProfile(id), searchWeb });
+  stack = await web.start({ onProfile: (id) => setProfile(id), searchWeb, onInstall: installGaaglu, onGameGone: quitWithGame });
   writeSessionFile();
   console.log(`Ống kính điện thoại: ${stack.lensUrl}  (mã QR tại gaaglu.com/thiet-bi)`);
   routeFakeWeb(session.fromPartition('persist:fakeweb'));
   lockVisitSession();
-  openBrowser();
+  if (!background) showBrowser();
   if (process.argv.includes('--game')) launchGame();
 });
 

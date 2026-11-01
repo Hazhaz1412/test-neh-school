@@ -15,11 +15,13 @@ func _ready() -> void:
 	bang = AudioStreamPlayer.new()
 	bang.stream = load("res://assets/audio/door_bang.wav")
 	add_child(bang)
-	lens = preload("res://scripts/phone_lens.gd").new()
-	lens.name = "PhoneLens"
-	lens.world = world
-	lens.bridge = self
-	add_child(lens)
+	# The lens renders the school; the daytime town only reports story state.
+	if not world.has_method("hub_state"):
+		lens = preload("res://scripts/phone_lens.gd").new()
+		lens.name = "PhoneLens"
+		lens.world = world
+		lens.bridge = self
+		add_child(lens)
 	set_process(not OS.get_cmdline_args().has("--script"))
 
 func _process(delta: float) -> void:
@@ -43,7 +45,8 @@ func _process(delta: float) -> void:
 		WebSocketPeer.STATE_CLOSED:
 			socket = null
 			linked = false
-			lens.set_active(false)
+			if lens != null:
+				lens.set_active(false)
 			clock = RETRY_SECONDS
 
 func _connect() -> void:
@@ -62,12 +65,17 @@ func _connect() -> void:
 		socket = peer
 
 func _send_state() -> void:
-	var story: Node3D = world.progression
-	var state := JSON.stringify({"type": "state", "evidence": story.evidence.keys(), "stage": story.Stage.keys()[story.stage]})
+	var state := JSON.stringify(_story_state())
 	if state == last_state:
 		return
 	last_state = state
 	socket.send_text(state)
+
+func _story_state() -> Dictionary:
+	if world.has_method("hub_state"):
+		return {"type": "state"}.merged(world.hub_state())
+	var story: Node3D = world.progression
+	return {"type": "state", "evidence": story.evidence.keys(), "stage": story.Stage.keys()[story.stage]}
 
 func _receive(text: String) -> void:
 	var message = JSON.parse_string(text)
@@ -75,7 +83,12 @@ func _receive(text: String) -> void:
 		return
 	if message.get("type") == "door_bang":
 		bang.play()
-		world.progression.fear.beat()
+		if lens != null:
+			world.progression.fear.beat()
+	if world.has_method("on_hub_message"):
+		world.on_hub_message(message)
+	if lens == null:
+		return
 	if message.get("type") == "lens":
 		lens.set_active(message.get("on") == true)
 	if message.get("type") == "lens_phone":

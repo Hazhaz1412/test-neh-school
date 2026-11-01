@@ -9,6 +9,8 @@ const VisualUpgrade := preload("res://scripts/visual_upgrade.gd")
 @export_range(0, 12, 1) var enemy_count := 3
 @export_range(0, 5, 1) var special_enemy_count := 3
 @export_group("Survival · encounters")
+const Gear := preload("res://scripts/night_gear.gd")
+@export var envy_enabled := true
 @export var smart_spawn_enabled := true
 @export_range(1, 6, 1) var max_active_ghosts := 3
 @export_range(8.0, 60.0, 1.0) var encounter_interval_seconds := 22.0
@@ -18,6 +20,7 @@ const VisualUpgrade := preload("res://scripts/visual_upgrade.gd")
 @export_range(20.0, 180.0, 1.0) var scare_interval_max := 62.0
 @export_group("Survival · enemy tuning")
 var encounters: Node
+var envy: Node
 @export_range(5.0, 35.0, 0.5) var ghost_detection_range := 18.0
 @export_range(1.0, 6.0, 0.1) var ghost_chase_speed := 4.65
 @export_range(4.0, 9.0, 0.1) var ghost_rush_speed := 6.4
@@ -126,6 +129,10 @@ func _ready() -> void:
 	scares.enabled = random_scares_enabled
 	scares.interval_min = scare_interval_min
 	scares.interval_max = maxf(scare_interval_min, scare_interval_max)
+	envy = preload("res://scripts/envy_director.gd").new()
+	envy.name = "EnvyDirector"
+	add_child(envy)
+	envy.setup(self)
 	test_cheats = preload("res://scripts/test_cheats.gd").new()
 	test_cheats.name = "TestCheats"
 	test_cheats.world = self
@@ -156,7 +163,10 @@ func _ready() -> void:
 	set_quality(quality_level, false)
 	player.damaged.connect(_on_damage)
 	player.died.connect(_on_death)
-	if bool(get_tree().get_meta("next_survival_run", false)):
+	if get_tree().has_meta("night_one"):
+		get_tree().remove_meta("next_survival_run")
+		call_deferred("_begin_night_one")
+	elif bool(get_tree().get_meta("next_survival_run", false)):
 		get_tree().remove_meta("next_survival_run")
 		survival.call_deferred("start_run")
 	elif play_opening_on_launch and not OS.get_cmdline_args().has("--script"):
@@ -276,6 +286,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().set_meta("next_survival_run", survival.active)
 			get_tree().reload_current_scene()
 		if survival.finished:
+			if survival.won and event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+				if get_tree().has_meta("night_one"):
+					var demon: Node = envy.demon
+					Gear.finish_night(Gear.read(), player.inventory, demon.stolen if demon != null else [])
+				get_tree().remove_meta("night_one")
+				get_tree().change_scene_to_file("res://scenes/town.tscn")
 			return
 		if event.keycode == KEY_M and not player.combat.busy() and not progression.controls_player():
 			paused_by_user = false
@@ -384,6 +400,15 @@ func _update_light_budget() -> void:
 		local_lights[index].visible = index < light_budget
 		local_lights[index].light_energy = light_defaults[local_lights[index]][1] * (0.60 if spirit_enabled else 1.0) * campus_light_scale()
 
+# Night 1, reached through the school gate after the free morning: the Intro is over, so the
+# campus is open, An is waiting and the Envy demon hunts from the first minute.
+func _begin_night_one() -> void:
+	survival.start_run(false)
+	progression.begin_night_one()
+	player.inventory.assign(Gear.loadout(Gear.read()))
+	envy.hunting_night = true
+	notify("Đêm 1 · Ghen Tị")
+
 func simulation_active() -> bool:
 	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)
 
@@ -399,6 +424,8 @@ func emit_noise(position_heard: Vector3, radius: float, source: String) -> void:
 	for ghost in enemies:
 		if is_instance_valid(ghost):
 			ghost.hear_noise(position_heard, radius, source)
+	if envy != null and envy.demon != null:
+		envy.demon.hear(position_heard, radius, source)
 
 func notify(message: String) -> void:
 	notice_label.text = message.left(85)

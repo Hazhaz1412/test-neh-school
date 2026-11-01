@@ -1,0 +1,41 @@
+'use strict';
+// Runs in a throwaway HOME: the real desktop is never touched.
+const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const home = fs.mkdtempSync(path.join(os.tmpdir(), 'neh-desktop-'));
+process.env.HOME = home;
+process.env.NEH_DESKTOP_DIR = path.join(home, 'Desktop');
+const desktop = require('../desktop.js');
+const icon = path.join(__dirname, '..', 'assets', 'gaaglu.png');
+const pass = (label) => console.log(`PASS / ${label}`);
+
+fs.mkdirSync(process.env.NEH_DESKTOP_DIR);
+const mine = path.join(process.env.NEH_DESKTOP_DIR, 'cua-nguoi-choi.txt');
+fs.writeFileSync(mine, 'giữ nguyên');
+const written = desktop.install({ launch: ['/bin/true', '--open'], icon });
+assert(written.length >= 3);
+pass('shortcut, note and icon are written');
+const note = path.join(process.env.NEH_DESKTOP_DIR, desktop.NOTE_NAME);
+assert.match(fs.readFileSync(note, 'utf8'), /thế giới bên kia/);
+pass('the note carries the line');
+const shortcut = path.join(process.env.NEH_DESKTOP_DIR, 'Gaaglu.desktop');
+assert.match(fs.readFileSync(shortcut, 'utf8'), /Exec="\/bin\/true" "--open"/);
+assert(fs.statSync(shortcut).mode & 0o100);
+pass('the shortcut is executable and opens the browser');
+const entry = path.join(home, '.local', 'share', 'applications', 'gaaglu.desktop');
+assert(fs.existsSync(entry));
+pass('Gaaglu is listed among the installed applications');
+desktop.remove();
+assert(!fs.existsSync(shortcut) && !fs.existsSync(note) && !fs.existsSync(entry));
+pass('removal takes away what was added');
+assert.strictEqual(fs.readFileSync(mine, 'utf8'), 'giữ nguyên');
+pass('the player\'s own files stay');
+fs.writeFileSync(note, 'ghi chú riêng của người chơi');
+desktop.install({ launch: ['/bin/true'], icon });
+desktop.remove();
+assert.strictEqual(fs.readFileSync(note, 'utf8'), 'ghi chú riêng của người chơi');
+pass('an existing note with the same name is neither replaced nor removed');
+fs.rmSync(home, { recursive: true, force: true });

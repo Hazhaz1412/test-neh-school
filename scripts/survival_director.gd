@@ -209,7 +209,7 @@ func _finish_dawn() -> void:
 	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 1.0)
 	world.player.enabled = false
 	world.player.velocity = Vector3.ZERO
-	end_text.text = ("06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if won else "06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu.") + "\n\nR · Chơi lại"
+	end_text.text = ("06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if won else "06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu.") + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
 	end_panel.show()

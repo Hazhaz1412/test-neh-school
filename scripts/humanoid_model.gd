@@ -105,31 +105,35 @@ func _build_student() -> void:
 func _student_library(rig: NodePath) -> AnimationLibrary:
 	var library := AnimationLibrary.new()
 	for alias in STUDENT_MOTIONS:
-		var source: Node = load("res://assets/rocketbox/animations/%s.fbx" % STUDENT_MOTIONS[alias]).instantiate()
-		var player: AnimationPlayer = source.find_children("*", "AnimationPlayer", true, false)[0]
-		var from: Animation = player.get_animation(player.get_animation_list()[0])
-		var clip := Animation.new()
-		clip.length = from.length
-		clip.loop_mode = Animation.LOOP_LINEAR
-		for track in range(from.get_track_count()):
-			var path := from.track_get_path(track)
-			var type := from.track_get_type(track)
-			if path.get_subname_count() == 0 or type != Animation.TYPE_ROTATION_3D:
-				continue
-			var target := String(path.get_subname(0)).replace("Bip01", "Bip02")
-			if skeleton.find_bone(target) < 0:
-				continue
-			var copy := clip.add_track(type)
-			clip.track_set_path(copy, NodePath("%s:%s" % [rig, target]))
-			for key in range(from.track_get_key_count(track)):
-				clip.rotation_track_insert_key(copy, from.track_get_key_time(track, key), from.track_get_key_value(track, key))
-		library.add_animation(alias, clip)
-		source.free()
+		library.add_animation(alias, rocketbox_clip(STUDENT_MOTIONS[alias], rig, skeleton))
 	var strike: Animation = library.get_animation("idle").duplicate()
 	strike.loop_mode = Animation.LOOP_NONE
 	strike.length = 0.8
 	library.add_animation("attack-melee-right", strike)
 	return library
+
+static func rocketbox_clip(title: String, rig: NodePath, target: Skeleton3D) -> Animation:
+	var source: Node = load("res://assets/rocketbox/animations/%s.fbx" % title).instantiate()
+	var player: AnimationPlayer = source.find_children("*", "AnimationPlayer", true, false)[0]
+	var from: Animation = player.get_animation(player.get_animation_list()[0])
+	var clip := Animation.new()
+	clip.length = from.length
+	clip.loop_mode = Animation.LOOP_LINEAR
+	var prefix := String(target.get_bone_name(0))
+	for track in range(from.get_track_count()):
+		var path := from.track_get_path(track)
+		var type := from.track_get_type(track)
+		if path.get_subname_count() == 0 or type != Animation.TYPE_ROTATION_3D:
+			continue
+		var bone_name := String(path.get_subname(0)).replace("Bip01", prefix)
+		if target.find_bone(bone_name) < 0:
+			continue
+		var copy := clip.add_track(type)
+		clip.track_set_path(copy, NodePath("%s:%s" % [rig, bone_name]))
+		for key in range(from.track_get_key_count(track)):
+			clip.rotation_track_insert_key(copy, from.track_get_key_time(track, key), from.track_get_key_value(track, key))
+	source.free()
+	return clip
 
 func _adjust_head(body: MeshInstance3D) -> ArrayMesh:
 	var result := ArrayMesh.new()

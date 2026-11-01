@@ -24,7 +24,7 @@ const PHOTO_COST := 20.0
 const BATTERY_RECHARGE := 50.0
 const CHALK_CHARGE_SECONDS := 1.5
 const CHALK_MAX_RANGE_MULTIPLIER := 5.0
-const ITEM_NAMES := {"torch": "Đèn pin", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn"}
+const ITEM_NAMES := {"torch": "Đèn pin", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "salt_gun": "Súng muối", "medal": "Huy chương mạ"}
 var inventory: Array[String] = ["torch", "camera", "chalk", "chalk", "chalk", ""]
 var selected_slot := 0
 var chalk_charging := false
@@ -43,6 +43,7 @@ var chalk: int:
 var combat: Node
 var held_visual: Node3D
 var holding_breath := false
+var seized := false
 var breath_exhausted := false
 var sprint_exhausted := false
 var noise_clock := 0.0
@@ -101,7 +102,7 @@ func cycle_item(step: int) -> void:
 
 func can_use_item() -> bool:
 	var world: Node3D = get_parent()
-	return enabled and health > 0 and not combat.busy() and world.simulation_active() and not world.map_panel.visible and (world.soul_quest == null or not world.soul_quest.panel_visible()) and (world.progression == null or not world.progression.panel_visible() and not world.progression.controls_player())
+	return enabled and not seized and health > 0 and not combat.busy() and world.simulation_active() and not world.map_panel.visible and (world.soul_quest == null or not world.soul_quest.panel_visible()) and (world.progression == null or not world.progression.panel_visible() and not world.progression.controls_player())
 
 func use_selected_item() -> bool:
 	if not can_use_item():
@@ -216,7 +217,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.keycode == KEY_G and not event.pressed:
 		release_chalk_charge("key")
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and enabled:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and enabled and not seized:
 		rotation.y -= event.relative.x * LOOK_SENSITIVITY
 		if is_hidden():
 			var forward: float = hidden_spot.rotation.y + PI
@@ -244,7 +245,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					begin_chalk_charge("key")
 			if event.keycode == KEY_Q:
 				drop_selected_item()
-		if event.keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		if event.keycode == KEY_E and not seized and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			if not get_parent().simulation_active():
 				return
 			if is_hidden():
@@ -262,6 +263,9 @@ func _physics_process(delta: float) -> void:
 	invulnerable_time = maxf(0.0, invulnerable_time - delta)
 	if get_parent().progression != null and get_parent().progression.controls_player():
 		get_parent().progression.tick_player(delta)
+		return
+	if seized:
+		velocity = Vector3.ZERO
 		return
 	if health <= 0.0 or not enabled or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		velocity = Vector3.ZERO
@@ -413,6 +417,7 @@ func reset_survival() -> void:
 	fear = 0
 	breath = 100
 	inventory.assign(["torch", "camera", "chalk", "chalk", "chalk", ""])
+	seized = false
 	selected_slot = 0
 	saved_flashlight = false
 	get_parent().camera_flash.reset()

@@ -11,7 +11,7 @@ Cập nhật 2026-11-01. Đọc file này trước khi làm tiếp. Kịch bản
 
 ## Git
 
-Nhánh `main`, commit mới nhất `6b3781f feat: another-world-camera` do người dùng tự commit (gồm `hub/`). Vẫn còn nhiều thay đổi chưa commit: nâng cấp đồ họa, model ma, âm thanh, đèn pin, `scripts/phone_lens.gd`, `scripts/lens_markers.gd`, shader cổng. Chỉ commit khi được yêu cầu.
+Nhánh `main`, commit mới nhất `75a8df6 feat: add lens-2ndworld` do người dùng tự commit. Toàn bộ khu phố ban ngày (`scripts/town/`, `scenes/town.tscn`, asset mới khoảng 95 MB) chưa commit. Chỉ commit khi được yêu cầu.
 
 ## Việc đang dở, làm trước tiên
 
@@ -21,6 +21,20 @@ Nhánh `main`, commit mới nhất `6b3781f feat: another-world-camera` do ngư�
 - Bản sửa ở `hub/web/lens-scan.js` đã kiểm chứng bằng ảnh game thật qua worker thật, **chưa thử trên điện thoại**.
 - Bước tiếp: người dùng tải lại trang, quét lại. Xem sau 100% hình có dán đúng màn hình không. Log nằm ở terminal `npm start`, dòng `Ống kính: ...`, và góc trên trang điện thoại.
 - Nếu hình lệch: nghi ngờ đầu tiên là ảnh camera không khớp khung nhìn của `XRView` (tỉ lệ, cắt ảnh, xoay dọc) trong `scanCamera` và phép đổi tọa độ ở `lens-xr.js`.
+
+## Khu phố ban ngày
+
+Đã có bản chơi được, chi tiết ở [TOWN.md](TOWN.md). Mở `scenes/town.tscn` và bấm F6. Người dùng chưa tự chơi, cảm giác lái và âm thanh tổng hợp chưa được ai nghe hay thử bằng tay. Cốt truyện ban ngày đã bỏ theo yêu cầu người dùng.
+
+## Quỷ Ghen Tị
+
+Đêm 1 sẽ dùng con quỷ này. Model: `tools/build_envy_demon.py` (chạy Blender nền) và `scripts/envy_demon_model.gd`. Xem thử bằng `tools/capture_envy.gd`. AI hai tầng: `scripts/envy_director.gd` (A, biết vị trí, chỉ gửi vùng gợi ý) và `scripts/envy_demon.gd` (B, chỉ biết điều nó thấy, nghe, được gợi ý; tự lục phòng và chỗ trốn; nín thở lúc nó nghe thì thoát). Quỷ thay ma học sinh sau cảnh Lan, tắt bằng `envy_enabled`. F9 hiện trạng thái A và B. Kiểm thử: `tools/validate_envy.gd`. Chưa có: vứt đồ để nhử, cảnh nó cầm đèn pin của người chơi, cân bằng khi chơi thật. Blender MCP đã cấu hình nhưng không nạp được trong phiên trước, nên dùng Blender dòng lệnh.
+
+## Mạch truyện sau Đêm 1
+
+Chui gầm bàn ra gặp Lan (`Stage.LAN_FAREWELL`), đổi số, sang `scenes/home.tscn`. Nhà: `scripts/home/`. App chat hư cấu "Nối" trong `home_phone.gd`, không chép Line. Kịch bản sáng trong `home_story.gd`. Cài lối tắt ở `hub/desktop.js`, chỉ khi người chơi đồng ý ở màn hình đầu, gỡ bằng `npm run remove-desktop` trong `hub/`. Test cài chỉ dùng HOME tạm, không đụng Desktop thật.
+
+Mạch đã chốt: Đêm 0 (Intro) gồm toàn bộ đoạn cũ tới khi gặp Lan, về nhà, sáng tự do ở khu phố, tới cổng trường vào Đêm 1 (`world._begin_night_one`, meta `night_one`): quỷ săn ngay, tìm An trên sân thượng, sống tới 06:00. Tài liệu Demo-Idea.md gọi đoạn Intro là "Đêm 1", đó là tên cũ. Cốt truyện ban ngày cũ (bức thư, cô Thanh, bác Lực) đã bị người dùng bỏ. F8 gọi quỷ ở nơi khác. F10 bỏ qua hành lang đỏ. `tools/measure_envy_hunt.gd` đo thời gian quỷ tìm ra người chơi.
 
 ## Cách chạy
 
@@ -123,6 +137,17 @@ Trình tự người dùng đã chốt: phải biết camera thấy vùng nào c
 - Hộp chọn file trên trang thật và bộ gõ Telex chưa kiểm tra.
 
 **Gameplay:**
-- Viết Ngày 1 và Đêm 2 ngắn, chạy trọn một vòng.
+- Nhận phản hồi về khu phố, rồi viết Đêm 2 để nối thành vòng trọn Ngày, Đêm.
 - Thử co-op kỹ thuật: hai người thấy nhau, ma đuổi người gần nhất, mỗi người một thế giới.
 - Thêm preset Windows; hiện chỉ có Linux.
+
+## Shop, cú vồ của quỷ Ghen Tị
+
+- `scripts/night_gear.gd`: tiền (nghìn đồng), túi 4 ô, đồ bị cướp; lưu `user://night_gear.cfg`, chỉ chốt khi thắng đêm nên chơi lại không bị phạt hai lần.
+- Tiệm không tên ở Hẻm 5 (`curio` trong `town_plan.gd`, không hiện trên bản đồ), giao diện `scripts/town/town_shop.gd`. Bà Sáu và chị Mai gợi ý đường tới.
+- `envy_demon.gd`: mọi cú bắt đều là chụp lên (GRAB). Bắn súng muối bằng chuột trái → quỷ STAGGER rồi lui, A im 19 s, người chơi có adrenaline 8 s. Không bắn → lấy đồ giá trị nhất (huy chương, rồi máy ảnh) và thả. Không có gì → chết. Đèn pin không bao giờ bị lấy; đồ bị lấy chuộc lại ở tiệm bằng nửa giá.
+- Test: `tools/validate_gear.gd`. Ảnh: `tools/capture_gear.gd`. Cây phố: `tools/build_town_tree.py`.
+
+## Chuỗi web của An
+
+Gaaglu → `thptneh.edu.vn` → Văn bản → danh sách dự thi cho số định danh `097193004217`; bài giải Cờ vua cho đáp án. Hai thứ này mở hồ sơ ở `dancu.hailam.gov.vn`. Mã tỉnh 097 không thuộc tỉnh thật nào. Cổng không dùng quốc huy hay tên cơ quan thật. Chưa có tín hiệu gửi về game khi người chơi mở hồ sơ.

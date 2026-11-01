@@ -1,6 +1,6 @@
 extends Node3D
 
-enum Stage { ROOM_LURE, BLOOD_TRAIL, CLUB_SCARE, ASCEND, DOOR_SIEGE, ESCAPE_RUN, GATE_INTERFERENCE, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE }
+enum Stage { ROOM_LURE, BLOOD_TRAIL, CLUB_SCARE, ASCEND, DOOR_SIEGE, ESCAPE_RUN, GATE_INTERFERENCE, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE, LAN_FAREWELL }
 const NOTEBOOK_SPOT := Vector3(-29.4,7.85,49.6)
 const TOP_FLOOR_HEIGHT := 7.8
 var world: Node3D
@@ -36,6 +36,12 @@ var lan_seen := {}
 var lan_node := "hub"
 var dialogue_data: Dictionary
 var lan_view: Control
+const FAREWELL := [
+	["Lan", "Trời sắp sáng rồi. Lúc này nó không với tới cậu được, nhưng đừng ở lại lâu."],
+	["Bạn", "Còn cô thì sao? Cô ra khỏi đây được chứ?"],
+	["Lan", "Đừng lo cho tôi. Đưa điện thoại đây, tôi lưu số. Có chuyện gì tôi sẽ nhắn.", "Đưa điện thoại"],
+	["Lan", "Xong rồi. Về nhà đi, ngủ một chút. Đừng trả lời tin nhắn nào không phải của tôi."],
+]
 var panel: PanelContainer
 var heading: Label
 var body_text: Label
@@ -258,7 +264,7 @@ func current_goal() -> String:
 	return "Bình minh · Đêm 1 kết thúc"
 
 func journal_context() -> String:
-	var text := "ĐÊM 1 · BẠO LỰC HỌC ĐƯỜNG\n" + current_goal()
+	var text := ("ĐÊM 1 · GHEN TỊ\n" if world.get_tree().has_meta("night_one") else "ĐÊM 0 · MỞ ĐẦU\n") + current_goal()
 	if evidence.has("bear"): text += "\n\nĐã nhặt một con gấu bông bị bỏ lại trong phòng học sáng đèn."
 	if evidence.has("clubs"): text += "\n\nBên kia hành lang có vết máu, tiếng gõ lặp lại và những cây gậy dính máu."
 	if evidence.has("notebook"): text += "\n\nCuốn vở trong phòng 306 ghi tên Nguyễn Bình An. Các trang đầy chữ nguệch ngoạc, gạch xóa và một ký hiệu con mắt khóc vẽ bằng máu."
@@ -478,9 +484,29 @@ func arrive_under_table() -> void:
 	static_sound.volume_db = -12
 	interference.hide()
 
+# Night 1 ends here: Lan waits by the table, they swap numbers and Peter goes home.
 func finish_table_crossing() -> void:
-	stage = Stage.COMFORT_AN
+	stage = Stage.LAN_FAREWELL
 	stage_time = 0
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var p: CharacterBody3D = world.player
+	lan.global_position = p.global_position + p.global_basis.x * 1.3
+	lan.show()
+	_farewell(0)
+
+func _farewell(index: int) -> void:
+	if index >= FAREWELL.size():
+		lan_view.hide()
+		_go_home()
+		return
+	var line: Array = FAREWELL[index]
+	var reply: String = line[2] if line.size() > 2 else "Tiếp"
+	lan_view.show_line(line[0], line[1], [{"text": reply, "action": _farewell.bind(index + 1)}])
+
+func _go_home() -> void:
+	if world.get_tree().has_meta("story_stay_in_school"):
+		return
+	world.get_tree().change_scene_to_file("res://scenes/home.tscn")
 
 func close() -> void:
 	if panel != null: panel.hide()
@@ -488,6 +514,18 @@ func close() -> void:
 	panel_kind = ""
 	if world != null and world.player.health > 0 and not world.paused_by_user and not world.map_panel.visible and not world.survival.finished:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func begin_night_one() -> void:
+	bypass_for_test()
+	world.player.global_position = Vector3(12, 0.05, 75.2)
+	world.survival.begin_midnight()
+	world.collect_master_key()
+	world.notice_time = 0
+	var quest: Node3D = world.soul_quest
+	# The Intro's clues were carried out of the school; the rest are still inside.
+	for i in range(quest.memories.size()):
+		if quest.memories[i].get("source", "") == "opening":
+			quest.found[i] = true
 
 func bypass_for_test() -> void:
 	close()

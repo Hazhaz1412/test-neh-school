@@ -43,6 +43,7 @@ func aim(pos: Vector3, target: Vector3) -> void:
 
 func validate() -> void:
 	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school.envy_enabled = false # This suite covers the legacy ghosts.
 	school.enemy_count = 8
 	school.special_enemy_count = 5
 	school.smart_spawn_enabled = false

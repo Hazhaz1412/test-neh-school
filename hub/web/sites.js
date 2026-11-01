@@ -2,19 +2,20 @@
 const fs = require('fs');
 const path = require('path');
 const news = require('./news');
+const school = require('./school');
+const registry = require('./registry');
+const { escape, fold } = require('./text');
 const QRCode = require('qrcode');
 
 const SEARCH = 'gaaglu.com';
-const DOMAINS = [SEARCH, ...news.DOMAINS];
+const DOMAINS = [SEARCH, ...news.DOMAINS, school.DOMAIN, registry.DOMAIN];
 const HOME = `https://${SEARCH}/`;
 const LOGO = fs.readFileSync(path.join(__dirname, '..', 'shell', 'logo.svg'), 'utf8');
 
-const fold = (text) => text.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd');
 // Fake or unreliable results here could do real harm, so these searches leave the fiction.
 const CRISIS = /tu tu|tu sat|tu hai|tu ket lieu|muon chet|khong muon song|cach chet|suicide|kill myself|self harm/;
 const isCrisis = (query) => CRISIS.test(fold(query));
 
-const escape = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function page(title, body) {
   return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${escape(title)}</title>
@@ -45,8 +46,9 @@ function blend(query, results) {
   const stories = news.search(query);
   const lead = stories.slice(0, 3);
   const rest = stories.slice(3);
-  const list = results.map(resultItem);
-  rest.forEach((story, index) => list.splice(index * 3 + 1, 0, resultItem(story)));
+  const local = [...school.search(query), ...registry.search(query)];
+  const list = [...local, ...results].map(resultItem);
+  rest.forEach((story, index) => list.splice(index * 3 + local.length + 1, 0, resultItem(story)));
   return (lead.length ? storyBox(lead) : '') + list.join('');
 }
 
@@ -74,7 +76,9 @@ function offline(host) {
 <p>Không tìm thấy địa chỉ của <b>${escape(host)}</b>.</p><p class="meta">DNS_PROBE_FINISHED_NXDOMAIN</p></main>`);
 }
 
-function render(host, url, results = []) {
+function render(host, url, results = [], request = {}) {
+  if (host === school.DOMAIN) return school.render(url);
+  if (host === registry.DOMAIN) return registry.render(request.method ?? 'GET', url, request.form ?? new URLSearchParams(), request.cookie);
   if (news.DOMAINS.includes(host)) return news.render(host, url);
   if (url.pathname !== '/' && url.pathname !== '/search') return [404, page('404', '<main><h2>404</h2><p>Trang này không tồn tại.</p></main>')];
   return [200, search(url, results)];
@@ -85,4 +89,4 @@ function isHome(address) {
   return url.hostname === SEARCH && url.pathname === '/' && !url.search;
 }
 
-module.exports = { DOMAINS, HOME, render, offline, isHome, isCrisis, devicePage };
+module.exports = { DOMAINS, HOME, HOME_HOST: SEARCH, render, offline, isHome, isCrisis, devicePage };

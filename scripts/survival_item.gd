@@ -6,7 +6,7 @@ var collected := false
 var dropped := false
 
 func _ready() -> void:
-	var colors := {"battery": Color(0.67, 0.55, 0.18), "medicine": Color(0.48, 0.65, 0.57), "chalk": Color(0.73, 0.73, 0.65), "gate": Color(0.5, 0.72, 0.6), "camera": Color(0.30, 0.39, 0.45), "torch": Color(0.55, 0.57, 0.48)}
+	var colors := {"battery": Color(0.67, 0.55, 0.18), "medicine": Color(0.48, 0.65, 0.57), "chalk": Color(0.73, 0.73, 0.65), "gate": Color(0.5, 0.72, 0.6), "camera": Color(0.30, 0.39, 0.45), "torch": Color(0.55, 0.57, 0.48), "salt_gun": Color(0.34, 0.30, 0.26), "medal": Color(0.86, 0.68, 0.24)}
 	if kind == "camera":
 		var camera_model: Node3D = preload("res://scripts/held_item.gd").camera_model()
 		camera_model.scale *= 0.6

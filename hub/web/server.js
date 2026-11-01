@@ -7,7 +7,7 @@ const sites = require('./sites');
 const news = require('./news');
 const lens = require('./lens');
 
-async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, searchWeb = async () => [] } = {}) {
+async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, onInstall = () => {}, onGameGone = () => {}, searchWeb = async () => [] } = {}) {
   const story = { evidence: [], stage: '', game: false };
   const listeners = new Set();
   let gameSocket = null;
@@ -31,6 +31,8 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
   const receive = (message, text) => {
     if (message?.type === 'lens_layout') phone.layout(text);
     if (message?.type === 'profile') onProfile(message.id);
+    // The game sends this only after the player agreed to desktop changes.
+    if (message?.type === 'install_gaaglu' && message.consent === true) onInstall();
     if (message?.type !== 'state') return;
     story.evidence = Array.isArray(message.evidence) ? message.evidence : [];
     story.stage = String(message.stage ?? '');
@@ -50,9 +52,12 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
       return res.end(photo);
     }
     if (url.pathname === '/thiet-bi') return reply(res, 200, await sites.devicePage(phone.url));
-    const query = url.searchParams.get('q')?.trim();
+    const host = req.headers['x-fake-host'];
+    const query = host === sites.HOME_HOST ? url.searchParams.get('q')?.trim() : null;
     const results = query && !sites.isCrisis(query) ? await searchWeb(query) : [];
-    return reply(res, ...sites.render(req.headers['x-fake-host'], url, results));
+    const form = req.method === 'POST' ? await readForm(req) : null;
+    if (req.method === 'POST' && !form) return reply(res, 413, 'Too large');
+    return reply(res, ...sites.render(host, url, results, { method: req.method, form, cookie: req.headers.cookie }));
   });
 
   const openEvents = (req, res) => {
@@ -81,6 +86,7 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
         if (gameSocket !== ws) return;
         gameSocket = null;
         story.game = false;
+        onGameGone();
         announce();
       });
     });
@@ -108,9 +114,28 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
   });
 }
 
-function reply(res, status, body) {
-  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+function reply(res, status, body, headers = {}) {
+  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...headers });
   res.end(body);
+}
+
+const FORM_LIMIT = 4096;
+
+// Forms stay in memory for one comparison; no site keeps what was typed.
+function readForm(req) {
+  return new Promise((resolve) => {
+    let text = '';
+    req.setEncoding('utf8');
+    req.on('data', (part) => {
+      text += part;
+      if (text.length > FORM_LIMIT) {
+        req.destroy();
+        resolve(null);
+      }
+    });
+    req.on('end', () => resolve(new URLSearchParams(text)));
+    req.on('error', () => resolve(null));
+  });
 }
 
 function parse(data) {

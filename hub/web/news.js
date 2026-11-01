@@ -4,7 +4,7 @@ const path = require('path');
 const { SITES } = require('./news-data');
 
 const PHOTO_DIR = path.join(__dirname, '..', '..', 'docs');
-const PHOTOS = new Set(Object.values(SITES).flatMap((site) => site.articles.map((a) => a.photo).filter(Boolean)));
+const PHOTOS = new Set(['town-school.png', ...Object.values(SITES).flatMap((site) => site.articles.map((a) => a.photo).filter(Boolean))]);
 for (const [host, site] of Object.entries(SITES)) for (const article of site.articles) article.host = host;
 
 const SCENES = {

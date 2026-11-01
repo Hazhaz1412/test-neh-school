@@ -9,6 +9,7 @@ npm start            # chỉ trình duyệt; mở game riêng bằng F5 trong Go
 npm run start:game   # trình duyệt + tự chạy game
 npm run web          # chỉ web stack, cổng 5173, không cần Electron
 node test/game_link.js   # kiểm tra Godot thật với web stack thật
+node test/webs.js        # web trường và cổng dân cư qua HTTP thật
 ```
 
 - `main.js`: cửa sổ, tab, chặn request tới tên miền giả rồi chuyển vào web stack.
@@ -16,6 +17,8 @@ node test/game_link.js   # kiểm tra Godot thật với web stack thật
 - `web/server.js`: web stack và WebSocket `/game`, gắn với `127.0.0.1`, cần token.
 - `web/sites.js`: nội dung các trang và danh sách tên miền giả; hiện chỉ còn trang chủ tìm kiếm.
 - `web/news.js`, `web/news-data.js`: ba tờ báo hư cấu và bài viết tạm; mọi bài được tìm qua Gaaglu.
+- `web/school.js`: website Trường THPT NEH (`thptneh.edu.vn`), dừng ở cuối năm 2009.
+- `web/registry.js`: cổng dữ liệu dân cư hư cấu của tỉnh Hải Lâm (`dancu.hailam.gov.vn`). Những gì người chơi nhập chỉ được so sánh rồi bỏ, không lưu, không ghi log.
 - `profiles.js`: tài khoản đang đăng nhập, theme giao diện và câu suy nghĩ khi ghé trang thật.
 - `realweb.js`: đọc kết quả tìm kiếm thật bằng cửa sổ ẩn (DuckDuckGo HTML).
 - `../scripts/arg_bridge.gd`: phía game; đọc `~/.config/neh-school/hub.json` để tìm hub.
