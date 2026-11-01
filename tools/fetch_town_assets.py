@@ -9,10 +9,10 @@ TEXTURES = ["laminate_floor_02", "asphalt_02", "concrete_pavers", "white_plaster
             "dirt", "brown_mud"]
 MODELS = ["plastic_monobloc_chair_01", "plastic_crate_01", "street_lamp_02", "potted_plant_02", "potted_plant_04",
           "planter_pot_clay", "concrete_road_barrier", "CoffeeCart_01", "bananas", "cardboard_box_01", "utility_box_01",
-          "Sofa_01", "dining_table", "dining_chair_02", "electric_stove", "television_02", "vintage_microwave"]
+          "chess_set", "Sofa_01", "dining_table", "dining_chair_02", "electric_stove", "television_02", "vintage_microwave"]
 SKIES = ["qwantani_morning_puresky", "qwantani_noon_puresky", "qwantani_late_afternoon_puresky", "qwantani_dusk_1_puresky"]
 PEOPLE = {"Adults": ["Female_Adult_02", "Female_Adult_05", "Female_Adult_07", "Female_Adult_12", "Male_Adult_01",
-                     "Male_Adult_06", "Male_Adult_08", "Male_Adult_14"], "Professions": ["Security_Male_01"]}
+                     "Male_Adult_06", "Male_Adult_08", "Male_Adult_14"], "Professions": ["Security_Male_01"], "Children": ["Male_Child_01"]}
 CLIPS = ["static/f_idle_neutral_01", "static/f_gestic_talk_neutral_01", "static/f_sit_chair_idle_neutral_01",
          "static/m_gestic_talk_neutral_01", "static/m_sit_chair_idle_neutral_01", "xy/f_walk_slow_01"]
 ROCKETBOX = "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/"

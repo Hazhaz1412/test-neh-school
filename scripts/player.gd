@@ -44,6 +44,7 @@ var combat: Node
 var held_visual: Node3D
 var holding_breath := false
 var seized := false
+var stamina_care := 1.0
 var breath_exhausted := false
 var sprint_exhausted := false
 var noise_clock := 0.0
@@ -291,7 +292,7 @@ func _physics_process(delta: float) -> void:
 	if stamina > 22:
 		sprint_exhausted = false
 	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not sprint_exhausted
-	stamina = clampf(stamina + (-23.0 * combat.sprint_multiplier() if running else 15.0 * (1 - fear * 0.005)) * delta, 0.0, MAX_STAMINA)
+	stamina = clampf(stamina + (-23.0 * combat.sprint_multiplier() * stamina_care if running else 15.0 * (1 - fear * 0.005)) * delta, 0.0, MAX_STAMINA)
 	var target := transform.basis * Vector3(direction.x, 0, direction.y).normalized()
 	var speed := 1.35 if quiet else (RUN_SPEED if running else WALK_SPEED)
 	speed *= test_speed_multiplier()

@@ -25,6 +25,7 @@ var view: Control
 var talking := ""
 var finished_day := false
 var gear := {}
+var chess_table: Node3D
 
 func setup(town: Node3D) -> void:
 	world = town
@@ -44,6 +45,7 @@ func setup(town: Node3D) -> void:
 		world.add_interaction(person.global_position, "Nói chuyện với %s" % role.name, talk.bind(id))
 	world.add_interaction(Vector3(262, 0, 26), "Vào trường · Bắt đầu đêm", _gate)
 	gear = Gear.read()
+	world.life.start_activities()
 	var curio: Dictionary = world.plan.place_lot("curio")
 	var keeper: Node3D = Person.new()
 	keeper.look = "Male_Adult_14"
@@ -54,7 +56,13 @@ func setup(town: Node3D) -> void:
 	keeper.rotation.y = atan2(-curio.normal.x, -curio.normal.y)
 	var counter: Vector2 = curio.front + curio.normal * 0.9
 	world.add_interaction(Vector3(counter.x, 0, counter.y), "Vào tiệm", open_shop)
-	_passers_by()
+	var corner: Dictionary = world.plan.place_lot("chess")
+	var frame: Transform3D = world.builder._frame(corner)
+	chess_table = preload("res://scripts/chess/chess_table.gd").new()
+	world.add_child(chess_table)
+	chess_table.global_transform = Transform3D(frame.basis, frame * Vector3(0, 0.68, 1.7))
+	chess_table.lay(preload("res://scripts/chess/chess_rules.gd").new().board)
+	world.add_interaction(chess_table.global_position, "Chơi cờ", open_chess)
 
 func open_shop() -> void:
 	world.player.enabled = false
@@ -63,20 +71,16 @@ func open_shop() -> void:
 	world.hud.add_child(view)
 	view.setup(gear, close)
 
-# People standing about; the street reads empty without them.
-func _passers_by() -> void:
-	var looks := ["Female_Adult_05", "Male_Adult_01", "Female_Adult_02", "Male_Adult_06", "Female_Adult_12", "Male_Adult_08"]
-	var road: Dictionary = world.plan.road_named("Đường Cổ Đằng")
-	for n in range(looks.size()):
-		var i: int = 60 + n * 22
-		var along: Vector2 = road.tangents[i]
-		var side := 1.0 if n % 2 == 0 else -1.0
-		var spot: Vector2 = road.path[i] + Vector2(-along.y, along.x) * side * (road.width * 0.5 + 2.2)
-		var person: Node3D = Person.new()
-		person.look = looks[n]
-		world.add_child(person)
-		person.global_position = Vector3(spot.x, world.plan.ground(spot), spot.y)
-		person.rotation.y = n * 2.1
+func open_chess() -> void:
+	world.player.enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	view = preload("res://scripts/chess/chess_view.gd").new()
+	world.hud.add_child(view)
+	view.setup(world, self, chess_table)
+
+func pay(amount: int) -> void:
+	gear.money += amount
+	Gear.write(gear)
 
 func _stool(at: Vector3) -> void:
 	var seat := MeshInstance3D.new()
@@ -120,6 +124,8 @@ func close() -> void:
 	world.player.enabled = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	talking = ""
+	world.player.camera.make_current()
+	world.spend(0)
 
 func _input(event: InputEvent) -> void:
 	if view != null and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:

@@ -405,7 +405,9 @@ func _update_light_budget() -> void:
 func _begin_night_one() -> void:
 	survival.start_run(false)
 	progression.begin_night_one()
-	player.inventory.assign(Gear.loadout(Gear.read()))
+	var gear := Gear.read()
+	player.inventory.assign(Gear.loadout(gear))
+	player.stamina_care = 1.0 - Gear.BOOST_CARE * gear.boosts
 	envy.hunting_night = true
 	notify("Đêm 1 · Ghen Tị")
 

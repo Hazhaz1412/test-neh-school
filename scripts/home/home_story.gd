@@ -127,7 +127,7 @@ func _arrive() -> void:
 	if consent:
 		_start_hub()
 	var banner: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
-	banner.text = "Về nhà · 05:52"
+	banner.text = "Về nhà · 01:06"
 	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	await get_tree().create_timer(1.8).timeout
@@ -273,7 +273,7 @@ func on_hub_message(message: Dictionary) -> void:
 		_ready_to_sleep()
 
 func _ready_to_sleep() -> void:
-	world.goal.text = "Ngủ một chút trước khi trời sáng"
+	world.goal.text = "Đi ngủ · Mới 1 giờ đêm"
 	world.think("Ai đã cài thứ này? Hỏi Lan sau. Giờ phải ngủ đã.")
 
 func _bed() -> void:
@@ -284,4 +284,9 @@ func _bed() -> void:
 	world.fade.show()
 	world.fade.modulate.a = 0.0
 	await create_tween().tween_property(world.fade, "modulate:a", 1.0, 1.4).finished
+	var morning: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
+	morning.text = "Ngủ tới 07:00 · Ngày 1"
+	morning.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	morning.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	await get_tree().create_timer(1.8).timeout
 	get_tree().change_scene_to_file("res://scenes/town.tscn")

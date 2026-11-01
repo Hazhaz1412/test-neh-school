@@ -31,8 +31,13 @@ var thought_time := 0.0
 func _ready() -> void:
 	sky = preload("res://scripts/town/town_sky.gd").new()
 	add_child(sky)
-	sky.sun.rotation_degrees = Vector3(-14, 150, 0)
-	sky.environment.ambient_light_energy = 0.42
+	# One in the morning: moonlight through the windows, the rest comes from the lamps indoors.
+	sky.apply(3)
+	sky.environment.background_energy_multiplier = 0.05
+	sky.sun.rotation_degrees = Vector3(-34, 150, 0)
+	sky.sun.light_energy = 0.12
+	sky.sun.light_color = Color(0.62, 0.70, 0.95)
+	sky.environment.ambient_light_energy = 0.24
 	sky.environment.fog_enabled = false
 	builder = Builder.new()
 	builder.rng.seed = 11
@@ -104,7 +109,7 @@ func _wall_piece(from: Vector2, along: Vector2, start: float, end: float, low: f
 
 func _pane(at: Vector3, width: float, height: float, along_x: bool) -> void:
 	var size := Vector3(width, height, 0.03) if along_x else Vector3(0.03, height, width)
-	batch.box("lit", Transform3D.IDENTITY, at, size, Color(0.84, 0.90, 1.0))
+	batch.box("glass", Transform3D.IDENTITY, at, size, Color.WHITE)
 	var bars := Vector3(0.05, height, 0.06) if along_x else Vector3(0.06, height, 0.05)
 	batch.box("paint", Transform3D.IDENTITY, at, bars, Color(0.86, 0.85, 0.82))
 	batch.box("paint", Transform3D.IDENTITY, at, Vector3(width, 0.05, 0.06) if along_x else Vector3(0.06, 0.05, width), Color(0.86, 0.85, 0.82))
@@ -240,7 +245,7 @@ func _furnish() -> void:
 	_prop("res://assets/kenney_furniture/bookcaseOpen.glb", Vector3(0.35, STOREY, 6.0), 1.8, PI * 0.5)
 
 func _add_lights() -> void:
-	for spot in [[Vector3(2.4, 2.6, 10.0), 8.0, 0.9], [Vector3(3.2, 2.6, 3.8), 7.0, 0.8], [Vector3(1.2, 2.6, 1.6), 4.5, 0.7], [Vector3(2.8, 5.4, 10.0), 6.0, 0.5], [Vector3(2.6, 5.4, 3.4), 7.0, 0.8]]:
+	for spot in [[Vector3(2.4, 2.6, 10.0), 8.0, 0.55], [Vector3(3.2, 2.6, 3.8), 7.0, 0.5], [Vector3(1.2, 2.6, 1.6), 4.5, 0.45], [Vector3(2.8, 5.4, 10.0), 6.0, 0.35], [Vector3(2.6, 5.4, 3.4), 7.0, 0.6]]:
 		var light := OmniLight3D.new()
 		light.position = spot[0]
 		light.omni_range = spot[1]

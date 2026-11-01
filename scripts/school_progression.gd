@@ -37,7 +37,7 @@ var lan_node := "hub"
 var dialogue_data: Dictionary
 var lan_view: Control
 const FAREWELL := [
-	["Lan", "Trời sắp sáng rồi. Lúc này nó không với tới cậu được, nhưng đừng ở lại lâu."],
+	["Lan", "Mới một giờ đêm thôi. Lúc này nó không với tới cậu được, nhưng đừng ở lại lâu."],
 	["Bạn", "Còn cô thì sao? Cô ra khỏi đây được chứ?"],
 	["Lan", "Đừng lo cho tôi. Đưa điện thoại đây, tôi lưu số. Có chuyện gì tôi sẽ nhắn.", "Đưa điện thoại"],
 	["Lan", "Xong rồi. Về nhà đi, ngủ một chút. Đừng trả lời tin nhắn nào không phải của tôi."],

@@ -33,8 +33,8 @@ func _ready() -> void:
 		body.set_surface_override_material(2, hidden)
 	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	var frame := global_transform.affine_inverse() * skeleton.global_transform
-	var top: Vector3 = frame * skeleton.get_bone_global_rest(skeleton.find_bone("Bip01 Head")).origin
-	var foot: Vector3 = frame * skeleton.get_bone_global_rest(skeleton.find_bone("Bip01 R Foot")).origin
+	var top: Vector3 = frame * skeleton.get_bone_global_rest(skeleton.find_bone(skeleton.get_bone_name(0) + " Head")).origin
+	var foot: Vector3 = frame * skeleton.get_bone_global_rest(skeleton.find_bone(skeleton.get_bone_name(0) + " R Foot")).origin
 	var scale_by := height / ((top.y - foot.y) * 1.26)
 	visual.scale *= scale_by
 	standing_y = -foot.y * scale_by + 0.06
@@ -43,7 +43,7 @@ func _ready() -> void:
 	visual.add_child(animation)
 	var kind := "f" if look.begins_with("Female") else "m"
 	var rig := visual.get_path_to(skeleton)
-	var key := "%s|%s" % [kind, rig]
+	var key := "%s|%s|%s" % [kind, rig, skeleton.get_bone_name(0)]
 	if not libraries.has(key):
 		var library := AnimationLibrary.new()
 		for alias in CLIPS[kind]:

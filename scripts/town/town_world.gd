@@ -4,6 +4,10 @@ const Plan := preload("res://scripts/town/town_plan.gd")
 const Builder := preload("res://scripts/town/town_builder.gd")
 const INTERACT_ON_FOOT := 2.8
 const INTERACT_ON_BIKE := 6.0
+const DAY_START := 7 * 60
+const DAY_END := 22 * 60
+# The clock barely moves on its own: a day is spent on what the player chooses to do.
+const REAL_SECONDS_PER_MINUTE := 30.0
 var plan: RefCounted
 var builder: RefCounted
 var sky: Node3D
@@ -16,6 +20,10 @@ var current: Dictionary = {}
 var last_street := -1
 var street_audio: AudioStreamPlayer
 var ending := false
+var minutes := DAY_START
+var life: Node
+var idle_clock := 0.0
+var click_sound: AudioStreamPlayer
 
 func _ready() -> void:
 	sky = preload("res://scripts/town/town_sky.gd").new()
@@ -32,9 +40,17 @@ func _ready() -> void:
 	traffic = preload("res://scripts/town/town_traffic.gd").new()
 	add_child(traffic)
 	traffic.setup(plan, player, builder.scooter_mesh)
+	life = preload("res://scripts/town/town_life.gd").new()
+	add_child(life)
+	life.setup(self)
 	story = preload("res://scripts/town/town_story.gd").new()
 	add_child(story)
 	story.setup(self)
+	click_sound = AudioStreamPlayer.new()
+	click_sound.stream = load("res://assets/audio/door_bang.wav")
+	click_sound.volume_db = -26
+	click_sound.pitch_scale = 3.0
+	add_child(click_sound)
 	var bridge := preload("res://scripts/arg_bridge.gd").new()
 	bridge.name = "ArgBridge"
 	bridge.world = self
@@ -98,7 +114,7 @@ func interact() -> void:
 		current.action.call()
 
 func _opening() -> void:
-	hud.banner.text = "Khu phố Bến Trầu · 07:40"
+	hud.banner.text = "Khu phố Bến Trầu · 07:00"
 	await get_tree().create_timer(1.8).timeout
 	var tween := create_tween()
 	tween.tween_property(hud.fade, "modulate:a", 0.0, 1.2)
@@ -122,6 +138,21 @@ func enter_night() -> void:
 	get_tree().set_meta("night_one", true)
 	get_tree().change_scene_to_file("res://scenes/school_runtime.tscn")
 
+func clock_text() -> String:
+	return "%02d:%02d" % [minutes / 60, minutes % 60]
+
+func phase_for(time: int) -> int:
+	return 0 if time < 11 * 60 else (1 if time < 15 * 60 else (2 if time < 18 * 60 else 3))
+
+func spend(amount: int) -> void:
+	minutes = mini(minutes + amount, DAY_END)
+	sky.apply(phase_for(minutes))
+	if minutes >= DAY_END and not ending and not story.talking_now():
+		enter_night()
+
+func street_click() -> void:
+	click_sound.play()
+
 func hub_state() -> Dictionary:
 	return {"evidence": [], "stage": "DAY_FREE"}
 
@@ -137,12 +168,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if story == null or player == null or ending:
 		return
+	if player.enabled and player.velocity.length() > 0.1:
+		idle_clock += delta
+		if idle_clock >= REAL_SECONDS_PER_MINUTE:
+			idle_clock = 0.0
+			spend(1)
 	var goal: Dictionary = story.objective()
 	hud.goal.text = goal.text
-	hud.clock.text = "Sáng · 07:40 · %d.000đ" % story.gear.money
+	hud.clock.text = "%s · %s · %d$" % [sky.PHASES[sky.phase].title, clock_text(), story.gear.money]
 	hud.targets = [{"position": goal.position, "label": "", "color": Color(1.0, 0.82, 0.24), "distance": true}]
 	if not player.riding() and player.global_position.distance_to(player.bike.global_position) > 12.0:
 		hud.targets.append({"position": player.bike.global_position, "label": "Xe", "color": Color(0.70, 0.86, 1.0), "low": true})

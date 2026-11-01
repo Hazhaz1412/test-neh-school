@@ -86,12 +86,12 @@ func refresh() -> void:
 	for child in list.get_children():
 		list.remove_child(child)
 		child.queue_free()
-	money.text = "%d.000đ · Túi %d/%d" % [gear.money, gear.bag.size(), Gear.BAG_ROOM]
+	money.text = "%d$ · Túi %d/%d" % [gear.money, gear.bag.size(), Gear.BAG_ROOM]
 	for entry in Gear.STOCK:
-		_row(entry.name, entry.text, "Mua · %dk" % entry.price, _buy.bind(entry.kind))
+		_row(entry.name, entry.text, "Mua · %d$" % entry.price, _buy.bind(entry.kind))
 	var names := {"medal": "Huy chương mạ", "camera": "Máy ảnh"}
 	for kind in gear.pawned:
-		_row("%s của cậu" % names.get(kind, kind), "Sáng nay có kẻ đem cầm ở đây. Đừng hỏi là ai.", "Chuộc · %dk" % Gear.redeem_price(kind), _redeem.bind(kind))
+		_row("%s của cậu" % names.get(kind, kind), "Sáng nay có kẻ đem cầm ở đây. Đừng hỏi là ai.", "Chuộc · %d$" % Gear.redeem_price(kind), _redeem.bind(kind))
 
 func _buy(kind: String) -> void:
 	note.text = Gear.buy(gear, kind)

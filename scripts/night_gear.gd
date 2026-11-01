@@ -1,11 +1,12 @@
 extends RefCounted
-# What the player owns between nights. Prices are in thousands of dong.
+# What the player owns between nights. Prices are in dollars, as people on the street quote them.
 const PATH := "user://night_gear.cfg"
 const START_MONEY := 300
 const NIGHT_PAY := 150
 const BAG_ROOM := 4
 const FREE_CHALK := 2
 const REDEEM_SHARE := 0.5
+const BOOST_CARE := 0.1
 # It only wants what looks like a prize; a torch is beneath it.
 const VALUE := {"medal": 120, "camera": 100}
 const STOCK := [
@@ -17,7 +18,7 @@ const STOCK := [
 ]
 
 static func fresh() -> Dictionary:
-	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": []}
+	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false}
 
 static func read() -> Dictionary:
 	var state := fresh()
@@ -92,4 +93,5 @@ static func finish_night(state: Dictionary, inventory: Array, stolen: Array) -> 
 	state.camera = inventory.has("camera")
 	state.pawned.append_array(stolen)
 	state.money += NIGHT_PAY
+	state.boosts = 0
 	write(state)

@@ -34,6 +34,7 @@ const PLACES := [
 	{"id": "cafe", "label": "Cà Phê Bến Sông", "road": "Đường Bến Trầu", "on": Vector2(50, -46), "width": 8.0, "depth": 11.0, "floors": 2, "style": "open", "tint": Color(0.74, 0.86, 0.90), "sign": Color(0.12, 0.34, 0.30)},
 	{"id": "stall", "label": "Trà Đá Bác Lực", "road": "Đường Đồng Muối", "on": Vector2(200, 10), "width": 6.0, "depth": 4.5, "floors": 1, "style": "stall", "tint": Color(0.8, 0.8, 0.7)},
 	{"id": "curio", "label": "", "road": "Hẻm 5", "on": Vector2(-127, -28), "width": 6.0, "depth": 9.0, "floors": 2, "style": "curio", "hidden": true},
+	{"id": "chess", "label": "Góc Cờ", "road": "Đường Bến Trầu", "on": Vector2(52, 26), "width": 6.0, "depth": 4.5, "floors": 1, "style": "stall", "tint": Color(0.8, 0.8, 0.7)},
 	{"id": "market", "label": "Chợ Bến Trầu", "road": "Phố Chợ", "on": Vector2(-120, 48), "width": 44.0, "depth": 30.0, "floors": 1, "style": "market", "tint": Color(0.82, 0.80, 0.72)},
 ]
 const SHOPS := ["Cơm Bình Dân", "Bún Riêu Cô Ba", "Sửa Xe Hoàng", "Tiệm Tóc Thu Hà", "Điện Thoại Minh Phát", "Photocopy Hùng", "Thuốc Tây Đức Tâm", "Bánh Mì Bảy Hổ", "Vá Xe 24h", "Hủ Tiếu Năm Lửa", "Nhà Sách Tuổi Xanh", "Trà Đá Chị Tư", "Gas Phú Lộc", "Áo Quần Thúy", "Ốc Cô Hai", "Sim Thẻ Nam Anh", "Karaoke Hồng Ân", "Giặt Ủi Sao Mai", "Nha Khoa Nụ Cười", "Vàng Bạc Kim Thành", "Bia Hơi Bạn Hiền", "Khóa Thợ Lành", "Kính Mắt Sáng", "Đồ Khô Hải Lâm", "Nước Mía Sầu Riêng", "Tiệm May Thanh", "Xôi Bà Lành", "Sơn Nhà Đại Lợi", "Cháo Lòng Cổ Đằng", "Chè Bến Trầu"]
