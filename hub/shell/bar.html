@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<title>Cú Đêm</title>
+<style>
+* { box-sizing: border-box; }
+body[data-theme="normal"] { --frame: #dfe3e6; --toolbar: #fff; --text: #3c4246; --hover: #eceff1; --strong: #cdd2d6; --field: #eef1f3; --field-hover: #e6eaec; --field-text: #1f2326; --accent: #2F6FED; --muted: #b4babf; }
+body[data-theme="haunted"] { --frame: #120a0b; --toolbar: #1b1012; --text: #d9b8b8; --hover: #2b1619; --strong: #3d1c20; --field: #241316; --field-hover: #2b1619; --field-text: #efd6d6; --accent: #b3202a; --muted: #5d4346; }
+body { margin: 0; overflow: hidden; background: var(--toolbar); color: var(--text); font: 12px "Segoe UI", Roboto, Arial, sans-serif; user-select: none; }
+button { border: 0; background: none; color: inherit; cursor: pointer; padding: 0; }
+svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+#strip { display: flex; align-items: flex-end; height: 42px; padding-left: 8px; background: var(--frame); -webkit-app-region: drag; }
+#tabs { display: flex; flex: 0 1 auto; min-width: 0; height: 34px; }
+.tab { position: relative; display: flex; align-items: center; gap: 8px; flex: 0 1 236px; min-width: 60px; height: 34px; padding: 0 8px 0 12px; border-radius: 10px 10px 0 0; -webkit-app-region: no-drag; }
+.tab:not(.active):hover { background: var(--hover); }
+.tab.active { background: var(--toolbar); }
+.tab.active::before, .tab.active::after { content: ""; position: absolute; bottom: 0; width: 10px; height: 10px; background: radial-gradient(circle at var(--c) 0, var(--frame) 10px, var(--toolbar) 10.5px); }
+.tab.active::before { left: -10px; --c: 0; }
+.tab.active::after { right: -10px; --c: 100%; }
+.tab:not(.active) + .tab:not(.active)::before { content: ""; position: absolute; left: 0; top: 9px; height: 16px; width: 1px; background: var(--muted); }
+.title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.close { flex: none; width: 18px; height: 18px; border-radius: 50%; font-size: 15px; line-height: 16px; }
+.close:hover { background: var(--strong); }
+.favicon { flex: none; width: 15px; height: 15px; background: url(logo.svg) center / contain no-repeat; }
+.favicon.loading { background: none; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#new-tab { flex: none; width: 28px; height: 28px; margin: 0 0 3px 6px; border-radius: 50%; display: grid; place-items: center; -webkit-app-region: no-drag; }
+#new-tab:hover { background: var(--strong); }
+#fill { flex: 1; min-width: 40px; }
+#controls { display: flex; align-self: flex-start; -webkit-app-region: no-drag; }
+#controls button { width: 46px; height: 32px; display: grid; place-items: center; }
+#controls button:hover { background: var(--strong); }
+#controls #close:hover { background: #c42b1c; color: #fff; }
+
+#toolbar { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 8px; }
+.round { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+.round:hover:enabled { background: var(--hover); }
+.round:disabled { color: var(--muted); cursor: default; }
+#bar { flex: 1; display: flex; align-items: center; gap: 10px; height: 34px; margin: 0 6px; padding: 0 8px 0 14px; border: 2px solid transparent; border-radius: 17px; background: var(--field); }
+#bar:hover { background: var(--field-hover); }
+#bar:focus-within { background: var(--toolbar); border-color: var(--accent); }
+#lock { flex: none; opacity: .75; }
+#lock.hidden { display: none; }
+#star { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; }
+#star:hover:enabled { background: var(--hover); }
+#star:disabled { visibility: hidden; }
+#star.on svg { fill: var(--accent); stroke: var(--accent); }
+#address { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--field-text); font: 14px "Segoe UI", Roboto, Arial, sans-serif; }
+#avatar { flex: none; width: 26px; height: 26px; border-radius: 50%; color: #fff; display: grid; place-items: center; font-weight: 600; }
+
+#bookmarks { display: flex; gap: 2px; align-items: center; height: 34px; padding: 0 10px; border-bottom: 1px solid var(--frame); }
+#bookmarks:empty { display: none; }
+#bookmarks a { display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 9px; border-radius: 13px; cursor: pointer; }
+#bookmarks a:hover { background: var(--hover); }
+</style>
+</head>
+<body data-theme="normal">
+<div id="strip">
+  <div id="tabs"></div>
+  <button id="new-tab" title="Tab mới"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
+  <div id="fill"></div>
+  <div id="controls">
+    <button id="minimize" title="Thu nhỏ"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
+    <button id="maximize" title="Phóng to"><svg viewBox="0 0 16 16"><path d="M3.5 3.5h9v9h-9z"/></svg></button>
+    <button id="close" title="Đóng"><svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+  </div>
+</div>
+<div id="toolbar">
+  <button class="round" id="back" title="Quay lại" disabled><svg viewBox="0 0 16 16"><path d="M13 8H3M7.5 3.5L3 8l4.5 4.5"/></svg></button>
+  <button class="round" id="forward" title="Tiến tới" disabled><svg viewBox="0 0 16 16"><path d="M3 8h10M8.5 3.5L13 8l-4.5 4.5"/></svg></button>
+  <button class="round" id="reload" title="Tải lại"><svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3"/></svg></button>
+  <form id="bar">
+    <span id="lock" class="hidden"><svg viewBox="0 0 16 16"><path d="M4 7.5h8v6H4zM5.5 7.5V5a2.5 2.5 0 0 1 5 0v2.5"/></svg></span>
+    <input id="address" spellcheck="false" autocomplete="off" placeholder="Tìm trên Gaaglu hoặc nhập địa chỉ web">
+    <button type="button" id="star" title="Thêm dấu trang" disabled><svg viewBox="0 0 16 16"><path d="M8 2.3l1.7 3.6 3.9.5-2.9 2.7.8 3.9L8 11.1l-3.5 1.9.8-3.9L2.4 6.4l3.9-.5z"/></svg></button>
+  </form>
+  <button id="avatar" title="Tài khoản"></button>
+  <button class="round" title="Tùy chọn"><svg viewBox="0 0 16 16"><path d="M8 3v.01M8 8v.01M8 13v.01"/></svg></button>
+</div>
+<div id="bookmarks"></div>
+<script src="bar.js"></script>
+</body>
+</html>

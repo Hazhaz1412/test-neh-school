@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<title>Tài khoản</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; height: 100vh; overflow: hidden; background: var(--toolbar); color: var(--text); font: 13px "Segoe UI", Roboto, Arial, sans-serif; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--line); border-radius: 12px; }
+body[data-theme="normal"] { --toolbar: #fff; --text: #3c4246; --line: #d5d9dc; }
+body[data-theme="haunted"] { --toolbar: #1b1012; --text: #d9b8b8; --line: #5a1f24; }
+#avatar { width: 64px; height: 64px; border-radius: 50%; color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+#name { font-size: 16px; font-weight: 600; }
+#status { opacity: .7; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body data-theme="normal">
+<div id="avatar"></div>
+<div id="name"></div>
+<div id="email"></div>
+<div id="status">Đã đăng nhập</div>
+<script src="menu.js"></script>
+</body>
+</html>

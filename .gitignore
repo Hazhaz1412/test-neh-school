@@ -5,3 +5,6 @@
 .export_templates/
 dist/
 build/
+
+# Hub dependencies
+hub/node_modules/

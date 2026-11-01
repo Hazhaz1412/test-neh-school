@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<title>Suy nghĩ</title>
+<style>
+html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; cursor: default; user-select: none; }
+#thought { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); max-width: 70%; padding: 12px 24px; border-radius: 8px; background: #000c; color: #fff; font: italic 20px "Segoe UI", Roboto, Arial, sans-serif; text-align: center; opacity: 0; transition: opacity .35s; }
+#thought.on { opacity: 1; }
+#thought[data-kind="annoyed"] { color: #ffc98a; font-weight: 600; }
+#thought[data-kind="done"] { color: #ff8a80; font-weight: 700; font-style: normal; font-size: 23px; }
+</style>
+</head>
+<body tabindex="0">
+<div id="thought"></div>
+<script src="cover.js"></script>
+</body>
+</html>

@@ -131,6 +131,10 @@ func _ready() -> void:
 	var ai_service := preload("res://scripts/soul_ai_service.gd").new()
 	ai_service.name = "SoulAIService"
 	add_child(ai_service)
+	var arg_bridge := preload("res://scripts/arg_bridge.gd").new()
+	arg_bridge.name = "ArgBridge"
+	arg_bridge.world = self
+	add_child(arg_bridge)
 	var compact := preload("res://scripts/compact_hud.gd").new()
 	compact.world = self
 	compact.mouse_filter = Control.MOUSE_FILTER_IGNORE
