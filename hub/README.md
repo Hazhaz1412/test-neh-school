@@ -15,10 +15,15 @@ node test/game_link.js   # kiểm tra Godot thật với web stack thật
 - `shell/`: giao diện trình duyệt.
 - `web/server.js`: web stack và WebSocket `/game`, gắn với `127.0.0.1`, cần token.
 - `web/sites.js`: nội dung các trang và danh sách tên miền giả; hiện chỉ còn trang chủ tìm kiếm.
+- `web/news.js`, `web/news-data.js`: ba tờ báo hư cấu và bài viết tạm; mọi bài được tìm qua Gaaglu.
 - `profiles.js`: tài khoản đang đăng nhập, theme giao diện và câu suy nghĩ khi ghé trang thật.
 - `realweb.js`: đọc kết quả tìm kiếm thật bằng cửa sổ ẩn (DuckDuckGo HTML).
 - `../scripts/arg_bridge.gd`: phía game; đọc `~/.config/neh-school/hub.json` để tìm hub.
 
 Giao thức: game gửi `{type:"state", evidence:[...], stage:"..."}`; hub gửi `{type:"door_bang"}`; game đổi tài khoản bằng `{type:"profile", id:"an"}`.
+
+## Ống kính điện thoại
+
+Chạy `npm start`, rồi mở game bằng F5. Vào `gaaglu.com/thiet-bi` trong Cú Đêm để lấy mã QR, hoặc lấy địa chỉ in ở terminal. Điện thoại phải cùng Wi-Fi với máy này, bấm bỏ qua cảnh báo chứng chỉ tự ký, rồi soi camera vào màn hình game. Cổng mặc định 8787, đổi bằng `NEH_LENS_PORT`.
 
 Nếu Electron báo `Cannot read properties of undefined (reading 'whenReady')`, chạy `unset ELECTRON_RUN_AS_NODE` rồi thử lại.

@@ -4,8 +4,10 @@ const http = require('http');
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 const sites = require('./sites');
+const news = require('./news');
+const lens = require('./lens');
 
-function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, searchWeb = async () => [] } = {}) {
+async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, searchWeb = async () => [] } = {}) {
   const story = { evidence: [], stage: '', game: false };
   const listeners = new Set();
   let gameSocket = null;
@@ -21,7 +23,13 @@ function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onPro
     return true;
   };
 
-  const receive = (message) => {
+  const phone = await lens.start({
+    onChange: (on) => sendToGame({ type: 'lens', on }),
+    onPhone: (update) => sendToGame({ type: 'lens_phone', ...update }),
+  });
+
+  const receive = (message, text) => {
+    if (message?.type === 'lens_layout') phone.layout(text);
     if (message?.type === 'profile') onProfile(message.id);
     if (message?.type !== 'state') return;
     story.evidence = Array.isArray(message.evidence) ? message.evidence : [];
@@ -35,9 +43,16 @@ function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onPro
     if (req.headers.host !== hostHeader) return reply(res, 403, 'Forbidden');
     const url = new URL(req.url, `http://${hostHeader}`);
     if (url.pathname === '/events') return openEvents(req, res);
+    if (url.pathname.startsWith('/anh/')) {
+      const photo = news.readPhoto(url.pathname.slice(5));
+      if (!photo) return reply(res, 404, 'Not found');
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'max-age=3600' });
+      return res.end(photo);
+    }
+    if (url.pathname === '/thiet-bi') return reply(res, 200, await sites.devicePage(phone.url));
     const query = url.searchParams.get('q')?.trim();
     const results = query && !sites.isCrisis(query) ? await searchWeb(query) : [];
-    return reply(res, ...sites.render(url, results));
+    return reply(res, ...sites.render(req.headers['x-fake-host'], url, results));
   });
 
   const openEvents = (req, res) => {
@@ -60,7 +75,8 @@ function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onPro
       gameSocket = ws;
       story.game = true;
       announce();
-      ws.on('message', (data) => receive(parse(data)));
+      sendToGame({ type: 'lens', on: phone.connected() });
+      ws.on('message', (data, isBinary) => (isBinary ? phone.frame(data) : receive(parse(data), data.toString())));
       ws.on('close', () => {
         if (gameSocket !== ws) return;
         gameSocket = null;
@@ -79,7 +95,9 @@ function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onPro
         token,
         story,
         sendToGame,
+        lensUrl: phone.url,
         close: () => {
+          phone.close();
           for (const res of listeners) res.end();
           sockets.close();
           gameSocket?.terminate();
