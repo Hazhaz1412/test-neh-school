@@ -1,4 +1,5 @@
 extends Node3D
+const VisualUpgrade := preload("res://scripts/visual_upgrade.gd")
 
 @export_group("Spirit realm · visuals")
 @export_range(0.005, 0.06, 0.001) var spirit_fog_density := 0.014
@@ -88,6 +89,7 @@ var death_text: Label
 
 func _ready() -> void:
 	_build_ui()
+	VisualUpgrade.apply(self)
 	_prepare_spirit_world()
 	realm_scenery = preload("res://scripts/spirit_scenery.gd").new()
 	add_child(realm_scenery)
@@ -362,6 +364,8 @@ func set_quality(level: int, persist := true) -> void:
 	player.flashlight.shadow_enabled = quality_level > 0
 	$Atmosphere/Moonlight.shadow_enabled = quality_level > 0
 	$Atmosphere/Moonlight.directional_shadow_max_distance = [40.0, 65.0, 110.0][quality_level]
+	VisualUpgrade.set_quality(normal_environment, quality_level)
+	VisualUpgrade.set_quality(cursed_environment, quality_level)
 	quality_label.text = "F6 / " + ["NHẸ", "CÂN BẰNG", "CAO"][quality_level]
 	_update_light_budget()
 	if persist:

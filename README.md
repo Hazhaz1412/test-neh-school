@@ -6,7 +6,7 @@ Demo khám phá trường 3D bằng Godot 4. **Khu A là khối chữ U ngược
 
 ## Chạy
 
-Mở `project.godot` bằng Godot 4.3+ (đã kiểm tra bằng 4.7.2), đợi import GLB rồi nhấn **F5**. Renderer Compatibility không yêu cầu Vulkan. Từ terminal: `godot --path .`.
+Mở `project.godot` bằng Godot 4.3+ (đã kiểm tra bằng 4.7.2), đợi import GLB rồi nhấn **F5**. Renderer Forward+ cần GPU hỗ trợ Vulkan; máy không có Vulkan sẽ tự lùi về OpenGL và mất một phần hiệu ứng. Từ terminal: `godot --path .`.
 
 | Điều khiển | Chức năng |
 | --- | --- |

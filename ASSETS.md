@@ -117,3 +117,26 @@ Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được gh
 ## Chân dung visual novel
 
 Lan và An dùng bản portrait riêng của rig Casual_Female Quaternius CC0 đã có, render trong SubViewport trong suốt. Lan mặc tím; An mặc xanh và nhỏ hơn. Khung, chữ hiện dần và lựa chọn dựng bằng Control của Godot; không tải thêm ảnh/model/font. Kịch bản hỏi/đáp ở `data/night1_dialogue.json`.
+
+## Microsoft Rocketbox — học sinh ma
+
+- Nguồn: https://github.com/microsoft/Microsoft-Rocketbox
+- Giấy phép: MIT, bản gốc ở `assets/rocketbox/LICENSE.txt`.
+- Dùng avatar `Male_Child_01` và các clip `m_idle_neutral_01`, `m_walk_bruised`, `m_run_injured`, `m_run_fast_01`, `m_walk_slow_01`.
+- Texture trong `assets/rocketbox/textures/` là bản vẽ lại bằng `tools/build_student_textures.gd`: đổi quần áo thành đồng phục bẩn, xóa nét mặt, thêm vết máu. Không lưu TGA gốc trong repo.
+
+## Poly Haven — vật liệu và đèn pin
+
+- Nguồn: https://polyhaven.com, giấy phép CC0.
+- `assets/polyhaven_school/`: worn_plaster_wall, painted_concrete_02, dirty_concrete, rough_wood (1k: màu, vân nổi, độ nhám).
+- `assets/polyhaven_torch/`: model pastic_torch_6v (1k glTF).
+
+## Âm thanh bước chân và công tắc
+
+- `assets/audio/steps/step_0*.ogg`: "Footsteps" trên OpenGameArt, CC0: https://opengameart.org/content/footsteps-0
+- `assets/audio/steps/footstep_wet_0*.ogg`, `switch_0*.ogg`: "100 CC0 SFX #2", CC0: https://opengameart.org/content/100-cc0-sfx-2
+
+## Ống kính điện thoại
+
+- js-aruco2 (MIT): https://www.npmjs.com/package/js-aruco2, dò dấu ArUco trên điện thoại. `assets/lens/markers.json` sinh bằng `tools/build_lens_markers.js`.
+- selfsigned (MIT), qrcode (MIT): chứng chỉ LAN và mã QR.

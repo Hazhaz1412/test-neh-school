@@ -10,10 +10,9 @@ static var tooth: StandardMaterial3D
 
 func _ready() -> void:
 	model = preload("res://scripts/humanoid_model.gd").new()
-	model.variant = "Suit_Male"
+	model.variant = "student"
+	model.look = "b"
 	model.target_height = 2.22
-	model.faceless = true
-	model.shirt_color = Color(0.11, 0.018, 0.022)
 	model.rotation.y = PI
 	add_child(model)
 	if skin == null:
@@ -25,14 +24,6 @@ func _ready() -> void:
 		tooth = StandardMaterial3D.new()
 		tooth.albedo_color = Color(0.66, 0.57, 0.41)
 	face = model.bone_frame("Head", "DistortedHead")
-	oval(Vector3(0, 0.13, 0), Vector3(0.26, 0.49, 0.24), skin)
-	# Hollow sockets and a stretched open jaw, with uneven teeth.
-	for side in [-1, 1]:
-		oval(Vector3(side * 0.059, 0.22, 0.115), Vector3(0.065, 0.10, 0.024), darkness)
-		oval(Vector3(side * 0.06, 0.22, 0.13), Vector3(0.008, 0.015, 0.006), tooth)
-	oval(Vector3(0, 0.048, 0.112), Vector3(0.09, 0.16, 0.04), darkness)
-	for i in range(5):
-		oval(Vector3((i - 2) * 0.014, 0.095 + sin(i) * 0.008, 0.135), Vector3(0.011, 0.034, 0.009), tooth)
 	var hand: Node3D = model.bone_frame("Fist.R", "BloodiedClub")
 	var club := MeshInstance3D.new()
 	var stick := CylinderMesh.new()
@@ -46,7 +37,7 @@ func _ready() -> void:
 	club.material_override = stained
 	hand.add_child(club)
 	for bone in ["UpperArm.R", "UpperArm.L"]:
-		var index: int = model.skeleton.find_bone(bone)
+		var index: int = model.skeleton.find_bone(model.bone(bone))
 		if index >= 0: model.skeleton.set_bone_pose_scale(index, Vector3(1, 1.2, 1))
 	vanish()
 

@@ -35,6 +35,10 @@ func validate() -> void:
 	event.pressed = true
 	school._unhandled_input(event)
 	check(school.spirit_enabled, "B enables the spirit world")
+	# Spawning waits for the navigation map, which synchronizes asynchronously.
+	for i in range(120):
+		if school.enemies.size() == 13: break
+		await physics_frame
 	check(school.enemies.size() == 13, "Spirit realm spawns eight bullies and five specialized entities")
 	check(school.get_node("Atmosphere/MoonlitEnvironment").environment != baseline, "Spirit realm replaces the environment")
 	check(school.cursed_environment.fog_density > baseline.fog_density, "Resentment increases fog density")
@@ -56,8 +60,8 @@ func validate() -> void:
 	var ghost: CharacterBody3D = school.enemies[0]
 	check(ghost.animation_names.has("walk") and ghost.animation_names.has("sprint") and ghost.animation_names.has("attack-melee-right"), "Imported walk, sprint and melee animations are available")
 	var head := ghost.model.find_child("head", true, false) as MeshInstance3D
-	check(head != null and head.material_override is ShaderMaterial and head.material_override.shader == preload("res://assets/materials/ghost_skin.gdshader"), "Faceless porcelain head uses the new grime shader")
-	check(ghost.model.find_child("StudentBadge", true, false) != null and ghost.model.find_child("SchoolTie", true, false) != null, "Ghost keeps recognizable student uniform details")
+	check(ghost.model.variant == "student" and ghost.model.head_source == ghost.head_node, "Ghost uses the repainted student model and its head follows the pose")
+	check(ghost.model.animation.has_animation("walk") and ghost.model.animation.has_animation("sprint"), "Student model has its walk and chase motions")
 	check(ghost.model.find_child("WoodenClub", true, false) != null, "Club is attached to the animated hand")
 	var nav_map: RID = school.get_world_3d().navigation_map
 	var path := NavigationServer3D.map_get_path(nav_map, Vector3(8, 0, 51), Vector3(0, 7.8, 8), true)

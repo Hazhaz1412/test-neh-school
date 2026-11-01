@@ -9,11 +9,17 @@ var linked := false
 var last_state := ""
 var clock := 0.0
 var bang: AudioStreamPlayer
+var lens: Node
 
 func _ready() -> void:
 	bang = AudioStreamPlayer.new()
 	bang.stream = load("res://assets/audio/door_bang.wav")
 	add_child(bang)
+	lens = preload("res://scripts/phone_lens.gd").new()
+	lens.name = "PhoneLens"
+	lens.world = world
+	lens.bridge = self
+	add_child(lens)
 	set_process(not OS.get_cmdline_args().has("--script"))
 
 func _process(delta: float) -> void:
@@ -37,6 +43,7 @@ func _process(delta: float) -> void:
 		WebSocketPeer.STATE_CLOSED:
 			socket = null
 			linked = false
+			lens.set_active(false)
 			clock = RETRY_SECONDS
 
 func _connect() -> void:
@@ -50,6 +57,7 @@ func _connect() -> void:
 	if not session is Dictionary or not session.has("port") or not session.has("token"):
 		return
 	var peer := WebSocketPeer.new()
+	peer.outbound_buffer_size = 1 << 20
 	if peer.connect_to_url("ws://127.0.0.1:%d/game?token=%s" % [int(session.port), session.token]) == OK:
 		socket = peer
 
@@ -63,6 +71,23 @@ func _send_state() -> void:
 
 func _receive(text: String) -> void:
 	var message = JSON.parse_string(text)
-	if message is Dictionary and message.get("type") == "door_bang":
+	if not message is Dictionary:
+		return
+	if message.get("type") == "door_bang":
 		bang.play()
 		world.progression.fear.beat()
+	if message.get("type") == "lens":
+		lens.set_active(message.get("on") == true)
+	if message.get("type") == "lens_phone":
+		lens.phone_update(message)
+
+# Frames are dropped, never queued: a late picture is worthless on the phone.
+func ready_for_frame() -> bool:
+	return linked and socket.get_current_outbound_buffered_amount() == 0
+
+func send_text(text: String) -> void:
+	if linked:
+		socket.send_text(text)
+
+func send_frame(jpeg: PackedByteArray) -> void:
+	socket.send(jpeg, WebSocketPeer.WRITE_MODE_BINARY)

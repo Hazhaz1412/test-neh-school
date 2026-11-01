@@ -94,7 +94,8 @@ func _ready() -> void:
 	agent.path_height_offset = 0.25
 	add_child(agent)
 	model = preload("res://scripts/humanoid_model.gd").new()
-	model.variant = "Suit_Male"
+	model.variant = "student"
+	model.look = "ab"[absi(String(name).hash()) % 2]
 	model.target_height = 2.6
 	model.faceless = true
 	model.name = "FacelessStudent"
@@ -102,29 +103,21 @@ func _ready() -> void:
 	model.rotation.y = PI
 	add_child(model)
 	snarl = _sound("DetectionSnarl", "res://assets/audio/ghost_snarl.wav", -6)
-	footsteps = _sound("ChaseSteps", "res://assets/audio/ghost_step.wav", -12)
+	footsteps = _sound("ChaseSteps", "res://assets/audio/steps/footstep_wet_01.ogg", -12)
+	footsteps.stream = preload("res://scripts/soundscape.gd").variations("footstep_wet_0", 3)
 	pose_phase = float((absi(String(name).hash()) * 37) % 100) * 0.17
 	var head_frame: Node3D = model.bone_frame("Head", "FacelessHeadAnchor")
 	head_node = MeshInstance3D.new()
 	head_node.name = "head"
-	var oval := SphereMesh.new()
-	oval.radius = 2.2
-	oval.height = 6.8
-	oval.radial_segments = 20
-	oval.rings = 12
-	head_node.mesh = _reshape(oval, Vector3(1, 1, 0.86), Vector3(0, 3.4, 0), "faceless_oval")
 	head_node.scale = Vector3.ONE * 0.075
-	var mask := ShaderMaterial.new()
-	mask.shader = preload("res://assets/materials/ghost_skin.gdshader")
-	head_node.material_override = mask
 	head_frame.add_child(head_node)
+	model.head_source = head_node
 	torso_node = Node3D.new()
 	torso_node.name = "SchoolUniformDetails"
 	model.add_child(torso_node)
 	animation = model.animation
 	for clip in ["idle", "walk", "sprint", "attack-melee-right"]:
 		animation_names[clip] = clip
-	_uniform_details()
 	_attach_club()
 	_play("walk")
 	head_node.rotation.z = 0.34 * sin(pose_phase)
@@ -163,26 +156,6 @@ func _detail(parent: Node3D, label: String, pos: Vector3, size: Vector3, color: 
 	node.material_override = mat
 	parent.add_child(node)
 	return node
-
-func _uniform_details() -> void:
-	for side in [-1, 1]:
-		var collar := _detail(torso_node, "ShirtCollar", Vector3(side * 0.10, 1.58, 0.15), Vector3(0.15, 0.06, 0.045), Color(0.61, 0.63, 0.54))
-		collar.rotation.z = side * 0.40
-	_detail(torso_node, "SchoolTie", Vector3(0, 1.39, 0.18), Vector3(0.065, 0.30, 0.035), Color(0.30, 0.025, 0.04))
-	_detail(torso_node, "StudentBadge", Vector3(0.15, 1.37, 0.18), Vector3(0.08, 0.065, 0.025), Color(0.62, 0.59, 0.38))
-	var hair := SphereMesh.new()
-	hair.radius = 2.25
-	hair.height = 2.8
-	hair.radial_segments = 16
-	hair.rings = 8
-	var cap := MeshInstance3D.new()
-	cap.name = "MattedHair"
-	cap.mesh = hair
-	cap.position = Vector3(0, 5.9, -0.4)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.025, 0.029, 0.026)
-	cap.material_override = mat
-	head_node.add_child(cap)
 
 func _process(delta: float) -> void:
 	if not active or not is_instance_valid(world) or not world.simulation_active():

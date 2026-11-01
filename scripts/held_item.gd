@@ -4,6 +4,11 @@ var player: CharacterBody3D
 var models := {}
 var shown_kind := ""
 var equip := 0.0
+const TORCH_SCALE := 0.62
+const TORCH_ROTATION := Vector3(0.05, PI, 0.0)
+const TORCH_OFFSET := Vector3(0.0, 0.09, 0.0)
+# The beam starts inside the held torch, which must not catch its own light.
+const HELD_LAYER := 1 << 19
 
 static func camera_model() -> Node3D:
 	var pivot := Node3D.new()
@@ -16,10 +21,22 @@ static func camera_model() -> Node3D:
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return pivot
 
+static func torch_model() -> Node3D:
+	var pivot := Node3D.new()
+	var source: Node3D = preload("res://assets/polyhaven_torch/pastic_torch_6v_1k.gltf").instantiate()
+	source.scale = Vector3.ONE * TORCH_SCALE
+	source.rotation = TORCH_ROTATION
+	source.position = TORCH_OFFSET
+	pivot.add_child(source)
+	for mesh in source.find_children("*", "MeshInstance3D", true, false):
+		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mesh.layers = HELD_LAYER
+	return pivot
+
 static func prop(kind: String) -> MeshInstance3D:
 	var visual := MeshInstance3D.new()
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = {"torch": Color(0.16, 0.20, 0.19), "battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73)}[kind]
+	mat.albedo_color = {"battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73)}[kind]
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	visual.material_override = mat
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -29,19 +46,21 @@ static func prop(kind: String) -> MeshInstance3D:
 		visual.mesh = mesh
 	else:
 		var mesh := CylinderMesh.new()
-		mesh.height = {"torch": 0.28, "battery": 0.10, "chalk": 0.12}[kind]
-		mesh.top_radius = {"torch": 0.055, "battery": 0.021, "chalk": 0.009}[kind]
-		mesh.bottom_radius = mesh.top_radius * (0.6 if kind == "torch" else 1.0)
+		mesh.height = {"battery": 0.10, "chalk": 0.12}[kind]
+		mesh.top_radius = {"battery": 0.021, "chalk": 0.009}[kind]
+		mesh.bottom_radius = mesh.top_radius
 		mesh.radial_segments = 12
 		visual.mesh = mesh
-		visual.rotation.x = PI / 2 if kind == "torch" else -0.35
+		visual.rotation.x = -0.35
 	return visual
 
 func _ready() -> void:
 	position = Vector3(0.25, -0.27, -0.52)
 	models["camera"] = camera_model()
 	models["camera"].rotation.y = -0.28
-	for kind in ["torch", "battery", "medicine", "chalk"]:
+	models["torch"] = torch_model()
+	player.flashlight.light_cull_mask &= ~HELD_LAYER
+	for kind in ["battery", "medicine", "chalk"]:
 		models[kind] = prop(kind)
 	for model in models.values():
 		add_child(model)

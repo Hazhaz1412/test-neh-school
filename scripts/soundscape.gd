@@ -24,6 +24,17 @@ func setup(school: Node3D) -> void:
 		sound.unit_size = 4
 		add_child(sound)
 		pool.append(sound)
+	sounds["footstep"] = variations("step_0", 6)
+	sounds["torch"] = variations("switch_0", 2)
+
+static func variations(prefix: String, count: int) -> AudioStreamRandomizer:
+	var group := AudioStreamRandomizer.new()
+	group.random_pitch = 1.08
+	group.random_volume_offset_db = 1.5
+	for index in range(1, count + 1):
+		group.add_stream(-1, load("res://assets/audio/steps/%s%d.ogg" % [prefix, index]))
+	return group
+
 func cue(title: String, volume := -18.0) -> void:
 	voice.stream = sounds[title]
 	voice.volume_db = volume
