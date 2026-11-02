@@ -24,6 +24,7 @@ func setup(school: Node3D) -> void:
 		sound.unit_size = 4
 		add_child(sound)
 		pool.append(sound)
+	sounds["crank"] = load("res://assets/audio/crank.wav")
 	sounds["footstep"] = variations("step_0", 6)
 	sounds["torch"] = variations("switch_0", 2)
 

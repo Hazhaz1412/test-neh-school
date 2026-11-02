@@ -10,6 +10,7 @@ const BOOST_CARE := 0.1
 # It only wants what looks like a prize; a torch is beneath it.
 const VALUE := {"medal": 120, "camera": 100}
 const STOCK := [
+	{"kind": "torch", "name": "Đèn pin", "price": 300, "text": "Sáng hơn, pin dùng 5 phút, không cần bấm. Món này không chiếm chỗ trong túi."},
 	{"kind": "salt_gun", "name": "Súng muối", "price": 180, "text": "Một phát. Bắn lúc bị nó chụp lên: nó đau, ném bạn đi và mất dấu."},
 	{"kind": "medal", "name": "Huy chương mạ", "price": 120, "text": "Giả, nhưng sáng. Nó sẽ giật thứ này thay vì ăn thịt bạn."},
 	{"kind": "battery", "name": "Pin", "price": 30, "text": "Thêm 50% pin cho đèn và máy ảnh."},
@@ -18,7 +19,7 @@ const STOCK := [
 ]
 
 static func fresh() -> Dictionary:
-	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false}
+	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false, "torch": false}
 
 static func read() -> Dictionary:
 	var state := fresh()
@@ -45,12 +46,17 @@ static func redeem_price(kind: String) -> int:
 	return int(VALUE.get(kind, price(kind)) * REDEEM_SHARE)
 
 static func buy(state: Dictionary, kind: String) -> String:
-	if state.bag.size() >= BAG_ROOM:
+	if kind == "torch" and state.torch:
+		return "Cậu có đèn này rồi."
+	if kind != "torch" and state.bag.size() >= BAG_ROOM:
 		return "Túi đầy rồi."
 	if state.money < price(kind):
 		return "Không đủ tiền."
 	state.money -= price(kind)
-	state.bag.append(kind)
+	if kind == "torch":
+		state.torch = true
+	else:
+		state.bag.append(kind)
 	write(state)
 	return ""
 
@@ -70,9 +76,9 @@ static func redeem(state: Dictionary, kind: String) -> String:
 	write(state)
 	return ""
 
-# Six slots, the torch always first; leftover room gets the free chalk.
+# Six slots, a light always first; leftover room gets the free chalk.
 static func loadout(state: Dictionary) -> Array:
-	var slots: Array = ["torch"]
+	var slots: Array = ["torch" if state.torch else "crank"]
 	if state.camera:
 		slots.append("camera")
 	slots.append_array(state.bag)
@@ -87,7 +93,7 @@ static func loadout(state: Dictionary) -> Array:
 static func finish_night(state: Dictionary, inventory: Array, stolen: Array) -> void:
 	var kept: Array = []
 	for kind in inventory:
-		if not kind in ["", "torch", "camera", "chalk"]:
+		if not kind in ["", "torch", "crank", "camera", "chalk"]:
 			kept.append(kind)
 	state.bag = kept.slice(0, BAG_ROOM)
 	state.camera = inventory.has("camera")

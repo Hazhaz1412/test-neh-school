@@ -4,6 +4,7 @@ var model: Node3D
 var face: Node3D
 var phase := 0.0
 var ferocity := 0.0
+var owner_entry = null
 static var skin: ShaderMaterial
 static var darkness: StandardMaterial3D
 static var tooth: StandardMaterial3D

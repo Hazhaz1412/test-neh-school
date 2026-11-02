@@ -1,10 +1,10 @@
 {
 	"checks": 28,
-	"corners": 4,
+	"corners": 10,
 	"failures": 0,
 	"hits": 0,
-	"jump_inputs": 5,
-	"lan_seconds": 75.999999999997,
+	"jump_inputs": 13,
+	"lan_seconds": 75.0166666666637,
 	"moving_furniture": true,
-	"slide_inputs": 7
+	"slide_inputs": 5
 }

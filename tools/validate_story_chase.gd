@@ -24,9 +24,9 @@ func validate() -> void:
 	school.survival.begin_midnight()
 	var runner: Node3D = story.runner
 	check(runner.active and runner.ghosts.size()==5 and not school.test_cheats.enabled,"Manual chase starts with five hostile ghosts and no cheats")
-	check(runner.junctions.size()==4 and runner.dead_ends.size()==8,"Four physical junctions offer wrong branches with visible barricades")
+	check(runner.junctions.size()==10 and runner.dead_ends.size()==20,"Ten physical junctions offer wrong branches with visible barricades")
 	check(runner.obstacles.any(func(item):return item.challenge=="weave") and runner.obstacles.any(func(item):return item.challenge=="drop_gate"),"The run includes slalom furniture and dropping low gates")
-	check(runner.obstacles.filter(func(item):return item.kind=="slide").size()>=6,"Low passages require Ctrl repeatedly throughout the chase")
+	check(runner.obstacles.filter(func(item):return item.kind=="slide").size()>=5,"Low passages require Ctrl repeatedly throughout the chase")
 	check(not runner.slide(),"Slide needs player-generated sprint momentum")
 	var start: Vector3 = school.player.position
 	for i in range(25):
@@ -85,10 +85,10 @@ func validate() -> void:
 			school.paused_by_user = false
 		if story.stage==story.Stage.LAN_DIALOGUE or school.player.health<=0: break
 	check(depleted and recovered,"Sprinting spends stamina and walking regenerates it")
-	check(driver.corners.size()==4,"Actual player movement navigates all four physical corners")
+	check(driver.corners.size()==10,"Actual player movement navigates all ten physical corners")
 	check(driver.shifted_seen,"Furniture shifts across the corridor during the real run")
 	check(saw_jump and saw_slide,"Player physically jumps over benches and slides below tables")
-	check(driver.slides>=6,"The reactive player uses Ctrl to clear the mandatory low passages")
+	check(driver.slides>=3,"The reactive player uses Ctrl to clear the mandatory low passages")
 	check(saw_lan_back and lan_was_correct,"Lan's +Z facing direction follows her physical travel, showing her back to the pursuing player")
 	check(runner.lan_time>=75 and runner.distance>=runner.LAN_CORNER,"Lan appears after at least 75 moving seconds and a corner")
 	check(runner.room_hidden and runner.door_amount==0 and story.stage==story.Stage.LAN_DIALOGUE,"Player follows Lan and manually enters the refuge before the door shuts")

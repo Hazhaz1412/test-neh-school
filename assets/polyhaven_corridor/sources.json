@@ -1,0 +1,43 @@
+[
+ {
+  "model": "SchoolChair_01",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/SchoolChair_01/SchoolChair_01_1k.gltf",
+  "license": "CC0"
+ },
+ {
+  "model": "SchoolDesk_01",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/SchoolDesk_01/SchoolDesk_01_1k.gltf",
+  "license": "CC0"
+ },
+ {
+  "model": "metal_office_desk",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/metal_office_desk/metal_office_desk_1k.gltf",
+  "license": "CC0"
+ },
+ {
+  "model": "drawer_cabinet",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/drawer_cabinet/drawer_cabinet_1k.gltf",
+  "license": "CC0"
+ },
+ {
+  "model": "industrial_storage_cart",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/industrial_storage_cart/industrial_storage_cart_1k.gltf",
+  "license": "CC0"
+ },
+ {
+  "texture": "peeling_painted_wall",
+  "license": "CC0"
+ },
+ {
+  "texture": "floor_tiles_02",
+  "license": "CC0"
+ },
+ {
+  "texture": "damaged_plaster",
+  "license": "CC0"
+ },
+ {
+  "texture": "concrete_floor_painted",
+  "license": "CC0"
+ }
+]

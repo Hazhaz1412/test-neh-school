@@ -63,7 +63,7 @@ func validate() -> void:
 	p.select_item("torch")
 	p.flashlight.show()
 	p.tick_survival(10, false)
-	check(is_equal_approx(p.battery, 93.25), "Flashlight drains six point seven five percent per ten seconds, doubling its runtime")
+	check(is_equal_approx(p.battery, 96.625), "Flashlight drains 3.375 percent per ten seconds, doubling its runtime again")
 	p.select_item("camera")
 	check(not p.flashlight.visible, "Switching to camera stops flashlight consumption")
 	var environment: Environment = school.get_node("Atmosphere/MoonlitEnvironment").environment

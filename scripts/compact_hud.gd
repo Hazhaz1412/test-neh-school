@@ -52,12 +52,14 @@ func _draw() -> void:
 	var stamina_percent: float = p.stamina / p.MAX_STAMINA * 100
 	if stamina_percent < 97 or world.progression.runner.active:
 		meter(Vector2(60, height - 31), stamina_percent, Color(0.45, 0.60, 0.60), 105)
-	if p.flashlight.visible or p.selected_item() == "camera" or p.selected_item() == "battery" or p.battery < 20:
+	var crank: bool = p.selected_item() == "crank"
+	var charge: float = p.crank_charge if crank else p.battery
+	if crank or p.flashlight.visible or p.selected_item() == "camera" or p.selected_item() == "battery" or p.battery < 20:
 		var at := Vector2(width - 130, height - 44)
 		draw_rect(Rect2(at, Vector2(26, 12)), ink, false, 1)
 		draw_rect(Rect2(at + Vector2(26, 4), Vector2(3, 4)), ink)
-		draw_rect(Rect2(at + Vector2(3, 3), Vector2(20 * p.battery / 100, 6)), ink)
-		text_at(str(int(p.battery)), at + Vector2(38, 12))
+		draw_rect(Rect2(at + Vector2(3, 3), Vector2(20 * charge / 100, 6)), ink)
+		text_at(str(int(charge)), at + Vector2(38, 12))
 	if p.is_hidden():
 		meter(Vector2(width / 2 - 45, height - 91), p.breath, Color(0.46, 0.69, 0.78), 90)
 	if p.fear > 35:
@@ -85,6 +87,8 @@ func _draw() -> void:
 			var name_text: String = p.ITEM_NAMES[kind]
 			if kind == "camera":
 				name_text += " · 20%"
+			elif kind == "crank":
+				name_text += " · chuột phải để bấm sạc"
 			elif kind == "chalk":
 				name_text += " · giữ / thả"
 			text_at(name_text, start + Vector2(0, -9), ink, 13)
@@ -101,6 +105,10 @@ func _draw_item(kind: String, at: Vector2, color: Color) -> void:
 		"torch":
 			draw_rect(Rect2(at + Vector2(-3, -6), Vector2(6, 16)), color, false, 1.5)
 			draw_colored_polygon(PackedVector2Array([at + Vector2(-6, -11), at + Vector2(6, -11), at + Vector2(3, -5), at + Vector2(-3, -5)]), color)
+		"crank":
+			draw_rect(Rect2(at + Vector2(-6, -8), Vector2(12, 18)), color, false, 1.5)
+			draw_arc(at + Vector2(9, 1), 6, -1.4, 1.4, 10, color, 1.5)
+			draw_colored_polygon(PackedVector2Array([at + Vector2(-8, -12), at + Vector2(8, -12), at + Vector2(5, -8), at + Vector2(-5, -8)]), color)
 		"battery":
 			draw_rect(Rect2(at - Vector2(7, 10), Vector2(14, 20)), color, false, 1.5)
 			draw_rect(Rect2(at + Vector2(-3, -13), Vector2(6, 3)), color)

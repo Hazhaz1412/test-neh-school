@@ -3,11 +3,44 @@ extends Node3D
 const ORIGIN := Vector3(220, 0, 0)
 const LAN_AFTER_SECONDS := 75.0
 const RUN_SPEED := 10.5
-const WALK_SPEED := 6.0
+const WALK_SPEED := 7.0
 const LANE_WIDTH := 1.8
-const ROOM_DISTANCE := 820.0
-const LAN_CORNER := 680.0
-const PATH := [Vector3(0,0,0), Vector3(0,0,-160), Vector3(160,0,-160), Vector3(160,0,-340), Vector3(-20,0,-340), Vector3(-20,0,-480)]
+const SLIDE_MIN_SPEED := 5.0
+const SPRINT_DRAIN := 4.0
+const CATCH_SHOVE := 7.0
+const ROOM_DISTANCE := 900.0
+const LAN_CORNER := 730.0
+# Eleven short legs that keep turning both ways, so no stretch runs long enough to feel the same.
+const PATH := [Vector3(0,0,0), Vector3(0,0,-100), Vector3(90,0,-100), Vector3(90,0,-170), Vector3(30,0,-170), Vector3(30,0,-250), Vector3(140,0,-250), Vector3(140,0,-320), Vector3(70,0,-320), Vector3(70,0,-400), Vector3(-20,0,-400), Vector3(-20,0,-480)]
+const HAUNT := "res://assets/polyhaven_corridor/textures/%s_diff.jpg"
+# One look per leg: what the walls are, what the light does, what is written on them.
+const ZONES := [
+	{"wall": "rubble", "tint": Color(0.38,0.14,0.12), "floor": Color(0.26,0.19,0.17), "light": Color(1.0,0.14,0.085), "energy": 3.8, "word": "CHẠY"},
+	{"wall": "peeling_painted_wall", "tint": Color(0.62,0.42,0.36), "floor": Color(0.22,0.18,0.15), "light": Color(1.0,0.45,0.16), "energy": 3.2, "word": "10A6", "props": "class"},
+	{"wall": "floor_tiles_02", "tint": Color(0.45,0.58,0.58), "floor": Color(0.16,0.2,0.21), "light": Color(0.35,0.75,0.8), "energy": 2.8, "word": "SAO KHÔNG AI NGHE"},
+	{"wall": "rubble", "tint": Color(0.42,0.1,0.08), "floor": Color(0.24,0.1,0.09), "light": Color(1.0,0.1,0.06), "energy": 4.2, "word": "ĐỪNG DỪNG LẠI"},
+	{"wall": "damaged_plaster", "tint": Color(0.3,0.3,0.32), "floor": Color(0.1,0.1,0.11), "light": Color(0.5,0.55,0.7), "energy": 0.55, "word": "TẮT ĐÈN ĐI"},
+	{"wall": "peeling_painted_wall", "tint": Color(0.55,0.4,0.25), "floor": Color(0.2,0.14,0.1), "light": Color(1.0,0.6,0.25), "energy": 3.0, "word": "GIỎI LẮM", "props": "books"},
+	{"wall": "damaged_plaster", "tint": Color(0.5,0.1,0.08), "floor": Color(0.16,0.015,0.012), "light": Color(1.0,0.06,0.04), "energy": 4.4, "word": "TRẢ LẠI ĐÂY"},
+	{"wall": "floor_tiles_02", "tint": Color(0.3,0.38,0.55), "floor": Color(0.1,0.13,0.2), "light": Color(0.3,0.45,1.0), "energy": 3.0, "word": "EM Ở ĐÂY"},
+	{"wall": "peeling_painted_wall", "tint": Color(0.42,0.55,0.3), "floor": Color(0.14,0.18,0.1), "light": Color(0.5,0.95,0.35), "energy": 2.8, "word": "KHÔNG AI CHƠI VỚI NÓ", "props": "class"},
+	{"wall": "damaged_plaster", "tint": Color(0.26,0.24,0.26), "floor": Color(0.08,0.08,0.09), "light": Color(1.0,0.2,0.15), "energy": 0.7, "word": "NÓ THẤY RỒI"},
+	{"wall": "rubble", "tint": Color(0.46,0.13,0.1), "floor": Color(0.26,0.15,0.13), "light": Color(1.0,0.14,0.085), "energy": 4.6, "word": "SẮP TỚI RỒI"},
+]
+# Metres along the route. The first legs teach, later ones chain moves with less room to breathe.
+const SCHEDULE := [
+	[30.0,"lane_right"],[52.0,"jump"],[74.0,"slide"],
+	[118.0,"row_left"],[138.0,"door_right"],[160.0,"topple"],
+	[206.0,"pit"],[224.0,"swing"],[244.0,"drop_gate"],
+	[278.0,"weave"],[302.0,"ceiling"],
+	[336.0,"squeeze"],[354.0,"jump"],[372.0,"ambush_right"],
+	[416.0,"row_right"],[434.0,"pit"],[450.0,"door_left"],[466.0,"swing"],[480.0,"jump"],[491.0,"slide"],
+	[526.0,"topple"],[544.0,"ambush_left"],[560.0,"drop_gate"],
+	[596.0,"squeeze"],[612.0,"ceiling"],[628.0,"weave"],
+	[666.0,"pit"],[682.0,"swing"],[698.0,"row_centre"],[712.0,"door_right"],
+	[746.0,"jump"],[766.0,"ambush_right"],[786.0,"topple"],[800.0,"lane_left"],
+	[836.0,"slide"],[856.0,"pit"],[872.0,"row_left"],
+]
 var story: Node3D
 var world: Node3D
 var active := false
@@ -46,6 +79,11 @@ var door_body: StaticBody3D
 var door_amount := 0.0
 var room_hide_time := 0.0
 var music: AudioStreamPlayer
+var music_bed: AudioStreamPlayer
+var hazards: RefCounted
+var scares: Node
+var zone_index := 0
+var leg_starts: Array[float] = []
 var chase_steps: AudioStreamPlayer3D
 var snarls: AudioStreamPlayer3D
 var breathing: AudioStreamPlayer
@@ -69,10 +107,13 @@ func setup(owner_story: Node3D) -> void:
 	world = story.world
 	position = ORIGIN
 	name = "EndlessCorridor"
-	music = AudioStreamPlayer.new()
-	music.stream = story.loop_wav("res://assets/audio/corridor_chase.wav")
-	music.volume_db = -15
-	add_child(music)
+	# The two tracks share a tempo and a length ratio, so they run as layers of one piece.
+	music_bed = _music_layer("res://assets/music/dark_ambience_gabovitch.ogg", -12.0)
+	music = _music_layer("res://assets/music/chase_wolfgang.ogg", -22.0)
+	hazards = preload("res://scripts/corridor_hazards.gd").new(self)
+	scares = preload("res://scripts/corridor_scares.gd").new()
+	add_child(scares)
+	scares.setup(self)
 	chase_steps = make_loop("res://assets/audio/ghost_step.wav", -8)
 	snarls = AudioStreamPlayer3D.new()
 	snarls.stream = load("res://assets/audio/pursuer_snarl.wav")
@@ -89,6 +130,15 @@ func setup(owner_story: Node3D) -> void:
 	drag.volume_db = -7
 	add_child(drag)
 	reset()
+
+func _music_layer(path: String, volume: float) -> AudioStreamPlayer:
+	var player := AudioStreamPlayer.new()
+	var stream: AudioStreamOggVorbis = load(path).duplicate()
+	stream.loop = true
+	player.stream = stream
+	player.volume_db = volume
+	add_child(player)
+	return player
 
 func make_loop(path: String, volume: float) -> AudioStreamPlayer3D:
 	var audio := AudioStreamPlayer3D.new()
@@ -164,8 +214,11 @@ func route_projection(at: Vector3) -> Vector2:
 	return result
 
 func prop(parent: Node3D, asset: String, at: Vector3, size: Vector3, rotation_y := 0.0) -> Node3D:
-	var visual: Node3D = load("res://assets/kenney_furniture/"+asset+".glb").instantiate()
-	visual.set_meta("source_asset","res://assets/kenney_furniture/"+asset+".glb")
+	var source: String = "res://assets/kenney_furniture/"+asset+".glb"
+	if ResourceLoader.exists("res://assets/polyhaven_corridor/%s/%s.gltf" % [asset,asset]):
+		source = "res://assets/polyhaven_corridor/%s/%s.gltf" % [asset,asset]
+	var visual: Node3D = load(source).instantiate()
+	visual.set_meta("source_asset",source)
 	parent.add_child(visual)
 	if asset=="table":
 		for part in visual.find_children("*","MeshInstance3D",true,false): part.mesh = _open_table_mesh(part.mesh)
@@ -209,43 +262,103 @@ func _open_table_mesh(source: ArrayMesh) -> ArrayMesh:
 	open_table_meshes[source] = result
 	return result
 
+func _zone_wall(zone: Dictionary) -> StandardMaterial3D:
+	var wall := material(zone.tint)
+	wall.albedo_texture = load("res://assets/polyhaven_horror/rubble_diff_1k.jpg" if zone.wall=="rubble" else HAUNT % zone.wall)
+	wall.uv1_triplanar = true
+	wall.uv1_scale = Vector3.ONE*(0.45 if zone.wall=="rubble" else 0.32)
+	return wall
+
+func _dress_leg(segment: Node3D, length: float, zone: Dictionary, index: int) -> void:
+	var dice := RandomNumberGenerator.new()
+	dice.seed = 4100+index
+	var blood: Texture2D = load("res://assets/horror_props/blood_splatter.png")
+	var z := 8.0
+	while z < length-8.0:
+		var side := 1.0 if dice.randf()<0.5 else -1.0
+		var kind: String = zone.get("props","")
+		if kind=="books":
+			prop(segment,"bookcaseOpen",Vector3(side*3.25,0,-z),Vector3(0.5,2.5,2.2))
+		elif kind=="class":
+			prop(segment,"SchoolDesk_01" if dice.randf()<0.5 else "SchoolChair_01",Vector3(side*3.15,0,-z),Vector3(0.6,0.8,0.8),dice.randf()*TAU)
+		var stain := Sprite3D.new()
+		stain.texture = blood
+		stain.pixel_size = dice.randf_range(0.004,0.009)
+		stain.modulate = Color(0.55,0.03,0.02)
+		stain.rotation.y = -side*PI*0.5
+		stain.position = Vector3(side*3.53,dice.randf_range(0.6,2.4),-z-3)
+		segment.add_child(stain)
+		z += dice.randf_range(9.0,15.0)
+	var word := Label3D.new()
+	word.text = zone.word
+	word.font_size = 110
+	word.pixel_size = 0.0075
+	word.modulate = Color(0.75,0.05,0.03)
+	word.shaded = true
+	word.rotation.y = PI*0.5
+	word.position = Vector3(-3.53,1.9,-minf(26.0,length*0.4))
+	segment.add_child(word)
+
+func _turn_sign(at: float, outgoing: Vector3, incoming: Vector3) -> void:
+	var frame := route_frame(at-11)
+	var right: bool = incoming.cross(outgoing).y<0
+	var sign := Label3D.new()
+	sign.text = "LỐI THOÁT →" if right else "← LỐI THOÁT"
+	sign.font_size = 72
+	sign.pixel_size = 0.0065
+	sign.modulate = Color(0.35,1.0,0.5)
+	sign.outline_size = 8
+	sign.transform = frame
+	sign.position = frame.origin+Vector3.UP*3.0
+	add_child(sign)
+
+func zone_at(meters: float) -> int:
+	for i in range(leg_starts.size()-1,-1,-1):
+		if meters>=leg_starts[i]: return i
+	return 0
+
 func build() -> void:
 	if built: return
 	built = true
-	var wall := material(Color(0.38, 0.14, 0.12))
-	wall.albedo_texture = load("res://assets/polyhaven_horror/rubble_diff_1k.jpg")
-	wall.uv1_triplanar = true
-	wall.uv1_scale = Vector3(0.45,0.45,0.45)
-	var floor_mat := material(Color(0.26, 0.19, 0.17))
 	var lamp_mat := material(Color(0.95, 0.08, 0.025), true)
 	var door_mat := material(Color(0.13,0.05,0.035))
 	var offset := 0.0
+	var ceiling_mat := material(Color(0.2,0.14,0.13))
 	for i in range(PATH.size()-1):
 		var length: float = PATH[i].distance_to(PATH[i+1])
+		var zone: Dictionary = ZONES[i]
+		leg_starts.append(offset)
+		var wall := _zone_wall(zone)
+		var floor_mat := material(zone.floor)
+		floor_mat.roughness = 0.25 if i==6 else 0.9
 		var segment := Node3D.new()
 		add_child(segment)
 		segment.transform = route_frame(offset+0.01)
 		segment.position = PATH[i]
 		box(segment, Vector3(0,-0.12,-length/2), Vector3(7.4,0.2,length+7.4), floor_mat, true)
-		box(segment, Vector3(0,3.5,-length/2), Vector3(7.4,0.2,length+7.4), wall)
+		box(segment, Vector3(0,3.5,-length/2), Vector3(7.4,0.2,length+7.4), ceiling_mat)
 		var from := 3.7 if i > 0 else -3.7
 		var to := length-3.7
 		for side in [-1,1]:
 			if i == PATH.size()-2 and side == -1:
 				to = length-4.1
 			box(segment, Vector3(side*3.65,1.7,-(from+to)/2), Vector3(0.2,3.5,to-from), wall, true)
+		if i == PATH.size()-2:
+			box(segment, Vector3(0,1.7,-length-3.7), Vector3(7.4,3.5,0.2), wall, true)
 		for z in range(10, int(length)-5, 15):
 			box(segment, Vector3(0,3.35,-z), Vector3(1.7,0.05,0.22), lamp_mat)
 			for side in [-1,1]: box(segment, Vector3(side*3.52,1.35,-z-4), Vector3(0.08,2.7,1.8), door_mat)
+		_dress_leg(segment,length,zone,i)
 		if i > 0:
-			# Each corner is now a real junction: two blocked branches plus the
-			# continuing path. Blood prints bend into the continuing corridor.
+			# Each corner is a real junction: two blocked branches plus the continuing
+			# path. Blood prints bend into it, and early corners also carry a sign.
 			var incoming: Vector3 = (PATH[i]-PATH[i-1]).normalized()
 			var outgoing: Vector3 = (PATH[i+1]-PATH[i]).normalized()
 			junctions.append({"position":PATH[i],"distance":offset,"correct":outgoing})
 			for direction in [incoming, -outgoing]:
-				_build_dead_end(PATH[i],direction,wall,floor_mat,lamp_mat)
+				_build_dead_end(PATH[i],direction,_zone_wall(ZONES[i-1]),floor_mat,lamp_mat)
 			_build_route_marks(offset)
+			if i <= 5: _turn_sign(offset,outgoing,incoming)
 		offset += length
 	for i in range(4):
 		var lamp := OmniLight3D.new()
@@ -254,33 +367,39 @@ func build() -> void:
 		lamp.omni_range = 22
 		add_child(lamp)
 		corridor_lights.append(lamp)
-	var at := 60.0
-	var index := 0
-	while at < 770:
-		if [160.0,320.0,500.0,680.0].any(func(corner): return absf(at-corner)<18):
-			at += 32
-			continue
-		build_obstacle(at, index)
-		index += 1
-		at += 32
+	for index in range(SCHEDULE.size()):
+		build_obstacle(SCHEDULE[index][0], SCHEDULE[index][1], index)
 	for i in range(5):
 		var ghost := preload("res://scripts/chase_apparition.gd").new()
 		add_child(ghost)
 		ghosts.append(ghost)
+	hazards.ambusher = preload("res://scripts/chase_apparition.gd").new()
+	add_child(hazards.ambusher)
 	lan = preload("res://scripts/humanoid_model.gd").new()
 	lan.variant = "Casual_Female"
 	lan.target_height = 1.68
 	lan.shirt_color = Color(0.38,0.29,0.48)
 	add_child(lan)
-	_build_room(wall, floor_mat)
+	_build_room(_zone_wall(ZONES[-1]), material(ZONES[-1].floor))
 
-func build_obstacle(at: float, index: int) -> void:
-	var kind: String = ["lane_right","jump","slide","weave","lane_left","drop_gate","jump","slide"][index%8]
-	if kind == "weave":
-		_build_hazard(at-5,"lane_right",index,"weave")
-		_build_hazard(at+9,"lane_left",index,"weave")
-		return
-	_build_hazard(at,"slide" if kind=="drop_gate" else kind,index,kind)
+func build_obstacle(at: float, kind: String, index: int) -> void:
+	match kind:
+		"weave":
+			_build_hazard(at-5,"lane_right",index,"weave")
+			_build_hazard(at+9,"lane_left",index,"weave")
+		"row_left": hazards.desk_row(at,-2.2,index)
+		"row_right": hazards.desk_row(at,2.2,index)
+		"row_centre": hazards.desk_row(at,0.0,index)
+		"squeeze": hazards.desk_row(at,0.0,index,true)
+		"door_left": hazards.door(at,-1.0,index)
+		"door_right": hazards.door(at,1.0,index)
+		"topple": hazards.topple(at,index)
+		"ceiling": hazards.ceiling(at,index)
+		"pit": hazards.pit(at,index)
+		"swing": hazards.swing(at,index)
+		"ambush_left": hazards.ambush(at,-1.0,index)
+		"ambush_right": hazards.ambush(at,1.0,index)
+		_: _build_hazard(at,"slide" if kind=="drop_gate" else kind,index,kind)
 
 func _build_hazard(at: float, kind: String, index: int, challenge: String) -> void:
 	var root := AnimatableBody3D.new()
@@ -360,11 +479,6 @@ func _build_route_marks(at: float) -> void:
 		for side in [-1,1]:
 			var footprint := box(self,frame.origin+frame.basis.x*side*.22+Vector3(0,.012,0),Vector3(.16,.008,.36),blood)
 			footprint.rotation.y = frame.basis.get_euler().y+side*.14
-	# A torn cloth catches the light on the open route; blocked branches
-	# have intact dusty floors and furniture piled across their far ends.
-	var frame := route_frame(at+10)
-	var rag := box(self,frame.origin+Vector3.UP*2.8,Vector3(.45,.65,.025),material(Color(.58,.33,.21)))
-	rag.rotation.y = frame.basis.get_euler().y
 
 func _trail_frame(meters: float) -> Transform3D:
 	if trail.size()<2: return route_frame(meters)
@@ -439,6 +553,7 @@ func start() -> void:
 		var frame := route_frame(ghost_distance-i*0.95)
 		ghosts[i].appear(ORIGIN+frame.origin+frame.basis.x*(i-2)*0.65+Vector3.UP*0.05,world.player.global_position)
 	_update_lights()
+	music_bed.play()
 	music.play()
 	chase_steps.play()
 	breathing.play()
@@ -477,7 +592,10 @@ func reset() -> void:
 	travel_distance = 12
 	held_keys.clear()
 	for ghost in ghosts: ghost.vanish()
+	if built: hazards.reset()
+	scares.hide_all()
 	for obstacle in obstacles:
+		if obstacle.has("custom"): continue
 		obstacle.passed = false
 		obstacle.kind = obstacle.initial_kind
 		obstacle.shifted = false
@@ -490,7 +608,7 @@ func reset() -> void:
 	if lan != null: lan.hide()
 	if hinge != null: hinge.rotation.y = 0
 	if table != null: table.get_node("Interaction").collision_layer = 0
-	for audio in [music,chase_steps,snarls,breathing,drag]:
+	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]:
 		if audio != null: audio.stop()
 	hide()
 
@@ -503,7 +621,7 @@ func jump() -> bool:
 	return true
 
 func slide() -> bool:
-	if momentum<0.35 or speed<7.5 or not world.player.is_on_floor() or slide_remaining>0 or slide_cooldown>0 or entering_room: return false
+	if speed<SLIDE_MIN_SPEED or not world.player.is_on_floor() or slide_remaining>0 or slide_cooldown>0 or entering_room: return false
 	slide_remaining = 0.95
 	slide_cooldown = 1.15
 	world.soundscape.cue("paper",-18)
@@ -527,11 +645,14 @@ func restore_pose() -> void:
 	p.camera.position = Vector3(0,1.62,0)
 	p.camera.fov = 73
 	p.camera.far = 400
+	p.camera.h_offset = 0
+	p.camera.v_offset = 0
 	p.camera.rotation = Vector3.ZERO
 	p.rotation = Vector3.ZERO
 	p.velocity = Vector3.ZERO
 
 func _furniture(delta: float) -> void:
+	hazards.tick(delta)
 	for obstacle in obstacles:
 		if distance>float(obstacle.distance)+2: obstacle.passed = true
 		if not obstacle.moving or obstacle.passed: continue
@@ -563,9 +684,9 @@ func tick(delta: float) -> void:
 	var direction := Vector2(float(held(KEY_D))-float(held(KEY_A)),float(held(KEY_S))-float(held(KEY_W)))
 	var moving := direction.length()>0
 	if p.stamina<=0.1: p.sprint_exhausted = true
-	if p.stamina>30: p.sprint_exhausted = false
+	if p.stamina>16: p.sprint_exhausted = false
 	var sprinting: bool = held(KEY_SHIFT) and moving and not p.sprint_exhausted and not entering_room
-	p.stamina = clampf(p.stamina+(-9.0 if sprinting else 11.0)*delta,0,p.MAX_STAMINA)
+	p.stamina = clampf(p.stamina+(-SPRINT_DRAIN if sprinting else 11.0)*delta,0,p.MAX_STAMINA)
 	var wanted := RUN_SPEED if sprinting else WALK_SPEED
 	if entering_room: wanted = 4.5
 	if slide_remaining>0: wanted = maxf(wanted,10)
@@ -601,7 +722,7 @@ func tick(delta: float) -> void:
 		var body: Object = collision.get_collider()
 		if body is Node and body.has_meta("chase_hazard") and collision.get_normal().y < 0.65: obstacle_hit()
 	p.camera.position.y = 0.52 if slide_remaining>0 else 1.62+sin(clock*17)*minf(1,speed/10)*0.035
-	p.camera.fov = move_toward(p.camera.fov,85 if sprinting else 75,delta*22)
+	p.camera.fov = move_toward(p.camera.fov,(85 if sprinting else 75)+clampf(1-ghost_gap/10,0,1)*14,delta*22)
 	p.startle = maxf(0,p.startle-delta*1.5)
 	if elapsed>=LAN_AFTER_SECONDS and distance>=LAN_CORNER and story.stage==story.Stage.CORRIDOR_RUN:
 		story.stage = story.Stage.FOLLOW_LAN
@@ -616,6 +737,7 @@ func tick(delta: float) -> void:
 		world.notify("Lan: Nhanh lên! Theo tôi!")
 	_tick_lan(delta)
 	_tick_ghosts(delta)
+	scares.tick(delta)
 	_update_lights()
 	chase_steps.position = _trail_frame(ghost_distance).origin+Vector3.UP*1.2
 	chase_steps.pitch_scale = clampf(1.4+(14-ghost_gap)*0.02,.75,1.8)
@@ -626,20 +748,33 @@ func tick(delta: float) -> void:
 		last_snarl = lerpf(2.2,5.5,clampf(ghost_gap/16,0,1))
 		snarls.play()
 	breathing.volume_db = lerpf(-28,-13,1-p.stamina/p.MAX_STAMINA)
-	music.volume_db = lerpf(-16,-10,clampf(1-ghost_gap/16,0,1))
+	# The chase layer climbs with the route and with how close they are; the bed thins out.
+	var dread := clampf(maxf(1-ghost_gap/14,distance/ROOM_DISTANCE),0,1)
+	music.volume_db = move_toward(music.volume_db,lerpf(-19,-7,dread),delta*18)
+	music_bed.volume_db = move_toward(music_bed.volume_db,lerpf(-11,-17,dread),delta*18)
 
 func _update_lights() -> void:
 	for obstacle in obstacles:
 		if obstacle.has("gap_light"): obstacle.gap_light.visible = active and absf(obstacle.distance-distance)<24
 	for i in range(corridor_lights.size()):
 		var frame := route_frame(distance+[-16.0,0.0,16.0,30.0][i])
+		var zone: Dictionary = ZONES[zone_at(distance+[-16.0,0.0,16.0,30.0][i])]
 		corridor_lights[i].position = frame.origin+Vector3.UP*2.8
-		corridor_lights[i].light_energy = 3.5+sin(clock*13+i)*0.25
+		corridor_lights[i].light_color = zone.light
+		# Dark legs stutter; the rest only tremble.
+		var stutter := 1.0 if zone.energy>1.0 or sin(clock*23+i*2)>-0.2 else 5.0
+		corridor_lights[i].light_energy = 0.0 if scares.dark_left>0 else zone.energy*stutter+sin(clock*13+i)*0.25
+
+# They hold close without ever being able to outrun a clean sprint for long: far behind they
+# gain, right on the heels they ease off, so a stumble is terrifying rather than fatal.
+func _ghost_speed() -> float:
+	if ghost_gap>11: return 10.9
+	return 9.6 if ghost_gap>6 else 8.4
 
 func _tick_ghosts(delta: float) -> void:
 	var p: CharacterBody3D = world.player
 	if clock>2.5 and not entering_room:
-		ghost_distance = minf(travel_distance-0.8,ghost_distance+(9.3 if ghost_gap>15 else 7.4)*delta)
+		ghost_distance = minf(travel_distance-0.8,ghost_distance+_ghost_speed()*delta)
 	ghost_gap = travel_distance-ghost_distance
 	for i in range(ghosts.size()):
 		var frame := _trail_frame(ghost_distance-i*0.95)
@@ -651,14 +786,18 @@ func _tick_ghosts(delta: float) -> void:
 		p.invulnerable_time = 0
 		p.take_damage(35)
 		p.startle = 1
-		attack_clock = 1.0
+		attack_clock = 2.5
+		# Torn free: the blow costs health, and the shove back buys one more chance to run.
+		ghost_distance -= CATCH_SHOVE
+		scares.fire([0,"scream"])
 
 # Test shortcut: F10 during the red corridor goes straight to Lan's room.
 func skip_to_refuge() -> void:
 	active = false
 	restore_pose()
-	for audio in [chase_steps, snarls, breathing, music]:
+	for audio in [chase_steps, snarls, breathing, music, music_bed]:
 		audio.stop()
+	scares.hide_all()
 	room_hidden = true
 	world.player.global_position = refuge.to_global(Vector3(-5, 0.05, 1.7))
 	story.enter_lan_room()
@@ -701,6 +840,8 @@ func _tick_lan(delta: float) -> void:
 			story.stage = story.Stage.ROOM_HIDE
 			if music.playing:
 				music.stop()
+				music_bed.stop()
+				scares.hide_all()
 				world.soundscape.cue("door",-8)
 			if room_hide_time>=2.5:
 				active = false
@@ -710,7 +851,7 @@ func _tick_lan(delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	var paused: bool = not world.simulation_active()
-	for audio in [music,chase_steps,snarls,breathing,drag]: audio.stream_paused = paused
+	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]: audio.stream_paused = paused
 	if paused:
 		for ghost in ghosts: ghost.model.animation.speed_scale = 0
 		if lan != null: lan.animation.speed_scale = 0
@@ -750,7 +891,7 @@ func look(relative: Vector2) -> void:
 	world.player.camera.rotation.x = clampf(world.player.camera.rotation.x-relative.y*world.player.LOOK_SENSITIVITY,-1.35,1.35)
 
 func _exit_tree() -> void:
-	for audio in [music,chase_steps,snarls,breathing,drag]:
+	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]:
 		if audio!=null:
 			audio.stream_paused = false
 			audio.stop()

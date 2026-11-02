@@ -161,3 +161,11 @@ Gaaglu → `thptneh.edu.vn` → Văn bản → danh sách dự thi cho số đ�
 ## Tiền truyện
 
 F5 giờ vào `scenes/home.tscn` lúc 19:40: Peter (nhóm điều tra cùng Minh, Khoa) thuê số 14 Hẻm 31 để theo dõi Trường NEH, không biết đây là nhà cũ của An (`registry.js`). Lướt Làng Ta trên điện thoại, chốt với nhóm, ra cửa, rồi mới vào cảnh mở đầu Đêm 0. Bài đăng dùng chung ở `data/social_posts.json` cho điện thoại và web `langta.vn`.
+
+## Hành lang đỏ
+
+Đường 900 m, 11 đoạn rẽ cả hai phía (`PATH`), mỗi đoạn một vùng (`ZONES`), vật cản theo lịch `SCHEDULE` trong `endless_corridor.gd`. Vật cản mới ở `corridor_hazards.gd`, nhịp hù theo mét ở `corridor_scares.gd` (`BEATS`). Nhạc hai lớp cùng nhịp 150 BPM, lớp đuổi to dần theo quãng đường và độ gần của ma. `tools/validate_corridor_run.gd` cho autopilot chạy trọn đường bằng vật lý thật (cần `--fixed-fps 60`).
+
+## Đèn
+
+Sau Đêm 0 người chơi chỉ có đèn bấm tay (`crank`, 10 giây, chuột phải sạc 9–14%, sáng 90%, mỗi lần bấm gây tiếng động bán kính 9). Đèn pin 300$ ở Tiệm Không Tên: sáng 120%, 296 giây, dùng chung pin với máy ảnh, không chiếm ô túi. Đèn bấm tay có thanh sạc riêng, không nạp cho máy ảnh.

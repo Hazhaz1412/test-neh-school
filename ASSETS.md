@@ -161,3 +161,9 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 ## Nhà của Peter
 
 `assets/home/`: giường, tủ lạnh, bồn cầu, chậu rửa từ Poly Pizza, CC0, URL và mã băm ở `assets/town_sources.json`. Sofa, bàn ăn, ghế, bếp, TV, lò vi sóng từ Poly Haven (CC0), nội thất còn lại từ Kenney (CC0). `hub/assets/gaaglu.png` do `tools/build_gaaglu_icon.py` vẽ. `phone_buzz.wav`, `phone_ding.wav` do `tools/build_town_audio.py` tổng hợp.
+
+## Hành lang đỏ
+
+- **Nhạc (CC0):** `assets/music/chase_wolfgang.ogg` ("Chase!" của Wolfgang_) và `dark_ambience_gabovitch.ogg` ("Dark Ambience Loop" của Iwan Gabovitch). Nguồn ở `assets/music/corridor_sources.json`.
+- **Tiếng hù (CC0):** `assets/audio/corridor/` cắt từ "Horror Hit Soundpack 1" của psychhead_.
+- **Model và texture (CC0, Poly Haven):** `assets/polyhaven_corridor/`, nguồn ở `sources.json` cùng thư mục.

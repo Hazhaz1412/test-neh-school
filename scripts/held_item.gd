@@ -36,7 +36,7 @@ static func torch_model() -> Node3D:
 static func prop(kind: String) -> MeshInstance3D:
 	var visual := MeshInstance3D.new()
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = {"battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73), "salt_gun": Color(0.34, 0.30, 0.26), "medal": Color(0.86, 0.68, 0.24)}[kind]
+	mat.albedo_color = {"battery": Color(0.68, 0.57, 0.22), "medicine": Color(0.48, 0.66, 0.56), "chalk": Color(0.80, 0.80, 0.73), "salt_gun": Color(0.34, 0.30, 0.26), "medal": Color(0.86, 0.68, 0.24), "crank": Color(0.32, 0.36, 0.26)}[kind]
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	visual.material_override = mat
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -46,8 +46,8 @@ static func prop(kind: String) -> MeshInstance3D:
 		visual.mesh = mesh
 	else:
 		var mesh := CylinderMesh.new()
-		mesh.height = {"battery": 0.10, "chalk": 0.12, "salt_gun": 0.34, "medal": 0.012}[kind]
-		mesh.top_radius = {"battery": 0.021, "chalk": 0.009, "salt_gun": 0.034, "medal": 0.05}[kind]
+		mesh.height = {"battery": 0.10, "chalk": 0.12, "salt_gun": 0.34, "medal": 0.012, "crank": 0.17}[kind]
+		mesh.top_radius = {"battery": 0.021, "chalk": 0.009, "salt_gun": 0.034, "medal": 0.05, "crank": 0.042}[kind]
 		mesh.bottom_radius = mesh.top_radius
 		mesh.radial_segments = 12
 		visual.mesh = mesh
@@ -60,7 +60,7 @@ func _ready() -> void:
 	models["camera"].rotation.y = -0.28
 	models["torch"] = torch_model()
 	player.flashlight.light_cull_mask &= ~HELD_LAYER
-	for kind in ["battery", "medicine", "chalk", "salt_gun", "medal"]:
+	for kind in ["battery", "medicine", "chalk", "salt_gun", "medal", "crank"]:
 		models[kind] = prop(kind)
 	for model in models.values():
 		add_child(model)
@@ -89,7 +89,7 @@ func _process(delta: float) -> void:
 	if not world.simulation_active():
 		return
 	equip = maxf(0, equip - delta * 7)
-	var recoil: float = world.camera_flash.intensity if kind == "camera" else 0.0
+	var recoil: float = world.camera_flash.intensity if kind == "camera" else (player.crank_kick if kind == "crank" else 0.0)
 	position = Vector3(0.25, -0.27 - equip * 0.18 - recoil * 0.035, -0.52 + recoil * 0.06)
 	var charge: float = player.chalk_charge_fraction() if kind == "chalk" and player.chalk_charging else 0.0
 	position += Vector3(0.03, -0.02, 0.10) * charge

@@ -40,7 +40,12 @@ func run() -> void:
 	state.money = 999
 	for i in range(3): Gear.buy(state, "chalk")
 	check(Gear.buy(state, "chalk") == "Túi đầy rồi.", "the bag has a limit")
-	check(Gear.loadout(state)[0] == "torch" and Gear.loadout(state).size() == 6, "the torch is always first")
+	check(Gear.loadout(state)[0] == "crank" and Gear.loadout(state).size() == 6, "a light is always first, the hand torch by default")
+	state.money = 300
+	check(Gear.buy(state, "torch").is_empty() and state.money == 0 and state.bag.size() == Gear.BAG_ROOM, "the torch costs 300$ and no bag slot")
+	check(Gear.loadout(state)[0] == "torch" and not Gear.buy(state, "torch").is_empty(), "it replaces the hand torch and sells once")
+	state.torch = false
+	state.money = 999
 	Gear.finish_night(state, ["torch", "", "chalk", "", "", ""], ["camera"])
 	check(not state.camera and state.pawned.has("camera"), "what it took shows up at the shop")
 	var before: int = state.money
@@ -55,6 +60,42 @@ func run() -> void:
 	await wait_for(func(): return school.envy.demon != null, 3.0)
 	await physics_frame
 	var player: CharacterBody3D = school.player
+	check(player.selected_item() == "crank", "without the shop torch the night starts with the hand torch")
+	check(absf(player.TORCH_ENERGY / 1.15 - 1.2) < 0.001 and absf(player.CRANK_ENERGY / 1.15 - 0.9) < 0.001, "brightness is 120% and 90% of the old torch")
+	check(absf(100.0 / player.FLASHLIGHT_DRAIN - 296.3) < 0.1 and 100.0 / player.CRANK_DRAIN == 10.0, "the torch lasts twice as long, the hand torch 10 s")
+	var lows := 100
+	var highs := 0
+	var heard_at := 0
+	school.envy.set_physics_process(false)
+	school.envy.demon.fall_back(school.envy.demon.global_position, 0.0)
+	for i in range(60):
+		player.crank_charge = 0.0
+		player.invulnerable_time = 0.0
+		player.pump_crank()
+		lows = mini(lows, int(player.crank_charge))
+		highs = maxi(highs, int(player.crank_charge))
+	check(lows == 9 and highs == 14, "a squeeze charges 9 to 14%%: %d-%d" % [lows, highs])
+	var demon_probe: Node = school.envy.demon
+	demon_probe.state = demon_probe.State.ROAM
+	demon_probe.has_area = false
+	demon_probe.global_position = player.global_position + Vector3(6, 0, 0)
+	player.pump_crank()
+	check(demon_probe.area.distance_to(player.global_position) < 1.0, "the demon hears a squeeze close by")
+	demon_probe.area = Vector3(999, 0, 0)
+	demon_probe.state = demon_probe.State.ROAM
+	demon_probe.global_position = player.global_position + Vector3(30, 0, 0)
+	player.pump_crank()
+	check(demon_probe.area.x == 999.0, "but not from across the school")
+	player.select_item("crank")
+	player.crank_charge = 100.0
+	player.use_selected_item()
+	check(player.flashlight.visible and player.flashlight.light_energy >= 1.0, "it switches on")
+	for i in range(125): player.tick_survival(1.0 / 12.0, false)
+	check(not player.flashlight.visible and player.crank_charge == 0.0, "it dies after 10 seconds")
+	player.pump_crank()
+	check(player.flashlight.visible and player.crank_charge >= 9.0, "a squeeze brings it back")
+	player.use_selected_item()
+	school.envy.set_physics_process(true)
 	school.envy.set_physics_process(false)
 	var demon: Node = grab(school, ["torch", "camera", "medal", "", "", ""])
 	check(player.seized and demon.state == demon.State.GRAB, "it lifts the player")

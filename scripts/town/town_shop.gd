@@ -88,7 +88,10 @@ func refresh() -> void:
 		child.queue_free()
 	money.text = "%d$ · Túi %d/%d" % [gear.money, gear.bag.size(), Gear.BAG_ROOM]
 	for entry in Gear.STOCK:
-		_row(entry.name, entry.text, "Mua · %d$" % entry.price, _buy.bind(entry.kind))
+		if entry.kind == "torch" and gear.torch:
+			_row(entry.name, "Đang dùng.", "Đã có", func(): pass)
+		else:
+			_row(entry.name, entry.text, "Mua · %d$" % entry.price, _buy.bind(entry.kind))
 	var names := {"medal": "Huy chương mạ", "camera": "Máy ảnh"}
 	for kind in gear.pawned:
 		_row("%s của cậu" % names.get(kind, kind), "Sáng nay có kẻ đem cầm ở đây. Đừng hỏi là ai.", "Chuộc · %d$" % Gear.redeem_price(kind), _redeem.bind(kind))

@@ -4,7 +4,15 @@ const WALK_SPEED := 3.0
 const RUN_SPEED := 5.2
 const LOOK_SENSITIVITY := 0.0022
 const MAX_STAMINA := 130.0
-const FLASHLIGHT_DRAIN := 0.675
+const FLASHLIGHT_DRAIN := 0.3375
+const TORCH_ENERGY := 1.38
+const CRANK_ENERGY := 1.035
+const CRANK_DRAIN := 10.0
+const CRANK_PUMP_MIN := 9
+const CRANK_PUMP_MAX := 14
+# The price of free light: every squeeze can be heard, so it cannot be spammed beside the demon.
+const CRANK_NOISE := 9.0
+const CRANK_LOW := 20.0
 signal damaged(amount: float)
 signal died
 var health := 100.0
@@ -24,7 +32,7 @@ const PHOTO_COST := 20.0
 const BATTERY_RECHARGE := 50.0
 const CHALK_CHARGE_SECONDS := 1.5
 const CHALK_MAX_RANGE_MULTIPLIER := 5.0
-const ITEM_NAMES := {"torch": "Đèn pin", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "salt_gun": "Súng muối", "medal": "Huy chương mạ"}
+const ITEM_NAMES := {"torch": "Đèn pin", "crank": "Đèn bấm tay", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "salt_gun": "Súng muối", "medal": "Huy chương mạ"}
 var inventory: Array[String] = ["torch", "camera", "chalk", "chalk", "chalk", ""]
 var selected_slot := 0
 var chalk_charging := false
@@ -44,6 +52,9 @@ var combat: Node
 var held_visual: Node3D
 var holding_breath := false
 var seized := false
+var crank_charge := 100.0
+var crank_on := false
+var crank_kick := 0.0
 var stamina_care := 1.0
 var breath_exhausted := false
 var sprint_exhausted := false
@@ -60,6 +71,7 @@ func _ready() -> void:
 	held_visual.name = "HeldItem"
 	held_visual.player = self
 	camera.add_child(held_visual)
+	flashlight.light_energy = TORCH_ENERGY
 	combat = preload("res://scripts/player_combat.gd").new()
 	combat.name = "Combat"
 	add_child(combat)
@@ -70,7 +82,7 @@ func selected_item() -> String:
 func add_item(kind: String) -> bool:
 	if not ITEM_NAMES.has(kind):
 		return false
-	if kind in ["torch", "camera"] and inventory.has(kind):
+	if kind in ["torch", "crank", "camera"] and inventory.has(kind):
 		return false
 	var slot := inventory.find("")
 	if slot < 0:
@@ -85,6 +97,7 @@ func select_slot(slot: int) -> void:
 		cancel_chalk_charge()
 		flashlight.hide()
 		saved_flashlight = false
+		crank_on = false
 	selected_slot = slot
 
 func select_item(kind: String) -> bool:
@@ -115,6 +128,13 @@ func use_selected_item() -> bool:
 			flashlight.visible = not flashlight.visible
 			get_parent().soundscape.cue("torch", -22)
 			return true
+		"crank":
+			if is_hidden():
+				return false
+			crank_on = not crank_on
+			flashlight.visible = crank_on and crank_charge > 0
+			get_parent().soundscape.cue("torch", -22)
+			return true
 		"camera":
 			return take_photo()
 		"chalk":
@@ -133,6 +153,17 @@ func use_selected_item() -> bool:
 			return false
 	inventory[selected_slot] = ""
 	get_parent().soundscape.cue("pickup", -22)
+	return true
+
+func pump_crank() -> bool:
+	if not can_use_item() or selected_item() != "crank" or is_hidden():
+		return false
+	crank_charge = minf(100.0, crank_charge + randi_range(CRANK_PUMP_MIN, CRANK_PUMP_MAX))
+	crank_kick = 1.0
+	if crank_on:
+		flashlight.show()
+	get_parent().soundscape.at("crank", global_position, -14)
+	get_parent().emit_noise(global_position, CRANK_NOISE, "crank")
 	return true
 
 func take_photo() -> bool:
@@ -227,6 +258,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and can_use_item():
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			use_selected_item()
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			pump_crank()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			cycle_item(-1)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
@@ -239,7 +272,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_6:
 				select_slot(event.keycode - KEY_1)
 			if event.keycode == KEY_F and not is_hidden():
-				if select_item("torch"):
+				if select_item("torch") or select_item("crank"):
 					use_selected_item()
 			if event.keycode == KEY_G:
 				if select_item("chalk"):
@@ -322,7 +355,11 @@ func movement_noise(running: bool, quiet: bool) -> float:
 	return 2.0 if quiet else (18.0 if running else 6.0)
 
 func tick_survival(delta: float, wants_hold: bool) -> void:
-	if flashlight.visible and not get_parent().progression.runner.active:
+	crank_kick = maxf(0.0, crank_kick - delta * 6.0)
+	if selected_item() == "crank":
+		_tick_crank(delta)
+	elif flashlight.visible and not get_parent().progression.runner.active:
+		flashlight.light_energy = TORCH_ENERGY
 		battery = maxf(0, battery - delta * FLASHLIGHT_DRAIN)
 		if battery <= 0:
 			flashlight.hide()
@@ -340,6 +377,16 @@ func tick_survival(delta: float, wants_hold: bool) -> void:
 	elif is_hidden() and not holding_breath and fear > 35 and breathing_clock <= 0:
 		breathing_clock = 1.25
 		get_parent().emit_noise(global_position, 5 + fear * 0.045, "breath")
+
+func _tick_crank(delta: float) -> void:
+	if not flashlight.visible:
+		return
+	crank_charge = maxf(0.0, crank_charge - delta * CRANK_DRAIN)
+	# A dying dynamo browns out before it quits, which is the cue to squeeze again.
+	var strength := 1.0 if crank_charge >= CRANK_LOW else lerpf(0.35, 1.0, crank_charge / CRANK_LOW) * randf_range(0.8, 1.0)
+	flashlight.light_energy = CRANK_ENERGY * strength
+	if crank_charge <= 0.0:
+		flashlight.hide()
 
 func chalk_charge_fraction() -> float:
 	return clampf(chalk_charge_time / CHALK_CHARGE_SECONDS, 0, 1)
@@ -415,6 +462,9 @@ func reset_survival() -> void:
 	recover()
 	stamina = MAX_STAMINA
 	battery = 100
+	crank_charge = 100.0
+	crank_on = false
+	flashlight.light_energy = TORCH_ENERGY
 	fear = 0
 	breath = 100
 	inventory.assign(["torch", "camera", "chalk", "chalk", "chalk", ""])
@@ -467,7 +517,7 @@ func end_hide() -> bool:
 		$Collision.position.y = 0.9
 		camera.position = Vector3(0, 1.62, 0)
 		camera.fov = 73
-		flashlight.visible = saved_flashlight and battery > 0 and selected_item() == "torch"
+		flashlight.visible = saved_flashlight and (battery > 0 and selected_item() == "torch" or crank_charge > 0 and selected_item() == "crank")
 		hidden_spot.release()
 		hidden_spot = null
 		velocity = Vector3.ZERO

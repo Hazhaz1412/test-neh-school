@@ -414,7 +414,7 @@ func _begin_night_one() -> void:
 	player.inventory.assign(Gear.loadout(gear))
 	player.stamina_care = 1.0 - Gear.BOOST_CARE * gear.boosts
 	envy.hunting_night = true
-	notify("Đêm 1 · Ghen Tị")
+	notify("Đêm 1 · Ghen Tị" if gear.torch else "Đêm 1 · Đèn pin đã mất ở Đêm 0, chỉ còn đèn bấm tay · Chuột phải để sạc")
 
 func simulation_active() -> bool:
 	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)

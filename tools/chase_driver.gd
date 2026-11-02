@@ -27,6 +27,9 @@ func tick() -> void:
 			if obstacle.shifted: shifted_seen = true
 			if obstacle.kind=="lane_right": lateral = 2.55
 			elif obstacle.kind=="lane_left": lateral = -2.55
+			elif obstacle.kind=="gap": lateral = obstacle.gap
+			elif obstacle.kind in ["door","ambush"]: lateral = -obstacle.side*2.2
+			elif obstacle.kind=="swing": lateral = -signf(obstacle.x)*2.5 if absf(obstacle.x)>.2 else 2.5
 			break
 	var target: Vector3 = runner.ORIGIN+runner.route_frame(runner.distance+5).origin
 	target += runner.route_frame(runner.distance+5).basis.x*lateral
@@ -38,10 +41,8 @@ func tick() -> void:
 	motion.relative.x = wrapf(p.rotation.y-yaw,-PI,PI)/p.LOOK_SENSITIVITY
 	if DisplayServer.get_name() == "headless": runner.look(motion.relative)
 	else: runner._input(motion)
-	if runner.distance>150: corners["first"] = true
-	if runner.distance>320: corners["second"] = true
-	if runner.distance>500: corners["third"] = true
-	if runner.distance>680: corners["fourth"] = true
+	for junction in runner.junctions:
+		if runner.distance>float(junction.distance)-10: corners[junction.distance] = true
 	if p.stamina<32: resting = true
 	if p.stamina>64: resting = false
 	# Build sprint momentum before a forced low passage, even if a stamina
@@ -51,11 +52,12 @@ func tick() -> void:
 	key(KEY_W,true)
 	if not hazard.is_empty():
 		var lead: float = hazard.distance-runner.distance
-		if hazard.kind=="jump" and lead<4.4 and runner.jump_height<0.05 and p.is_on_floor():
+		var reach: float = runner.speed*.39+(1.0 if hazard.kind=="topple" else 0.0)
+		if hazard.kind in ["jump","pit","fall","topple"] and lead>.3 and lead<reach and runner.jump_height<0.05 and p.is_on_floor():
 			key(KEY_SPACE,true)
 			key(KEY_SPACE,false)
 			jumps += 1
-		if hazard.kind=="slide" and lead>0 and lead<4.5 and runner.slide_remaining==0:
+		if hazard.kind=="slide" and lead>0 and lead<runner.speed*.42 and runner.slide_remaining==0:
 			# Begin from genuine speed/momentum, never directly setting posture.
 			key(KEY_CTRL,true)
 			key(KEY_CTRL,false)
