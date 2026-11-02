@@ -317,6 +317,13 @@ func _shopfront(lot: Dictionary, frame: Transform3D, w: float, recess: float, ta
 	if alley and place.is_empty() and rng.randf() < 0.65:
 		return
 	if kind == "home" and place.get("id", "") == "home":
+		var plate := Label3D.new()
+		plate.text = "14"
+		plate.font_size = 96
+		plate.pixel_size = 0.004
+		plate.double_sided = false
+		plate.transform = Transform3D(frame.basis * Basis(Vector3.UP, PI), frame * Vector3(w * 0.5 - 0.5, 2.3, 0.2))
+		signs_root.add_child(plate)
 		return
 	if kind != "home" or rng.randf() < 0.3:
 		_shop_sign(frame, w, tall, place)

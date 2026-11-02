@@ -22,14 +22,31 @@ var installed_by_hub := false
 var opened_gaaglu := false
 var fallback_note: Control
 var lan_beat := 0
+var prologue := false
+var evening_started := false
+const EVENING_CHAT := [
+	"Minh: Bài tổng hợp NEH hơn nghìn lượt thích rồi. Mày dọn vô chưa?",
+	"Khoa: Máy đo sạc đầy. Có vụ gì lạ ở căn đó không?",
+	"Minh: Dân tình đồn dữ quá. Vào sớm kẻo nhóm khác vào trước.",
+]
+const EVENING_ASK := ["Tối nay vào luôn. 22:30 ở cổng trường.", "Tôi đọc đủ rồi. Lẻn vào tối nay đi."]
+const EVENING_END := ["Khoa: Chốt. Đừng vô một mình.", "Minh: Tới lẹ. Nhớ đem đèn."]
 
 func setup(home: Node3D) -> void:
 	world = home
+	prologue = get_tree().has_meta("prologue")
 	buzz = _sound("res://assets/audio/phone_buzz.wav", -8.0)
 	ding = _sound("res://assets/audio/phone_ding.wav", -12.0)
 	world.phone.add_thread("team", "Nhóm điều tra", "Minh, Khoa", Color(0.42, 0.46, 0.52), "N")
-	world.phone.threads["team"].log.append({"text": "Minh: Tối qua mày biến đi đâu vậy?", "mine": false, "garbled": false})
 	world.phone.reply_chosen.connect(_on_reply)
+	if prologue:
+		world.player.enabled = false
+		if OS.get_cmdline_args().has("--script"):
+			world.fade.hide()
+		else:
+			begin_prologue()
+		return
+	world.phone.threads["team"].log.append({"text": "Minh: Tối qua mày biến đi đâu vậy?", "mine": false, "garbled": false})
 	var saved := ConfigFile.new()
 	asked_consent = saved.load(CONSENT_FILE) == OK and saved.has_section_key("external", "allowed")
 	consent = saved.get_value("external", "allowed", false)
@@ -41,6 +58,74 @@ func setup(home: Node3D) -> void:
 		_arrive()
 	else:
 		_ask_consent()
+
+# Peter came to Bến Trầu for the school. Nobody has told him whose house this was.
+func begin_prologue() -> void:
+	step = "feed"
+	get_tree().remove_meta("prologue")
+	world.phone.add_thread("langta", "Làng Ta", "Bảng tin", Color(0.22, 0.31, 0.25), "L")
+	world.phone.threads["langta"].feed = true
+	world.phone.threads["langta"].unread = 8
+	world.phone.add_thread("sau", "Bà Sáu (chủ nhà)", "Hẻm 31", Color(0.72, 0.42, 0.20), "S")
+	world.phone.threads["sau"].log.append({"text": "Nhà số 14 Hẻm 31 nha con. Số 14. Khóa để dưới chậu.", "mine": false, "garbled": false})
+	world.phone.threads["sau"].log.append({"text": "Đừng hỏi người ta sao căn này rẻ.", "mine": false, "garbled": false})
+	world.phone.feed_read.connect(_feed_done)
+	world.phone.thread_opened.connect(_evening_opened)
+	world.phone.clock_label.text = "19:40"
+	world.phone._refresh_list()
+	if OS.get_cmdline_args().has("--script"):
+		return
+	var banner: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
+	banner.text = "Số 14, Hẻm 31 · Khu phố Bến Trầu\nThứ Sáu · 19:40"
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	await get_tree().create_timer(2.6).timeout
+	await create_tween().tween_property(world.fade, "modulate:a", 0.0, 1.2).finished
+	world.fade.hide()
+	world.player.enabled = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	world.goal.text = "Mở điện thoại · Tab · Lướt Làng Ta"
+	world.think("Tuần đầu ở căn nhà này. Tới đây vì Trường NEH, xem hôm nay người ta đồn gì.")
+
+func _feed_done() -> void:
+	if step != "feed":
+		return
+	step = "chat"
+	world.goal.text = "Nhóm điều tra đang nhắn"
+	world.phone.show_list()
+	await get_tree().create_timer(0.1).timeout
+	buzz.play()
+	world.phone.receive("team", EVENING_CHAT[0])
+
+func _evening_opened(id: String) -> void:
+	if id != "team" or step != "chat" or evening_started:
+		return
+	evening_started = true
+	for line in EVENING_CHAT.slice(1):
+		await _type_line("team", line)
+	world.phone.offer_replies(EVENING_ASK)
+
+func _evening_answer(index: int) -> void:
+	world.phone.clear_replies()
+	world.phone.send_mine("team", EVENING_ASK[index])
+	for line in EVENING_END:
+		await _type_line("team", line)
+	step = "leave"
+	world.goal.text = "Ra khỏi nhà · Tới Trường NEH"
+	world._add_touch(Vector3(2.4, 1.2, 12.9), "Ra khỏi nhà", _leave_home)
+
+func _leave_home() -> void:
+	world.player.enabled = false
+	world.fade.show()
+	world.fade.modulate.a = 0.0
+	await create_tween().tween_property(world.fade, "modulate:a", 1.0, 1.2).finished
+	var late: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
+	late.text = "Cổng Trường THPT NEH · 22:30"
+	late.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	late.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	await get_tree().create_timer(1.8).timeout
+	get_tree().change_scene_to_file("res://scenes/school_runtime.tscn")
 
 func step_name() -> String:
 	return step
@@ -182,6 +267,9 @@ func toggle_phone() -> void:
 		_lan_beat(0, true)
 
 func _on_reply(index: int) -> void:
+	if prologue:
+		_evening_answer(index)
+		return
 	var beat: Dictionary = LAN_TALK[lan_beat]
 	world.phone.clear_replies()
 	world.phone.send_mine("lan", beat.ask[index])

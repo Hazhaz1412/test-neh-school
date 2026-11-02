@@ -170,8 +170,13 @@ func _ready() -> void:
 		get_tree().remove_meta("next_survival_run")
 		survival.call_deferred("start_run")
 	elif play_opening_on_launch and not OS.get_cmdline_args().has("--script"):
-		# Script tools explicitly control their camera/mode; F5 plays the story opening.
-		survival.call_deferred("start_run")
+		# Script tools explicitly control their camera/mode; F5 plays the story from the rented room.
+		if get_tree().has_meta("prologue_done"):
+			survival.call_deferred("start_run")
+		else:
+			get_tree().set_meta("prologue_done", true)
+			get_tree().set_meta("prologue", true)
+			get_tree().call_deferred("change_scene_to_file", "res://scenes/home.tscn")
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()

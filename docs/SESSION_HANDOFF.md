@@ -157,3 +157,7 @@ Gaaglu → `thptneh.edu.vn` → Văn bản → danh sách dự thi cho số đ�
 - Đêm 0 kết thúc lúc 01:06, ngủ tới 07:00. Đồng hồ ngày ở `town_world.gd`: chỉ trôi 1 phút mỗi 30 giây khi người chơi di chuyển, còn lại do hoạt động tiêu. Hết 22:00 tự vào đêm.
 - Đơn vị tiền là $. `scripts/chess/`: luật (perft ở `tools/validate_chess_rules.gd`), bot, bàn cờ 3D, ba đối thủ (`chess_people.gd`), giao diện (`chess_view.gd`). Test chơi thật: `tools/validate_chess_play.gd`.
 - `scripts/town/town_life.gd`: người đi bộ, loa phường, hoạt động trên phố. Phở, cà phê tăng `boosts`, giảm tiêu stamina trong đêm.
+
+## Tiền truyện
+
+F5 giờ vào `scenes/home.tscn` lúc 19:40: Peter (nhóm điều tra cùng Minh, Khoa) thuê số 14 Hẻm 31 để theo dõi Trường NEH, không biết đây là nhà cũ của An (`registry.js`). Lướt Làng Ta trên điện thoại, chốt với nhóm, ra cửa, rồi mới vào cảnh mở đầu Đêm 0. Bài đăng dùng chung ở `data/social_posts.json` cho điện thoại và web `langta.vn`.

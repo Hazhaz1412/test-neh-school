@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {"slug": "chuyen-ma-hai-lam", "name": "Hội Kể Chuyện Ma Hải Lâm", "members": "48,2K thành viên"},
+    {"slug": "cuu-hs-neh", "name": "Cựu Học Sinh THPT NEH", "members": "1,3K thành viên"},
+    {"slug": "dieu-tra-tam-linh", "name": "Điều Tra Tâm Linh Miền Sông Trầu", "members": "6,7K thành viên"},
+    {"slug": "ben-trau-oi", "name": "Bến Trầu Ơi", "members": "12K thành viên"}
+  ],
+  "posts": [
+    {"group": "chuyen-ma-hai-lam", "author": "Tuấn Xe Ôm", "time": "2 giờ", "text": "Ai chạy đêm qua đường Đồng Muối chưa? Mười một giờ khuya chở khách qua cầu Mây, thấy phòng tầng ba Trường NEH sáng đèn. Điện cắt mười mấy năm rồi đó. Khách tôi im ru, tới nơi trả tiền xong mới hỏi: anh có thấy đứa nhỏ đứng cửa sổ không?", "love": 3200, "fear": 8900, "comments": [["Hạnh Bánh Tráng", "Nhà tui bên đồng muối, đêm nào cũng thấy, riết quen."], ["Duy 2k4", "Câu like hả chú"], ["Tuấn Xe Ôm", "Tối nay qua đó đi rồi nói chuyện."]]},
+    {"group": "chuyen-ma-hai-lam", "author": "Ngọc Ánh", "time": "Hôm qua", "text": "Nhóm tụi em vào NEH quay clip, ở chừng 20 phút. Hành lang tầng trệt có tiếng gõ từ phòng 102, gõ đều như đếm. Bạn em mở cửa ra thì không có ai, chỉ có mấy cây gậy dựa tường. Tụi em bỏ chạy, về tới nhà bạn em sốt ba ngày.", "love": 1800, "fear": 6400, "comments": [["Khánh Rùa", "Cây gậy gì?"], ["Ngọc Ánh", "Em không biết. Có vệt gì đó ở đầu gậy, tối quá."], ["Người dùng ẩn danh", "Phòng 102 đừng mở."], ["Quản trị viên", "Bình luận trên đã bị gỡ theo yêu cầu."]]},
+    {"group": "cuu-hs-neh", "author": "Lê Hoàng Phúc", "time": "3 tuần", "text": "17 năm rồi. Có ai còn giữ liên lạc với cô chủ nhiệm 10A6 không? Mình muốn hỏi một chuyện năm đó.", "love": 42, "fear": 3, "comments": [["Trần Mỹ Duyên", "Thôi anh. Chuyện cũ để yên đi."], ["Lê Hoàng Phúc", "Em cũng thấy cái cuốn vở đó mà."], ["Trần Mỹ Duyên", "[Bình luận đã bị xóa]"]]},
+    {"group": "cuu-hs-neh", "author": "Hồ Thu Trang", "time": "2 tháng", "text": "Tìm lại ảnh lớp cũ mà web trường vẫn còn sống, thiệt luôn. Mà sao tên một bạn trong Bảng vàng bị gỡ vậy mọi người? Mình nhớ bạn đó giỏi lắm.", "love": 87, "fear": 11, "comments": [["Bùi Anh Tuấn", "Đừng nhắc."], ["Vũ Đức Thịnh", "Bạn nào? Tui không nhớ."], ["Hồ Thu Trang", "Sao mấy ông kỳ vậy?"]]},
+    {"group": "dieu-tra-tam-linh", "author": "Minh Đo Sóng", "time": "4 ngày", "text": "Tổng hợp về NEH để anh em khỏi hỏi lại: trường đóng cuối năm 2009, không có thông cáo rõ ràng. Tiếng chuông 00:00 dù không còn điện. Nhiệt độ phòng 306 thấp hơn hành lang 7 độ, tụi mình đo từ ngoài cửa sổ. Nhóm sẽ vào thực địa sớm. Bạn nào có tài liệu gốc thì inbox.", "love": 960, "fear": 1200, "comments": [["Khoa Khoa Học", "Máy đo của tao, công của tao."], ["Peter", "Tôi đã thuê được phòng gần đó."], ["Minh Đo Sóng", "Nhanh dữ. Tối nay chốt."]]},
+    {"group": "dieu-tra-tam-linh", "author": "Peter", "time": "6 ngày", "text": "Cần thuê phòng gần đường Đồng Muối để theo dõi dài ngày. Càng rẻ càng tốt, không ngại nhà cũ.", "love": 18, "fear": 0, "comments": [["Bà Sáu Tạp Hóa", "Hẻm 31 số 14 còn trống cả căn. Bỏ lâu rồi, rẻ lắm con."], ["Peter", "Sao rẻ vậy bà?"], ["Bà Sáu Tạp Hóa", "Nhà cũ thì rẻ thôi. Con hỏi nhiều quá."]]},
+    {"group": "ben-trau-oi", "author": "Bến Trầu Ơi", "time": "1 ngày", "text": "Nhắc bà con: phường khuyến cáo không vào khu trường NEH sau khi trời tối. Nhóm thanh niên nào còn quay clip xin dừng lại, nguy hiểm vì nhà xuống cấp.", "love": 510, "fear": 220, "comments": [["Chị Mai Chuối", "Nói hoài có đứa nào nghe đâu."], ["Anh Phúc Phở", "Ai sợ quá ghé quán, buồn giảm giá."]]},
+    {"group": "chuyen-ma-hai-lam", "author": "Ẩn danh", "time": "Vừa xong", "text": "bạn đang đọc cái này ở đâu vậy", "love": 0, "fear": 1, "comments": []}
+  ]
+}

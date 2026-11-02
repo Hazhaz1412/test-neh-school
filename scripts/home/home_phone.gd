@@ -11,6 +11,7 @@ const NIGHT := Color(0.07, 0.08, 0.10)
 const GLYPHS := "ⱠꝒʭɮꞀƕȹʬȸꜩƢƾʨʫȣɤ▓▒░╬╪┼∷⁂"
 signal reply_chosen(index: int)
 signal thread_opened(id: String)
+signal feed_read
 var threads := {}
 var order: Array[String] = []
 var open_id := ""
@@ -30,6 +31,10 @@ var banner_title: Label
 var banner_text: Label
 var clock_label: Label
 var scrambled: Array = []
+var feed_page: VBoxContainer
+var feed_list: VBoxContainer
+var feed_scroll: ScrollContainer
+var feed_finished := false
 var scramble_clock := 0.0
 var rng := RandomNumberGenerator.new()
 
@@ -99,6 +104,74 @@ func _build_shell() -> void:
 	chat_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	chat_page.add_theme_constant_override("separation", 0)
 	stack.add_child(chat_page)
+	_build_feed(stack)
+
+func _build_feed(stack: VBoxContainer) -> void:
+	feed_page = VBoxContainer.new()
+	feed_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	feed_page.add_theme_constant_override("separation", 0)
+	feed_page.hide()
+	stack.add_child(feed_page)
+	var head := PanelContainer.new()
+	var band := _box(Color(0.22, 0.31, 0.25))
+	band.content_margin_left = 10
+	band.content_margin_top = 6
+	band.content_margin_bottom = 8
+	head.add_theme_stylebox_override("panel", band)
+	var row := HBoxContainer.new()
+	head.add_child(row)
+	var back := Button.new()
+	back.text = "‹"
+	back.flat = true
+	back.add_theme_font_size_override("font_size", 28)
+	back.add_theme_color_override("font_color", Color.WHITE)
+	back.pressed.connect(show_list)
+	row.add_child(back)
+	_text("Làng Ta", 24, Color(0.98, 0.96, 0.91), row)
+	feed_page.add_child(head)
+	feed_scroll = ScrollContainer.new()
+	feed_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	feed_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	feed_scroll.get_v_scroll_bar().value_changed.connect(_feed_scrolled)
+	feed_page.add_child(feed_scroll)
+	feed_list = VBoxContainer.new()
+	feed_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	feed_list.add_theme_constant_override("separation", 8)
+	feed_scroll.add_child(feed_list)
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/social_posts.json"))
+	for post in data.posts:
+		_feed_card(post, data.groups.filter(func(g): return g.slug == post.group)[0].name)
+
+func _feed_card(post: Dictionary, group: String) -> void:
+	var card := PanelContainer.new()
+	var paper := _box(Color(1.0, 0.99, 0.96))
+	paper.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel", paper)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	card.add_child(column)
+	_text(post.author, 16, INK, column)
+	_text("%s · %s" % [group, post.time], 12, Color(0.48, 0.45, 0.39), column)
+	_wrapped(post.text, 15, INK, column)
+	_text("♥ %d   ☠ %d   %d bình luận" % [post.love, post.fear, post.comments.size()], 12, Color(0.43, 0.39, 0.33), column)
+	for said in post.comments:
+		_wrapped("%s: %s" % [said[0], said[1]], 13, Color(0.34, 0.31, 0.27), column)
+	feed_list.add_child(card)
+
+func _wrapped(content: String, size_px: int, colour: Color, parent: Node) -> void:
+	var label := _text(content, size_px, colour, parent)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = SCREEN.x - 48.0
+
+func _feed_scrolled(value: float) -> void:
+	var bar := feed_scroll.get_v_scroll_bar()
+	if value + bar.page >= bar.max_value - 4.0:
+		finish_feed()
+
+func finish_feed() -> void:
+	if not feed_finished:
+		feed_finished = true
+		feed_read.emit()
 
 func _build_list() -> void:
 	var head := PanelContainer.new()
@@ -284,6 +357,7 @@ func toggle() -> void:
 func show_list() -> void:
 	open_id = ""
 	chat_page.hide()
+	feed_page.hide()
 	list_page.show()
 	_refresh_list()
 
@@ -292,6 +366,10 @@ func open_thread(id: String) -> void:
 	var thread: Dictionary = threads[id]
 	thread.unread = 0
 	list_page.hide()
+	if thread.get("feed", false):
+		feed_page.show()
+		thread_opened.emit(id)
+		return
 	chat_page.show()
 	title_label.text = thread.title
 	status_label.text = thread.status

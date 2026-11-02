@@ -55,7 +55,7 @@ const row = (name, value) => `<tr><th>${name}</th><td>${value}</td></tr>`;
 function record() {
   return page('Hồ sơ công dân', `<section class="card"><h1>Hồ sơ công dân</h1>${steps(2)}<div class="ok">Xác minh thành công. Phiên làm việc sẽ tự đóng khi bạn đăng xuất.</div>
 <table><caption>I. Thông tin nhân thân</caption>
-${row('Họ và tên', 'NGUYỄN BÌNH AN')}${row('Ngày sinh', '14/03/1993')}${row('Giới tính', 'Nữ')}${row('Số định danh', AN_ID)}${row('Quê quán', 'Xã Đồng Muối, tỉnh Hải Lâm')}${row('Nơi thường trú', 'Số 8, Hẻm 12, khu phố Bến Trầu, phường Cổ Đằng')}${row('Trạng thái hồ sơ', '<span class="warn">ĐÃ ĐÓNG · 22/11/2009</span>')}${row('Lý do đóng hồ sơ', '<span class="hidden">được giữ kín theo yêu cầu</span> <span class="muted">(bị ẩn theo công văn 118/CV)</span>')}</table>
+${row('Họ và tên', 'NGUYỄN BÌNH AN')}${row('Ngày sinh', '14/03/1993')}${row('Giới tính', 'Nữ')}${row('Số định danh', AN_ID)}${row('Quê quán', 'Xã Đồng Muối, tỉnh Hải Lâm')}${row('Nơi thường trú', 'Số 14, Hẻm 31, khu phố Bến Trầu, phường Cổ Đằng')}${row('Trạng thái hồ sơ', '<span class="warn">ĐÃ ĐÓNG · 22/11/2009</span>')}${row('Lý do đóng hồ sơ', '<span class="hidden">được giữ kín theo yêu cầu</span> <span class="muted">(bị ẩn theo công văn 118/CV)</span>')}</table>
 <table><caption>II. Thành viên hộ gia đình</caption>
 ${row('Mẹ', 'Trần Thị Mận, sinh 1968. Chuyển khỏi địa bàn tháng 01/2010, chưa cập nhật nơi ở mới.')}${row('Cha', 'Nguyễn Văn Bình, sinh 1965. Đã mất năm 2003.')}${row('Người liên hệ khác', 'Cô Lê Thị Thanh Hoa, giáo viên chủ nhiệm lớp 10A6, Trường THPT NEH')}</table>
 <table><caption>III. Ghi chú liên quan từ cơ quan địa phương</caption>

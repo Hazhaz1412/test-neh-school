@@ -50,6 +50,10 @@ function ask(host, path, { method = 'GET', form, cookie } = {}) {
   assert.equal((await ask(GOV, '/xac-minh', { method: 'POST', form: { dap: 'cờ vua' }, cookie })).location, '/ho-so');
   assert.equal((await ask(GOV, '/dang-xuat', { method: 'POST', cookie })).location, '/');
   assert.equal((await ask(GOV, '/ho-so', { cookie })).status, 303, 'logging out closes the record');
+  assert.ok((await ask('langta.vn', '/')).text.includes('Tuấn Xe Ôm'), 'the feed shows posts');
+  assert.equal((await ask('langta.vn', '/nhom/cuu-hs-neh')).status, 200);
+  assert.ok((await ask('langta.vn', '/tim?q=ph%C3%B2ng%20102')).text.includes('Ngọc Ánh'), 'the feed can be searched');
+  assert.ok((await ask('gaaglu.com', '/search?q=truy%E1%BB%87n%20ma')).text.includes('langta.vn'), 'search finds the feed');
   const big = await ask(GOV, '/tra-cuu', { method: 'POST', form: { so: 'x'.repeat(9000) } }).catch(() => ({ status: 413 }));
   assert.equal(big.status, 413);
   assert.ok((await ask('gaaglu.com', '/search?q=tr%C6%B0%E1%BB%9Dng%20NEH')).text.includes(SCHOOL), 'search finds the school');
