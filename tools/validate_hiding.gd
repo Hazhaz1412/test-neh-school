@@ -44,7 +44,7 @@ func press_e() -> void:
 	school.player._unhandled_input(event)
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.envy_enabled = false # This suite covers the legacy ghosts.
 	root.add_child(school)
 	current_scene = school

@@ -7,7 +7,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

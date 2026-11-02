@@ -40,7 +40,7 @@ func approach(item: Node3D, aim_height := 0.35) -> bool:
 	return false
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

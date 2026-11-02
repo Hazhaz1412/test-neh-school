@@ -61,6 +61,7 @@ func setup(home: Node3D) -> void:
 
 # Peter came to Bến Trầu for the school. Nobody has told him whose house this was.
 func begin_prologue() -> void:
+	preload("res://scripts/game_progress.gd").mark("prologue")
 	step = "feed"
 	get_tree().remove_meta("prologue")
 	world.phone.add_thread("langta", "Làng Ta", "Bảng tin", Color(0.22, 0.31, 0.25), "L")
@@ -75,11 +76,7 @@ func begin_prologue() -> void:
 	world.phone._refresh_list()
 	if OS.get_cmdline_args().has("--script"):
 		return
-	var banner: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
-	banner.text = "Số 14, Hẻm 31 · Khu phố Bến Trầu\nThứ Sáu · 19:40"
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	world.show_card("Số 14, Hẻm 31 · Khu phố Bến Trầu\nThứ Sáu · 19:40")
 	await get_tree().create_timer(2.6).timeout
 	await create_tween().tween_property(world.fade, "modulate:a", 0.0, 1.2).finished
 	world.fade.hide()
@@ -120,10 +117,7 @@ func _leave_home() -> void:
 	world.fade.show()
 	world.fade.modulate.a = 0.0
 	await create_tween().tween_property(world.fade, "modulate:a", 1.0, 1.2).finished
-	var late: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
-	late.text = "Cổng Trường THPT NEH · 22:30"
-	late.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	late.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	world.show_card("Cổng Trường THPT NEH · 22:30")
 	await get_tree().create_timer(1.8).timeout
 	get_tree().change_scene_to_file("res://scenes/school_runtime.tscn")
 
@@ -209,12 +203,10 @@ func _set_consent(allowed: bool) -> void:
 	_arrive()
 
 func _arrive() -> void:
+	preload("res://scripts/game_progress.gd").mark("home")
 	if consent:
 		_start_hub()
-	var banner: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
-	banner.text = "Về nhà · 01:06"
-	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	world.show_card("Về nhà · 01:06")
 	await get_tree().create_timer(1.8).timeout
 	await create_tween().tween_property(world.fade, "modulate:a", 0.0, 1.2).finished
 	world.fade.hide()
@@ -226,15 +218,21 @@ func _arrive() -> void:
 	world._add_touch(Vector3(4.0, 4.4, 1.5), "Ngồi vào máy tính", _desk)
 	world._add_touch(Vector3(1.0, 4.0, 2.6), "Nằm xuống giường", _bed)
 
+# A build carries the hub beside the executable: nothing inside the pack can be run as a program.
+static func hub_folder() -> String:
+	if OS.has_feature("editor"):
+		return ProjectSettings.globalize_path("res://hub")
+	return OS.get_executable_path().get_base_dir().path_join("hub")
+
 # Starts the Electron binary itself: the npm wrapper needs node, which a launcher's PATH may lack.
 func _start_hub() -> void:
 	if not OS.get_environment("NEH_HUB_SESSION").is_empty() or world.bridge.linked:
 		return
-	var binary := ProjectSettings.globalize_path("res://hub/node_modules/electron/dist/" + ("electron.exe" if OS.has_feature("windows") else "electron"))
+	var hub: String = hub_folder()
+	var binary := hub.path_join("node_modules/electron/dist/" + ("electron.exe" if OS.has_feature("windows") else "electron"))
 	if not FileAccess.file_exists(binary):
 		push_warning("Hub not found: " + binary)
 		return
-	var hub := ProjectSettings.globalize_path("res://hub")
 	var started := OS.create_process("/usr/bin/env", ["-u", "ELECTRON_RUN_AS_NODE", binary, hub, "--background"]) if not OS.has_feature("windows") else OS.create_process(binary, [hub, "--background"])
 	if started < 0:
 		push_warning("Hub did not start")
@@ -372,9 +370,6 @@ func _bed() -> void:
 	world.fade.show()
 	world.fade.modulate.a = 0.0
 	await create_tween().tween_property(world.fade, "modulate:a", 1.0, 1.4).finished
-	var morning: Label = world._label(world.fade, 40, Color(0.97, 0.94, 0.86))
-	morning.text = "Ngủ tới 07:00 · Ngày 1"
-	morning.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	morning.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	world.show_card("Ngủ tới 07:00 · Ngày 1")
 	await get_tree().create_timer(1.8).timeout
 	get_tree().change_scene_to_file("res://scenes/town.tscn")

@@ -4,7 +4,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

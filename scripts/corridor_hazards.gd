@@ -9,6 +9,8 @@ const SWING_PERIOD := 2.5
 const SWING_HIT := 1.15
 const AMBUSH_HIT := 1.0
 const AMBUSH_SIDE := 1.6
+const STACK_TIERS := 3
+const HOLE_LENGTH := 7.0
 var run: Node3D
 var entries: Array[Dictionary] = []
 var ambusher: Node3D
@@ -54,16 +56,30 @@ func desk_row(at: float, gap: float, index: int, tall := false) -> void:
 			if tall:
 				run.prop(root, "drawer_cabinet", Vector3(x, 0, 0), Vector3(0.95, 2.5, 0.7), 0.0)
 			else:
-				run.prop(root, "SchoolDesk_01", Vector3(x, 0, 0), Vector3(1.05, 0.8, 0.65), 0.0)
-				run.prop(root, "SchoolChair_01", Vector3(x, 0.8, 0), Vector3(0.75, 0.85, 0.6), PI)
+				for tier in range(STACK_TIERS):
+					run.prop(root, "SchoolDesk_01", Vector3(x, tier * 0.8, 0), Vector3(1.05, 0.8, 0.65), 0.0)
+				run.prop(root, "SchoolChair_01", Vector3(x, STACK_TIERS * 0.8, 0), Vector3(0.75, 0.85, 0.6), PI)
 		x += 1.2
+	var boards: StandardMaterial3D = run.material(Color(0.14, 0.085, 0.06))
 	for side in [-1.0, 1.0]:
 		var inner: float = gap + side * half
 		var outer: float = side * 3.6
 		var width: float = absf(outer - inner)
 		if width > 0.1:
 			_shape(root, Vector3((inner + outer) * 0.5, 1.5, 0), Vector3(width, 3.0, 0.8))
-	_add(root, at, "gap", {"gap": gap})
+			# Boarded up behind: no crawling under the desks, no climbing over the stack.
+			run.box(root, Vector3((inner + outer) * 0.5, 1.7, -0.36), Vector3(width, 3.4, 0.07), boards)
+	# Chalk and a cold lamp mark the only way through, the same sign the low gates use.
+	var chalk: StandardMaterial3D = run.material(Color(0.62, 0.73, 0.73), true)
+	for side in [-1.0, 1.0]:
+		run.box(root, Vector3(gap + side * half, 0.025, 0), Vector3(0.055, 0.02, 3.6), chalk)
+	var lamp := OmniLight3D.new()
+	lamp.position = Vector3(gap, 1.4, -0.9)
+	lamp.light_color = Color(0.6, 0.85, 0.9)
+	lamp.light_energy = 1.1
+	lamp.omni_range = 5.0
+	root.add_child(lamp)
+	_add(root, at, "gap", {"gap": gap, "gap_light": lamp})
 
 # A classroom door bursts open across half the corridor.
 func door(at: float, side: float, index: int) -> void:
@@ -120,6 +136,23 @@ func pit(at: float, index: int) -> void:
 		hands.append(arm)
 	_add(root, at, "pit", {"hands": hands})
 
+# The floor falls away across the whole corridor: there is no jumping this one.
+func hole(at: float, index: int) -> void:
+	var root := Node3D.new()
+	run.add_child(root)
+	root.transform = run.route_frame(at)
+	var dark: MeshInstance3D = run.box(root, Vector3(0, 0.012, 0), Vector3(7.2, 0.01, HOLE_LENGTH), run.material(Color(0.004, 0.003, 0.004)))
+	var rim: MeshInstance3D = run.box(root, Vector3(0, 0.02, HOLE_LENGTH * 0.5), Vector3(7.2, 0.012, 0.12), run.material(Color(0.8, 0.12, 0.06), true))
+	dark.scale.z = 0.01
+	rim.hide()
+	var glow := OmniLight3D.new()
+	glow.position = Vector3(0, 0.5, 0)
+	glow.light_color = Color(1, 0.08, 0.04)
+	glow.light_energy = 0.0
+	glow.omni_range = 9
+	root.add_child(glow)
+	_add(root, at, "hole", {"dark": dark, "rim": rim, "glow": glow})
+
 # A cabinet on chains sweeps the width of the corridor; the gap is read by timing it.
 func swing(at: float, index: int) -> void:
 	var root := Node3D.new()
@@ -158,6 +191,10 @@ func reset() -> void:
 				entry.visual.position.y = 3.4
 			"ambush":
 				entry.x = entry.side * 3.4
+			"hole":
+				entry.dark.scale.z = 0.01
+				entry.rim.hide()
+				entry.glow.light_energy = 0.0
 	if ambusher != null:
 		ambusher.vanish()
 
@@ -193,6 +230,12 @@ func tick(delta: float) -> void:
 				if entry.shifted and entry.shift < 1.0:
 					entry.shift = minf(1.0, entry.shift + delta * 3.2)
 					entry.visual.position.y = lerpf(3.4, 0.0, entry.shift * entry.shift)
+			"hole":
+				if entry.shifted and entry.shift < 1.0:
+					entry.shift = minf(1.0, entry.shift + delta * 3.0)
+					entry.dark.scale.z = maxf(entry.shift, 0.01)
+					entry.glow.light_energy = 4.0 * entry.shift
+					entry.rim.show()
 			"pit":
 				for i in range(entry.hands.size()):
 					entry.hands[i].position.y = 0.2 + sin(run.clock * 5.0 + i) * 0.22

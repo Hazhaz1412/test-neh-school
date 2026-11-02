@@ -27,6 +27,7 @@ var bridge: Node
 var interactions: Array = []
 var current := {}
 var thought_time := 0.0
+var card: Label
 
 func _ready() -> void:
 	sky = preload("res://scripts/town/town_sky.gd").new()
@@ -293,8 +294,19 @@ func _label(parent: Control, size_px: int, colour: Color) -> Label:
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	label.add_theme_constant_override("outline_size", 5)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if size_px >= 40:
+		preload("res://scripts/horror_type.gd").title(label)
 	parent.add_child(label)
 	return label
+
+# The one line shown over the black between scenes; each new one replaces the last.
+func show_card(text: String) -> void:
+	if card == null:
+		card = _label(fade, 40, Color(0.97, 0.94, 0.86))
+		card.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		card.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	card.text = text
 
 func think(text: String, seconds := 4.0) -> void:
 	thought.text = text

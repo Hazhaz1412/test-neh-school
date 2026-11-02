@@ -6,7 +6,7 @@ func shot(title: String) -> void:
 	root.get_texture().get_image().save_png("res://docs/" + title + ".png")
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school
@@ -24,7 +24,7 @@ func validate() -> void:
 	school.player.camera.look_at(Vector3(15.5, 2.0, 9))
 	await shot("night1-lure-courtyard")
 	check(not story.room_shadow.model.visible and story.room_shadow.mode == story.room_shadow.Mode.HIDDEN, "First illuminated-room event has no silhouette")
-	check(not story.notebook.visible and story.room_shadow.model.variant=="Casual_Female", "A female shadow and her notebook are reserved for later")
+	check(not story.notebook.visible and story.room_shadow.model.look=="Female_Adult_05", "A female shadow and her notebook are reserved for later")
 	var first: Node3D = school.get_node("Architecture/ClassroomDoor103")
 	check(await approach(first, 1.25) and first.interact(school.player), "Illuminated classroom door remains physically usable")
 	await frames(35)

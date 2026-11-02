@@ -7,7 +7,7 @@ func profile() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
 	var started := Time.get_ticks_msec()
-	var scene: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var scene: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(scene)
 	current_scene = scene
 	var load_ms := Time.get_ticks_msec() - started

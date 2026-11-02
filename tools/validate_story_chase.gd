@@ -9,7 +9,7 @@ func press(code: int, down := true) -> void:
 
 func validate() -> void:
 	root.get_tree().set_meta("story_stay_in_school", true)
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school
@@ -65,8 +65,9 @@ func validate() -> void:
 		var lan_before: Vector3 = runner.lan.position
 		var lan_was_visible: bool = runner.lan.visible
 		runner.tick(1.0/60)
-		if lan_was_visible and runner.lan.visible and runner.lan.position.distance_to(lan_before)>.005:
-			var heading: Vector3 = (runner.lan.position-lan_before).normalized()
+		var lan_step: Vector3 = (runner.lan.position-lan_before)*Vector3(1,0,1)
+		if lan_was_visible and runner.lan.visible and lan_step.length()>.005:
+			var heading: Vector3 = lan_step.normalized()
 			if heading.dot(runner.lan.basis.z.normalized())<.9: lan_was_correct = false
 			else: saw_lan_back = true
 		school.survival.advance_clock(1.0/60)

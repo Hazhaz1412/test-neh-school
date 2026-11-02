@@ -71,7 +71,7 @@ func validate() -> void:
 	source.set_script(null)
 	root.add_child(source)
 	source.get_node("Player").set_physics_process(false)
-	var runtime: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var runtime: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(runtime)
 	runtime.set_process_unhandled_input(false)
 	runtime.player.set_physics_process(false)

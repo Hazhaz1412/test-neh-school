@@ -135,6 +135,61 @@
   "sha256": "d2d1f529a851966b65411b5094510dd9eba03cd5c0a89921f79325c377a8e8eb"
  },
  {
+  "file": "polyhaven_town/models/chess_set/chess_set.bin",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chess_set/chess_set.bin",
+  "sha256": "c73476fd032a2cb4a9c256f70573eed260708132fdc42fec161c6216711560b3"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/chess_set.gltf",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chess_set/chess_set_1k.gltf",
+  "sha256": "3e21ecd0c2ffb703dfdb3f3ea7a379c1dbd4ec513ba2cb8e6cb1e5f276d7eb91"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_board_arm_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_board_arm_1k.jpg",
+  "sha256": "67387308ce3a6424a1666e742c6556853344c01fbfcda8453b6e2e2f62bc6d30"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_board_diff_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_board_diff_1k.jpg",
+  "sha256": "cca44d214f48ebe2205362a3996265d1fed727e094835bec2c873e91c653eaa5"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_board_nor_gl_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_board_nor_gl_1k.jpg",
+  "sha256": "bc5657ec58e0e04a2e8fa6d50ec0f6e3009b1c22b8391ccdde1a4d5d9db30d4d"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_black_arm_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_black_arm_1k.jpg",
+  "sha256": "e0413b36e970c645bd9b6192bfe788b318d9bd9f4f3746cf137552bfee118982"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_black_diff_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_black_diff_1k.jpg",
+  "sha256": "74471018f96f197c963cc89e7dae19960b03bc2e4bf448e4b0beb51bfee5b85d"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_black_nor_gl_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_black_nor_gl_1k.jpg",
+  "sha256": "b92343bba552e82f271f86def504e806e73c6f5dfc4469a90fa5b4f66013bfcd"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_white_arm_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_white_arm_1k.jpg",
+  "sha256": "9604c461ee6d5d4f5937891b0468ff7efd354299074b139d04029b03c326e434"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_white_diff_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_white_diff_1k.jpg",
+  "sha256": "d9e06002509d73c3f343e1643f0c89ef84e24602f1f6858b5628e8f3e55ae77d"
+ },
+ {
+  "file": "polyhaven_town/models/chess_set/textures/chess_set_pieces_white_nor_gl_1k.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chess_set/chess_set_pieces_white_nor_gl_1k.jpg",
+  "sha256": "51c31dc44d1d0f01c10b759be7903bea9d5b04781b63dc45738dd70a6e31dd6c"
+ },
+ {
   "file": "polyhaven_town/models/concrete_road_barrier/concrete_road_barrier.bin",
   "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/concrete_road_barrier/concrete_road_barrier.bin",
   "sha256": "64a4f9bc6e4af64d714a252c3c13428c430a60569deba3d52ca6b7dd3aa70d8c"
@@ -630,6 +685,11 @@
   "sha256": "9edb60f3d315407ee110022c7ee3b644080db5d2beb42491da099b2b081c1b61"
  },
  {
+  "file": "rocketbox/animations/f_crouch_idle.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_crouch_idle.max.fbx",
+  "sha256": "b7e67dee31fc07bc777e93ddf1a88ac58c99954ba67731e5acefeac4c8590f49"
+ },
+ {
   "file": "rocketbox/animations/f_gestic_talk_neutral_01.fbx",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_gestic_talk_neutral_01.max.fbx",
   "sha256": "fee2c764dcfac6f2edd85e73e11b1a13aac305372cbd657207d4c947b21a2476"
@@ -638,6 +698,11 @@
   "file": "rocketbox/animations/f_idle_neutral_01.fbx",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_idle_neutral_01.max.fbx",
   "sha256": "fd68b33ea9e290dc734ca8c3a71ef5842bb2dfe719853ff84f6336d06d39fdcb"
+ },
+ {
+  "file": "rocketbox/animations/f_run_fast_01.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_run_fast_01.max.fbx",
+  "sha256": "b4ec45c0413e382ab12b7c80ebd395b0bbb85006c5d103726d344ab7f7e543c5"
  },
  {
   "file": "rocketbox/animations/f_sit_chair_idle_neutral_01.fbx",
@@ -675,14 +740,29 @@
   "sha256": "faaa677ad270784b87538d16839c179b0930a121fa0bb3fed8f3ed189b33a98a"
  },
  {
+  "file": "rocketbox/townsfolk/Female_Adult_11.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_11/Export/Female_Adult_11.fbx",
+  "sha256": "713d79f1bf21e20e9c1e9ec4ed4d421c84c0466dfdeebf59d47af81b71b8ca88"
+ },
+ {
   "file": "rocketbox/townsfolk/Female_Adult_12.fbx",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_12/Export/Female_Adult_12.fbx",
   "sha256": "e7f1d9af57cfbac0be76c2c31c9c695aec2204e09e6616abda61df71bf4a7f67"
  },
  {
+  "file": "rocketbox/townsfolk/Female_Child_01.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Female_Child_01/Export/Female_Child_01.fbx",
+  "sha256": "d75e13afa7302117d60a2513b1f7de81f48fcb609f7a807b49434333c6ea0949"
+ },
+ {
   "file": "rocketbox/townsfolk/Male_Adult_01.fbx",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_01/Export/Male_Adult_01.fbx",
   "sha256": "8d1edb51b4dc3427ae2456f4407fc105532c145dd019e53cd42bab31cc948a29"
+ },
+ {
+  "file": "rocketbox/townsfolk/Male_Adult_02.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_02/Export/Male_Adult_02.fbx",
+  "sha256": "1c65e292e9057a23f7f70969f6971c631c1316fcaaf93e575a4557201c835018"
  },
  {
   "file": "rocketbox/townsfolk/Male_Adult_06.fbx",
@@ -698,6 +778,11 @@
   "file": "rocketbox/townsfolk/Male_Adult_14.fbx",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_14/Export/Male_Adult_14.fbx",
   "sha256": "9d3ecf5c94a84e22b081ddadebf57da18d79541e48e792fa598335553f2dc399"
+ },
+ {
+  "file": "rocketbox/townsfolk/Male_Child_01.fbx",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Male_Child_01/Export/Male_Child_01.fbx",
+  "sha256": "ec3b257289dbd4ddeccc1921c25350ad31ed2489a1cb6e88f61c3ccf88d64359"
  },
  {
   "file": "rocketbox/townsfolk/Security_Male_01.fbx",
@@ -735,6 +820,16 @@
   "note": "resized to 1024 JPG"
  },
  {
+  "file": "rocketbox/townsfolk/textures/Female_Adult_11_body.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_11/Textures/f011_body_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Female_Adult_11_head.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_11/Textures/f011_head_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
   "file": "rocketbox/townsfolk/textures/Female_Adult_12_body.jpg",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_12/Textures/f012_body_color.tga",
   "note": "resized to 1024 JPG"
@@ -745,6 +840,16 @@
   "note": "resized to 1024 JPG"
  },
  {
+  "file": "rocketbox/townsfolk/textures/Female_Child_01_body.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Female_Child_01/Textures/cf001_body_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Female_Child_01_head.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Female_Child_01/Textures/cf001_head_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
   "file": "rocketbox/townsfolk/textures/Male_Adult_01_body.jpg",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_01/Textures/m002_body_color.tga",
   "note": "resized to 1024 JPG"
@@ -752,6 +857,16 @@
  {
   "file": "rocketbox/townsfolk/textures/Male_Adult_01_head.jpg",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_01/Textures/m002_head_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Male_Adult_02_body.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_02/Textures/m003_body_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Male_Adult_02_head.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_02/Textures/m003_head_color.tga",
   "note": "resized to 1024 JPG"
  },
  {
@@ -782,6 +897,16 @@
  {
   "file": "rocketbox/townsfolk/textures/Male_Adult_14_head.jpg",
   "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_14/Textures/m012_head_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Male_Child_01_body.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Male_Child_01/Textures/cm001_body_color.tga",
+  "note": "resized to 1024 JPG"
+ },
+ {
+  "file": "rocketbox/townsfolk/textures/Male_Child_01_head.jpg",
+  "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Children/Male_Child_01/Textures/cm001_head_color.tga",
   "note": "resized to 1024 JPG"
  },
  {

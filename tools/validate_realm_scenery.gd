@@ -17,7 +17,7 @@ func frames(count: int) -> void:
 		await physics_frame
 
 func validate() -> void:
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	school.player.set_physics_process(false)

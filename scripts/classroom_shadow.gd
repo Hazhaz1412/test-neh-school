@@ -31,7 +31,7 @@ func setup(school: Node3D, progression: Node3D) -> void:
 	name = "TopFloorShadow"
 	classroom = world.get_node("Architecture/ClassroomDoor306")
 	model = preload("res://scripts/humanoid_model.gd").new()
-	model.variant = "Casual_Female"
+	model.look = "Female_Adult_05"
 	model.target_height = 2.0
 	model.rotation.y = PI
 	add_child(model)

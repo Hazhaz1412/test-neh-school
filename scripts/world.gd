@@ -35,6 +35,8 @@ var envy: Node
 var camera_flash: Node
 @export_group("Performance")
 @export_enum("Nhẹ", "Cân bằng", "Cao") var quality_level := 1
+const Settings := preload("res://scripts/game_settings.gd")
+const Progress := preload("res://scripts/game_progress.gd")
 var light_budget := 12
 var local_lights: Array[OmniLight3D] = []
 var flicker_lights: Array[OmniLight3D] = []
@@ -161,22 +163,23 @@ func _ready() -> void:
 	if settings.load("user://settings.cfg") == OK:
 		quality_level = clampi(int(settings.get_value("graphics", "quality", quality_level)), 0, 2)
 	set_quality(quality_level, false)
+	Settings.track(normal_environment)
+	Settings.track(cursed_environment)
 	player.damaged.connect(_on_damage)
 	player.died.connect(_on_death)
 	if get_tree().has_meta("night_one"):
 		get_tree().remove_meta("next_survival_run")
 		call_deferred("_begin_night_one")
+	elif get_tree().has_meta("chapter_corridor"):
+		get_tree().remove_meta("next_survival_run")
+		call_deferred("_begin_corridor")
 	elif bool(get_tree().get_meta("next_survival_run", false)):
 		get_tree().remove_meta("next_survival_run")
 		survival.call_deferred("start_run")
 	elif play_opening_on_launch and not OS.get_cmdline_args().has("--script"):
-		# Script tools explicitly control their camera/mode; F5 plays the story from the rented room.
-		if get_tree().has_meta("prologue_done"):
-			survival.call_deferred("start_run")
-		else:
-			get_tree().set_meta("prologue_done", true)
-			get_tree().set_meta("prologue", true)
-			get_tree().call_deferred("change_scene_to_file", "res://scenes/home.tscn")
+		# Script tools explicitly control their camera/mode; the menu or F6 plays Night 0.
+		Progress.mark("night0")
+		survival.call_deferred("start_run")
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -292,6 +295,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().reload_current_scene()
 		if survival.finished:
 			if survival.won and event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+				if get_tree().has_meta("chapter_corridor"):
+					get_tree().remove_meta("chapter_corridor")
 				if get_tree().has_meta("night_one"):
 					var demon: Node = envy.demon
 					Gear.finish_night(Gear.read(), player.inventory, demon.stolen if demon != null else [])
@@ -346,7 +351,7 @@ func _process(delta: float) -> void:
 		light_clock = 0.35
 		_update_light_budget()
 	if show_performance:
-		performance_label.text = "%d FPS\n%d lượt vẽ" % [Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)]
+		performance_label.text = "%s · %s\n%d FPS\n%d lượt vẽ" % [RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name(), Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)]
 	health_label.text = "SINH LỰC  %d" % int(player.health)
 	realm_label.text = ("%s · ĐÊM 01 · %s" % [survival.clock_text(), "CHUẨN BỊ TRƯỚC NỬA ĐÊM" if survival.phase == survival.Phase.PREPARATION else "SỐNG SÓT ĐẾN 06:00"]) if survival.active else ("B / THẾ GIỚI LINH HỒN · %d THỰC THỂ · N chơi đêm 01" % enemies.size() if spirit_enabled else "N / XEM MỞ ĐẦU ĐÊM 01    ·    B / Thử thế giới linh hồn")
 	stamina_bar.value = player.stamina
@@ -390,9 +395,7 @@ func set_quality(level: int, persist := true) -> void:
 	quality_label.text = "F6 / " + ["NHẸ", "CÂN BẰNG", "CAO"][quality_level]
 	_update_light_budget()
 	if persist:
-		var settings := ConfigFile.new()
-		settings.set_value("graphics", "quality", quality_level)
-		settings.save("user://settings.cfg")
+		Settings.write("quality", quality_level)
 
 func _update_light_budget() -> void:
 	if progression != null and progression.blackout:
@@ -407,11 +410,19 @@ func _update_light_budget() -> void:
 
 # Night 1, reached through the school gate after the free morning: the Intro is over, so the
 # campus is open, An is waiting and the Envy demon hunts from the first minute.
+func _begin_corridor() -> void:
+	survival.start_run(false)
+	survival.begin_midnight()
+	set_spirit_world(true, true)
+	progression.begin_first_chase()
+
 func _begin_night_one() -> void:
+	Progress.mark("night1")
 	survival.start_run(false)
 	progression.begin_night_one()
 	var gear := Gear.read()
 	player.inventory.assign(Gear.loadout(gear))
+	player.crank_on = player.flashlight.visible
 	player.stamina_care = 1.0 - Gear.BOOST_CARE * gear.boosts
 	envy.hunting_night = true
 	notify("Đêm 1 · Ghen Tị" if gear.torch else "Đêm 1 · Đèn pin đã mất ở Đêm 0, chỉ còn đèn bấm tay · Chuột phải để sạc")

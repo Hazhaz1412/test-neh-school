@@ -97,7 +97,6 @@ func _ready() -> void:
 	model.variant = "student"
 	model.look = "ab"[absi(String(name).hash()) % 2]
 	model.target_height = 2.6
-	model.faceless = true
 	model.name = "FacelessStudent"
 	model.scale = Vector3.ONE * 0.80
 	model.rotation.y = PI

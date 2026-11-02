@@ -2,8 +2,8 @@ extends CharacterBody3D
 const Gear := preload("res://scripts/night_gear.gd")
 # AI B, the demon. It holds no reference to where anyone is: it knows only what it sees, what
 # it hears and the areas the director whispers. It searches rooms and hiding places itself.
-enum State {ROAM, SWEEP, LISTEN, CHASE, STRIKE, REST, GRAB, STAGGER}
-const NAMES := {State.ROAM: "đi lang thang", State.SWEEP: "tự lục soát", State.LISTEN: "nghe trước chỗ trốn", State.CHASE: "đuổi", State.STRIKE: "vồ", State.REST: "bị gọi lui", State.GRAB: "chụp người chơi", State.STAGGER: "đau, mất dấu"}
+enum State {ROAM, SWEEP, LISTEN, CHASE, STRIKE, REST, GRAB, STAGGER, ADMIRE}
+const NAMES := {State.ROAM: "đi lang thang", State.SWEEP: "tự lục soát", State.LISTEN: "nghe trước chỗ trốn", State.CHASE: "đuổi", State.STRIKE: "vồ", State.REST: "bị gọi lui", State.GRAB: "chụp người chơi", State.STAGGER: "đau, mất dấu", State.ADMIRE: "ngắm chiến lợi phẩm"}
 const STALK_SPEED := 3.1
 const SEARCH_SPEED := 2.6
 const CHASE_SPEED := 4.75
@@ -21,6 +21,9 @@ const GRAB_ARMED_SECONDS := 2.6
 const LIFT := 0.75
 const HOLD_REACH := 1.0
 const STAGGER_SECONDS := 3.0
+const ADMIRE_SECONDS := 4.0
+const LUNGE_SPEED := 6.5
+const LOW_EYE := 1.3
 const BLIND_SECONDS := 16.0
 const THROW_REACH := 3.5
 const ESCAPE_GRACE := 2.0
@@ -106,7 +109,8 @@ func _ready() -> void:
 	shout.offset_right = 500
 	shout.offset_top = -230
 	shout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	shout.add_theme_font_size_override("font_size", 34)
+	shout.add_theme_font_size_override("font_size", 44)
+	preload("res://scripts/horror_type.gd").title(shout)
 	shout.add_theme_color_override("font_color", Color(1.0, 0.86, 0.62))
 	shout.add_theme_color_override("font_outline_color", Color.BLACK)
 	shout.add_theme_constant_override("outline_size", 8)
@@ -136,7 +140,7 @@ func is_hunting() -> bool:
 	return state in [State.CHASE, State.STRIKE, State.GRAB]
 
 func is_resting() -> bool:
-	return state == State.REST or state == State.STAGGER
+	return state in [State.REST, State.STAGGER, State.ADMIRE]
 
 # The only way the director can reach the demon.
 func whisper(centre: Vector3, radius: float) -> void:
@@ -183,13 +187,18 @@ func _can_see_player(use_cone := true) -> bool:
 	var facing := -global_basis.z
 	if use_cone and offset.length() > SENSE_ALWAYS and facing.dot(offset.normalized()) < SIGHT_CONE:
 		return false
-	var ray := PhysicsRayQueryParameters3D.create(eye, chest, 5)
-	ray.exclude = [get_rid()]
-	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
-	return hit.is_empty() or hit.collider == player
+	# It towers over door frames, so a second look from chest height sees under them.
+	for height in [eye, global_position + Vector3.UP * LOW_EYE]:
+		var ray := PhysicsRayQueryParameters3D.create(height, chest, 5)
+		ray.exclude = [get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+		if hit.is_empty() or hit.collider == player:
+			return true
+	return false
 
 func _sense(delta: float) -> void:
-	if state == State.GRAB or state == State.STAGGER:
+	# While it rests, stumbles or gloats it notices nobody: that is the player's head start.
+	if state == State.GRAB or is_resting():
 		return
 	sense_clock -= delta
 	if sense_clock > 0.0:
@@ -295,6 +304,8 @@ func _physics_process(delta: float) -> void:
 			_hold(delta)
 		State.STAGGER:
 			_stagger(delta)
+		State.ADMIRE:
+			_admire(delta)
 		State.REST:
 			rest_left -= delta
 			_walk(STALK_SPEED, delta)
@@ -359,7 +370,6 @@ func _chase(delta: float) -> void:
 	if _player_exposed() and global_position.distance_to(player.global_position) < STRIKE_REACH:
 		state = State.STRIKE
 		wait = 0.45
-		velocity = Vector3.ZERO
 		model.move("idle", 1.4)
 		return
 	if unseen > LOSE_SECONDS:
@@ -368,8 +378,17 @@ func _chase(delta: float) -> void:
 		has_area = true
 		_next_search()
 
+# The reach is a lunge, not a pause: stepping backwards must not outrun the wind-up.
 func _strike(delta: float) -> void:
 	wait -= delta
+	var flat := player.global_position - global_position
+	flat.y = 0.0
+	if flat.length() > 0.9:
+		velocity = flat.normalized() * LUNGE_SPEED
+		velocity.y = -0.5
+		move_and_slide()
+	if flat.length() > 0.1:
+		rotation.y = lerp_angle(rotation.y, atan2(-flat.x, -flat.z), 1.0 - exp(-12.0 * delta))
 	if wait > 0.0:
 		return
 	if _player_exposed() and global_position.distance_to(player.global_position) < STRIKE_REACH + 0.6 and not player.test_invincible():
@@ -425,9 +444,29 @@ func _decide() -> void:
 		return
 	player.inventory[player.inventory.find(prize)] = ""
 	stolen.append(prize)
-	world.notify("Nó giật mất %s rồi thả bạn xuống." % player.ITEM_NAMES[prize])
+	world.notify("Nó giật mất %s rồi mải mê ngắm · Chạy đi!" % player.ITEM_NAMES[prize])
 	_release(0.0)
+	state = State.ADMIRE
+	wait = ADMIRE_SECONDS
+	velocity = Vector3.ZERO
+	goal = null
+	witnessed = null
+	has_area = false
+	notice = 0.0
+	model.admire(prize)
 	director.caught_someone()
+
+# It turns the prize over in its claws, medals chiming, and forgets the world for a moment.
+func _admire(delta: float) -> void:
+	wait -= delta
+	model.move("idle", 0.5)
+	rotate_y(sin(wait * 1.7) * delta * 0.5)
+	if int(wait * 0.8) != int((wait + delta) * 0.8):
+		clink_sound.play()
+	if wait <= 0.0:
+		model.stop_admiring()
+		state = State.ROAM
+		_next_search()
 
 func fire_salt() -> void:
 	player.inventory[player.inventory.find("salt_gun")] = ""

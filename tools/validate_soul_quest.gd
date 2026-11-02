@@ -25,7 +25,7 @@ func approach(item: Node3D) -> bool:
 				return true
 	return false
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	school.set_process_unhandled_input(false)

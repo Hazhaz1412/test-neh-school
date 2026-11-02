@@ -41,7 +41,7 @@ func walk_to(target: Vector2, speed := 3.0) -> bool:
 	return false
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.enemy_count = 8
 	school.special_enemy_count = 5
 	school.smart_spawn_enabled = false
@@ -140,7 +140,5 @@ func validate() -> void:
 	Limbs.meshes.clear()
 	Ghost.reshaped_meshes.clear()
 	Soul.appearance_materials.clear()
-	Humanoid.animation_libraries.clear()
-	Humanoid.proportion_meshes.clear()
-	Humanoid.faceless_mesh = null
+	Humanoid.clip_libraries.clear()
 	quit(0 if failures == 0 else 1)

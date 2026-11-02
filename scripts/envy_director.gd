@@ -107,7 +107,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		menace = maxf(0.0, menace - delta * 4.0)
 		quiet_time += delta
-	if menace >= MENACE_LIMIT and not demon.is_resting():
+	# Never called off mid-chase: it only backs away once it has lost sight of its prey.
+	if menace >= MENACE_LIMIT and not demon.is_resting() and not demon.is_hunting():
 		menace = 45.0
 		demon.fall_back(_far_point(target.global_position), REST_SECONDS)
 		return
@@ -120,7 +121,7 @@ func _physics_process(delta: float) -> void:
 func caught_someone() -> void:
 	menace = 45.0
 	quiet_time = 0.0
-	demon.fall_back(_far_point(world.player.global_position), REST_SECONDS)
+	hint_clock = SLOW_HINT
 
 # A salt shot blinds it: A goes silent for a while, so the player truly gets away.
 func driven_off(seconds: float) -> void:

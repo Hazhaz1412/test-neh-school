@@ -1,7 +1,17 @@
-{
- "title": "Horror Hit Soundpack 1",
- "author": "psychhead_",
- "license": "CC0",
- "source": "https://opengameart.org/content/horror-hit-soundpack-1",
- "note": "six hits trimmed to 2.4 s, loudness normalised"
-}
+[
+ {
+  "title": "Horror Hit Soundpack 1",
+  "author": "psychhead_",
+  "license": "CC0",
+  "source": "https://opengameart.org/content/horror-hit-soundpack-1",
+  "note": "six hits trimmed to 2.4 s, loudness normalised"
+ },
+ {
+  "title": "breathing tired",
+  "author": "mikeask",
+  "license": "CC0",
+  "source": "https://opengameart.org/content/breathing-tired",
+  "file": "panting.wav",
+  "note": "two breaths cut from the clip, loudness normalised, sped up 1.45x, 22 kHz mono"
+ }
+]

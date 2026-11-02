@@ -21,7 +21,7 @@ func protocol_reply(quest: Node3D, passed: bool) -> void:
 	quest._received(HTTPRequest.RESULT_SUCCESS,200,[],JSON.stringify({"request_id":quest.request_id,"source":"ai","scores":{"understanding":2 if passed else 0,"validation":2 if passed else 0,"support":2 if passed else 0},"unsafe":false,"feedback":"Protocol fixture only."}).to_utf8_buffer())
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

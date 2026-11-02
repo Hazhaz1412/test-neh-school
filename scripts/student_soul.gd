@@ -7,18 +7,18 @@ static var appearance_materials: Array[Material] = []
 
 func _ready() -> void:
 	model = preload("res://scripts/humanoid_model.gd").new()
-	model.variant = "Casual_Female"
+	model.look = "An_Student"
 	model.target_height = 1.48
-	model.shirt_color = Color(0.25, 0.36, 0.38)
 	add_child(model)
 	model.head_pitch = 0.27
-	var body: MeshInstance3D = model.visual.find_child("Body2", true, false)
+	var body: MeshInstance3D = model.body_mesh
 	if appearance_materials.is_empty():
 		for surface in range(body.mesh.get_surface_count()):
 			var material: StandardMaterial3D = body.get_active_material(surface).duplicate()
 			material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			var opacity: float = material.albedo_color.a
 			material.albedo_color = material.albedo_color.lerp(Color(0.48, 0.69, 0.72), 0.45)
-			material.albedo_color.a = 0.88
+			material.albedo_color.a = opacity * 0.88
 			material.emission_enabled = true
 			material.emission = Color(0.28, 0.55, 0.58) * 0.65
 			appearance_materials.append(material)

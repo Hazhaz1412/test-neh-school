@@ -19,7 +19,7 @@ const STOCK := [
 ]
 
 static func fresh() -> Dictionary:
-	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false, "torch": false}
+	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false, "torch": false, "minutes": 420}
 
 static func read() -> Dictionary:
 	var state := fresh()
@@ -100,4 +100,5 @@ static func finish_night(state: Dictionary, inventory: Array, stolen: Array) -> 
 	state.pawned.append_array(stolen)
 	state.money += NIGHT_PAY
 	state.boosts = 0
+	state.minutes = 420
 	write(state)

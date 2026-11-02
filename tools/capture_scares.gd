@@ -15,7 +15,7 @@ func shot(label: String) -> void:
 	root.get_texture().get_image().save_png("res://docs/horror-" + label + ".png")
 
 func capture() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	school.player.set_physics_process(false)

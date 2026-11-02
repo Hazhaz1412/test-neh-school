@@ -10,6 +10,17 @@ const SPRINT_DRAIN := 4.0
 const CATCH_SHOVE := 7.0
 const ROOM_DISTANCE := 900.0
 const LAN_CORNER := 730.0
+const LAN_SIGHT := 8.0
+const LAN_HOP := 1.15
+const LAN_HOP_REACH := 1.7
+const LAN_DUCK_REACH := 1.6
+const LAN_DODGE := 8.0
+const LAN_DUCK_HEIGHT := 0.8
+# The pack stops at the room's doorway and hammers on the door once it shuts.
+const DOOR_LINE := -2.6
+const DOOR_NEAR := 30.0
+const DOOR_BANG_EVERY := 0.6
+const DOOR_BANG_SHAKE := 0.45
 # Eleven short legs that keep turning both ways, so no stretch runs long enough to feel the same.
 const PATH := [Vector3(0,0,0), Vector3(0,0,-100), Vector3(90,0,-100), Vector3(90,0,-170), Vector3(30,0,-170), Vector3(30,0,-250), Vector3(140,0,-250), Vector3(140,0,-320), Vector3(70,0,-320), Vector3(70,0,-400), Vector3(-20,0,-400), Vector3(-20,0,-480)]
 const HAUNT := "res://assets/polyhaven_corridor/textures/%s_diff.jpg"
@@ -33,11 +44,11 @@ const SCHEDULE := [
 	[118.0,"row_left"],[138.0,"door_right"],[160.0,"topple"],
 	[206.0,"pit"],[224.0,"swing"],[244.0,"drop_gate"],
 	[278.0,"weave"],[302.0,"ceiling"],
-	[336.0,"squeeze"],[354.0,"jump"],[372.0,"ambush_right"],
-	[416.0,"row_right"],[434.0,"pit"],[450.0,"door_left"],[466.0,"swing"],[480.0,"jump"],[491.0,"slide"],
+	[336.0,"squeeze"],[354.0,"jump"],[372.0,"ambush_right"],[384.0,"hole"],
+	[424.0,"row_right"],[434.0,"pit"],[450.0,"door_left"],[466.0,"swing"],[480.0,"jump"],[491.0,"slide"],
 	[526.0,"topple"],[544.0,"ambush_left"],[560.0,"drop_gate"],
-	[596.0,"squeeze"],[612.0,"ceiling"],[628.0,"weave"],
-	[666.0,"pit"],[682.0,"swing"],[698.0,"row_centre"],[712.0,"door_right"],
+	[596.0,"squeeze"],[612.0,"ceiling"],[628.0,"weave"],[636.0,"hole"],
+	[672.0,"pit"],[687.0,"swing"],[700.0,"row_centre"],[712.0,"door_right"],
 	[746.0,"jump"],[766.0,"ambush_right"],[786.0,"topple"],[800.0,"lane_left"],
 	[836.0,"slide"],[856.0,"pit"],[872.0,"row_left"],
 ]
@@ -82,6 +93,10 @@ var music: AudioStreamPlayer
 var music_bed: AudioStreamPlayer
 var hazards: RefCounted
 var scares: Node
+var chute: Node3D
+var lan_side := 0.0
+var lan_ducking := false
+var door_bangs := 0
 var zone_index := 0
 var leg_starts: Array[float] = []
 var chase_steps: AudioStreamPlayer3D
@@ -114,6 +129,9 @@ func setup(owner_story: Node3D) -> void:
 	scares = preload("res://scripts/corridor_scares.gd").new()
 	add_child(scares)
 	scares.setup(self)
+	chute = preload("res://scripts/corridor_chute.gd").new()
+	add_child(chute)
+	chute.setup(self)
 	chase_steps = make_loop("res://assets/audio/ghost_step.wav", -8)
 	snarls = AudioStreamPlayer3D.new()
 	snarls.stream = load("res://assets/audio/pursuer_snarl.wav")
@@ -121,8 +139,8 @@ func setup(owner_story: Node3D) -> void:
 	snarls.unit_size = 12
 	add_child(snarls)
 	breathing = AudioStreamPlayer.new()
-	breathing.stream = story.loop_wav("res://assets/audio/player_breath.wav")
-	breathing.volume_db = -28
+	breathing.stream = story.loop_wav("res://assets/audio/corridor/panting.wav")
+	breathing.volume_db = -15
 	add_child(breathing)
 	drag = AudioStreamPlayer3D.new()
 	drag.stream = load("res://assets/audio/chair_scrape.wav")
@@ -291,7 +309,8 @@ func _dress_leg(segment: Node3D, length: float, zone: Dictionary, index: int) ->
 		z += dice.randf_range(9.0,15.0)
 	var word := Label3D.new()
 	word.text = zone.word
-	word.font_size = 110
+	word.font = preload("res://scripts/horror_type.gd").WALL
+	word.font_size = 130
 	word.pixel_size = 0.0075
 	word.modulate = Color(0.75,0.05,0.03)
 	word.shaded = true
@@ -304,6 +323,7 @@ func _turn_sign(at: float, outgoing: Vector3, incoming: Vector3) -> void:
 	var right: bool = incoming.cross(outgoing).y<0
 	var sign := Label3D.new()
 	sign.text = "LỐI THOÁT →" if right else "← LỐI THOÁT"
+	sign.font = preload("res://scripts/horror_type.gd").WALL
 	sign.font_size = 72
 	sign.pixel_size = 0.0065
 	sign.modulate = Color(0.35,1.0,0.5)
@@ -376,11 +396,11 @@ func build() -> void:
 	hazards.ambusher = preload("res://scripts/chase_apparition.gd").new()
 	add_child(hazards.ambusher)
 	lan = preload("res://scripts/humanoid_model.gd").new()
-	lan.variant = "Casual_Female"
+	lan.look = "Female_Adult_11"
 	lan.target_height = 1.68
-	lan.shirt_color = Color(0.38,0.29,0.48)
 	add_child(lan)
 	_build_room(_zone_wall(ZONES[-1]), material(ZONES[-1].floor))
+	chute.build()
 
 func build_obstacle(at: float, kind: String, index: int) -> void:
 	match kind:
@@ -399,6 +419,7 @@ func build_obstacle(at: float, kind: String, index: int) -> void:
 		"swing": hazards.swing(at,index)
 		"ambush_left": hazards.ambush(at,-1.0,index)
 		"ambush_right": hazards.ambush(at,1.0,index)
+		"hole": hazards.hole(at,index)
 		_: _build_hazard(at,"slide" if kind=="drop_gate" else kind,index,kind)
 
 func _build_hazard(at: float, kind: String, index: int, challenge: String) -> void:
@@ -588,12 +609,16 @@ func reset() -> void:
 	lan_time = -1
 	lan_entering = false
 	lan_running = false
+	lan_side = 0
+	lan_ducking = false
+	door_bangs = 0
 	trail.clear()
 	travel_distance = 12
 	held_keys.clear()
 	for ghost in ghosts: ghost.vanish()
 	if built: hazards.reset()
 	scares.hide_all()
+	chute.reset()
 	for obstacle in obstacles:
 		if obstacle.has("custom"): continue
 		obstacle.passed = false
@@ -610,18 +635,19 @@ func reset() -> void:
 	if table != null: table.get_node("Interaction").collision_layer = 0
 	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]:
 		if audio != null: audio.stop()
+	if breathing != null: breathing.pitch_scale = 1
 	hide()
 
 func held(code: int) -> bool:
 	return held_keys.get(code,Input.is_physical_key_pressed(code))
 
 func jump() -> bool:
-	if not world.player.is_on_floor() or slide_remaining>0 or entering_room: return false
+	if chute.active or not world.player.is_on_floor() or slide_remaining>0 or entering_room: return false
 	world.player.velocity.y = 8.6
 	return true
 
 func slide() -> bool:
-	if speed<SLIDE_MIN_SPEED or not world.player.is_on_floor() or slide_remaining>0 or slide_cooldown>0 or entering_room: return false
+	if chute.active or speed<SLIDE_MIN_SPEED or not world.player.is_on_floor() or slide_remaining>0 or slide_cooldown>0 or entering_room: return false
 	slide_remaining = 0.95
 	slide_cooldown = 1.15
 	world.soundscape.cue("paper",-18)
@@ -680,6 +706,9 @@ func tick(delta: float) -> void:
 	obstacle_cooldown = maxf(0,obstacle_cooldown-delta)
 	attack_clock = maxf(0,attack_clock-delta)
 	var p: CharacterBody3D = world.player
+	if chute.active:
+		_tick_chute(delta)
+		return
 	if held(KEY_CTRL) and slide_remaining<=0 and slide_cooldown<=0: slide()
 	var direction := Vector2(float(held(KEY_D))-float(held(KEY_A)),float(held(KEY_S))-float(held(KEY_W)))
 	var moving := direction.length()>0
@@ -713,6 +742,10 @@ func tick(delta: float) -> void:
 	var projected := route_projection(p.global_position)
 	distance = projected.x
 	furthest_distance = maxf(furthest_distance,distance)
+	var falling_in: int = chute.opening_at(distance)
+	if falling_in>=0:
+		chute.enter(falling_in)
+		return
 	lane_x = projected.y
 	lane = clampi(roundi(lane_x/LANE_WIDTH)+1,0,2)
 	jump_height = maxf(0,p.position.y-0.05)
@@ -747,11 +780,35 @@ func tick(delta: float) -> void:
 	if last_snarl<=0 and not room_hidden:
 		last_snarl = lerpf(2.2,5.5,clampf(ghost_gap/16,0,1))
 		snarls.play()
-	breathing.volume_db = lerpf(-28,-13,1-p.stamina/p.MAX_STAMINA)
-	# The chase layer climbs with the route and with how close they are; the bed thins out.
+	_breathe(delta,maxf(1-p.stamina/p.MAX_STAMINA,1-ghost_gap/14))
+	_score(delta)
+
+# Peter pants all the way, faster and closer the worse it gets, and only settles behind the door.
+func _breathe(delta: float, strain: float) -> void:
+	var wanted := -26.0 if room_hidden else lerpf(-15,-2,clampf(strain,0,1))
+	breathing.volume_db = move_toward(breathing.volume_db,wanted,delta*12)
+	breathing.pitch_scale = move_toward(breathing.pitch_scale,0.9 if room_hidden else lerpf(1,1.5,clampf(strain,0,1)),delta*0.7)
+
+# The chase layer climbs with the route and with how close they are; the bed thins out.
+func _score(delta: float) -> void:
 	var dread := clampf(maxf(1-ghost_gap/14,distance/ROOM_DISTANCE),0,1)
 	music.volume_db = move_toward(music.volume_db,lerpf(-19,-7,dread),delta*18)
 	music_bed.volume_db = move_toward(music_bed.volume_db,lerpf(-11,-17,dread),delta*18)
+
+func _tick_chute(delta: float) -> void:
+	var p: CharacterBody3D = world.player
+	p.stamina = clampf(p.stamina+11.0*delta,0,p.MAX_STAMINA)
+	elapsed += delta
+	chute.tick(delta)
+	if not chute.active: return
+	p.startle = maxf(0,p.startle-delta*1.5)
+	scares.tick(delta)
+	last_snarl -= delta
+	if last_snarl<=0:
+		last_snarl = 3.0
+		snarls.play()
+	_breathe(delta,0.85)
+	_score(delta)
 
 func _update_lights() -> void:
 	for obstacle in obstacles:
@@ -773,13 +830,13 @@ func _ghost_speed() -> float:
 
 func _tick_ghosts(delta: float) -> void:
 	var p: CharacterBody3D = world.player
-	if clock>2.5 and not entering_room:
+	if clock>2.5:
 		ghost_distance = minf(travel_distance-0.8,ghost_distance+_ghost_speed()*delta)
 	ghost_gap = travel_distance-ghost_distance
 	for i in range(ghosts.size()):
 		var frame := _trail_frame(ghost_distance-i*0.95)
 		ghosts[i].transform = frame
-		ghosts[i].position += frame.basis.x*((i-2)*0.65+sin(clock*3+i)*0.16)+Vector3.UP*0.05
+		ghosts[i].position = _outside_room(ghosts[i].position+frame.basis.x*((i-2)*0.65+sin(clock*3+i)*0.16)+Vector3.UP*0.05)
 		ghosts[i].look_at(Vector3(p.position.x,0.05,p.position.z))
 		ghosts[i].animate(delta,clampf(1-ghost_gap/16,0,1))
 	if ghosts[0].global_position.distance_to(p.global_position)<1.7 and not entering_room and attack_clock<=0:
@@ -791,13 +848,25 @@ func _tick_ghosts(delta: float) -> void:
 		ghost_distance -= CATCH_SHOVE
 		scares.fire([0,"scream"])
 
+func _outside_room(at: Vector3) -> Vector3:
+	if distance<ROOM_DISTANCE-DOOR_NEAR: return at
+	var inside: Vector3 = refuge.transform.affine_inverse()*at
+	inside.x = maxf(inside.x,DOOR_LINE)
+	return refuge.transform*inside
+
+func _clear_pursuers() -> void:
+	for ghost in ghosts: ghost.vanish()
+	hazards.ambusher.vanish()
+
 # Test shortcut: F10 during the red corridor goes straight to Lan's room.
 func skip_to_refuge() -> void:
 	active = false
+	chute.reset()
 	restore_pose()
 	for audio in [chase_steps, snarls, breathing, music, music_bed]:
 		audio.stop()
 	scares.hide_all()
+	_clear_pursuers()
 	room_hidden = true
 	world.player.global_position = refuge.to_global(Vector3(-5, 0.05, 1.7))
 	story.enter_lan_room()
@@ -808,9 +877,12 @@ func _tick_lan(delta: float) -> void:
 	var before := lan.position
 	lan_distance = move_toward(lan_distance,minf(ROOM_DISTANCE,maxf(lan_distance,distance+9)),delta*11)
 	if not lan_entering:
-		lan.transform = route_frame(lan_distance)
-		lan.position += Vector3.UP*0.05
+		var hop := _lan_line(delta)
+		var along := route_frame(lan_distance)
+		lan.transform = along
+		lan.position += along.basis.x*lan_side+Vector3.UP*(0.05+hop)
 		lan.rotate_y(PI)
+		if lan_ducking: lan.scale.y = LAN_DUCK_HEIGHT
 	if distance>=ROOM_DISTANCE-18 and not room_hidden:
 		room_open = true
 		door_amount = minf(1,door_amount+delta*2)
@@ -821,13 +893,16 @@ func _tick_lan(delta: float) -> void:
 	if lan_entering:
 		lan.global_position = lan.global_position.move_toward(refuge.to_global(Vector3(-7,0.05,1.7)),delta*6)
 	var movement := lan.position-before
+	movement.y = 0
 	lan_running = movement.length()>.005
 	if lan_running:
 		# This rig faces +Z. look_at faces -Z, so compensate after facing the
 		# real movement direction (also works while turning into the room).
+		var height := lan.scale.y
 		lan.look_at(lan.global_position+movement.normalized())
 		lan.rotate_y(PI)
-	var clip := "sprint" if lan_running else "idle"
+		lan.scale.y = height
+	var clip := "crouch" if lan_ducking else ("sprint" if lan_running else "idle")
 	if lan.animation.current_animation!=clip: lan.animation.play(clip)
 	if in_refuge(p.global_position):
 		entering_room = true
@@ -843,15 +918,43 @@ func _tick_lan(delta: float) -> void:
 				music_bed.stop()
 				scares.hide_all()
 				world.soundscape.cue("door",-8)
+			if int(room_hide_time/DOOR_BANG_EVERY)>door_bangs:
+				door_bangs += 1
+				world.soundscape.cue("chair_impact",-5)
+				scares.shake = DOOR_BANG_SHAKE
 			if room_hide_time>=2.5:
 				active = false
 				restore_pose()
 				for audio in [chase_steps,snarls,breathing]: audio.stop()
+				_clear_pursuers()
 				story.enter_lan_room()
+
+# Lan reads the same obstacles the player does: she swings to the open side, hops the low ones
+# and ducks under the gates. Returns how high her feet are off the floor.
+func _lan_line(delta: float) -> float:
+	var open_side := 0.0
+	var hop := 0.0
+	lan_ducking = false
+	for obstacle in obstacles:
+		var lead: float = obstacle.distance-lan_distance
+		if lead<-2.0 or lead>LAN_SIGHT: continue
+		match obstacle.kind:
+			"gap": open_side = obstacle.gap
+			"lane_right": open_side = 2.55
+			"lane_left": open_side = -2.55
+			"door","ambush": open_side = -obstacle.side*2.2
+			"swing": open_side = -signf(obstacle.x)*2.5 if absf(obstacle.x)>.2 else 2.5
+			"jump","pit","fall","topple":
+				if absf(lead)<LAN_HOP_REACH: hop = (1-pow(lead/LAN_HOP_REACH,2))*LAN_HOP
+			"slide":
+				lan_ducking = absf(lead)<LAN_DUCK_REACH
+		break
+	lan_side = move_toward(lan_side,open_side,delta*LAN_DODGE)
+	return hop
 
 func _process(_delta: float) -> void:
 	var paused: bool = not world.simulation_active()
-	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]: audio.stream_paused = paused
+	for audio in [music,music_bed,chase_steps,snarls,breathing,drag,chute.slide_sound]: audio.stream_paused = paused
 	if paused:
 		for ghost in ghosts: ghost.model.animation.speed_scale = 0
 		if lan != null: lan.animation.speed_scale = 0
@@ -878,7 +981,7 @@ func _input(event: InputEvent) -> void:
 				if code==KEY_SPACE: jump()
 				if code==KEY_CTRL: slide()
 			get_viewport().set_input_as_handled()
-	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
+	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT and not chute.active:
 		looking_back = event.pressed
 		world.player.camera.rotation.y = PI if looking_back else 0
 		get_viewport().set_input_as_handled()
@@ -887,11 +990,14 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func look(relative: Vector2) -> void:
+	if chute.active:
+		chute.look(relative)
+		return
 	world.player.rotation.y -= relative.x*world.player.LOOK_SENSITIVITY
 	world.player.camera.rotation.x = clampf(world.player.camera.rotation.x-relative.y*world.player.LOOK_SENSITIVITY,-1.35,1.35)
 
 func _exit_tree() -> void:
-	for audio in [music,music_bed,chase_steps,snarls,breathing,drag]:
+	for audio in [music,music_bed,chase_steps,snarls,breathing,drag,chute.slide_sound]:
 		if audio!=null:
 			audio.stream_paused = false
 			audio.stop()

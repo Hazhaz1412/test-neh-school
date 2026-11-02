@@ -166,6 +166,22 @@ F5 giờ vào `scenes/home.tscn` lúc 19:40: Peter (nhóm điều tra cùng Minh
 
 Đường 900 m, 11 đoạn rẽ cả hai phía (`PATH`), mỗi đoạn một vùng (`ZONES`), vật cản theo lịch `SCHEDULE` trong `endless_corridor.gd`. Vật cản mới ở `corridor_hazards.gd`, nhịp hù theo mét ở `corridor_scares.gd` (`BEATS`). Nhạc hai lớp cùng nhịp 150 BPM, lớp đuổi to dần theo quãng đường và độ gần của ma. `tools/validate_corridor_run.gd` cho autopilot chạy trọn đường bằng vật lý thật (cần `--fixed-fps 60`).
 
+Hai đoạn trượt hầm ở `corridor_chute.gd` (`RUNS`): sàn sập ở mét 384 và 636, rơi xuống ống riêng dưới bản đồ, ra lại mét 408 và 656. Trong ống A/D vô dụng, nghiêng camera mới trượt ngang, mỗi `gate` chặn một hoặc hai trong ba làn. Nhện ở `corridor_spiders.gd` gắn vào camera, đảo chiều chuột đủ mạnh mới hất được một con, nên hất nhện làm lệch đường trượt. Ma dừng ở `DOOR_LINE`, đập cửa phòng Lan rồi biến mất khi hội thoại bắt đầu. Lan né vật cản theo `_lan_line`.
+
+Chữ: theme dự án `assets/fonts/night_theme.tres` dùng Grenze, `horror_type.gd` cấp nét cọ cho tiêu đề và nét viết tường. Điện thoại và biển hiệu khu phố cố ý giữ font thường. Chữ giữa hai cảnh ở nhà đi qua `home_world.show_card`, không tự tạo Label mới.
+
+Lưu ý bản release: GDScript không kiểm tra null khi gọi hàm native đã biết kiểu. Sau `change_scene_to_file` scene rời cây ngay, nên `get_viewport()` trong cùng khung sẽ làm game segfault dù bản editor chỉ báo lỗi. Đây là nguyên nhân crash khi về nhà sau câu thoại cuối với Lan. Đổi scene từ trong xử lý input thì dùng `call_deferred`.
+
 ## Đèn
 
 Sau Đêm 0 người chơi chỉ có đèn bấm tay (`crank`, 10 giây, chuột phải sạc 9–14%, sáng 90%, mỗi lần bấm gây tiếng động bán kính 9). Đèn pin 300$ ở Tiệm Không Tên: sáng 120%, 296 giây, dùng chung pin với máy ảnh, không chiếm ô túi. Đèn bấm tay có thanh sạc riêng, không nạp cho máy ảnh.
+
+## Độ sáng và quỷ
+
+F4 đổi độ sáng (100, 130, 160, 200, 250%), lưu trong `user://settings.cfg`, mặc định 130%. F7 hiện renderer và card đồ họa để chẩn đoán máy khác. Quỷ Ghen Tị: vồ là cú lao tới chứ không đứng khựng, không bị gọi lui khi đang đuổi, không cảm nhận khi nghỉ, choáng hoặc ngắm đồ (`State.ADMIRE`, 4 giây).
+
+## Menu, chương, đóng gói
+
+Game mở ở `scenes/main_menu.tscn` (cảnh 3D `scripts/menu_scene.gd`). Tiến trình ở `user://progress.cfg`, sáu chương trong `scripts/game_progress.gd`. Cài đặt ở `scripts/game_settings.gd`, F4 mở bảng cài đặt qua autoload `GameShell`. Tools nạp thẳng `res://scenes/school_runtime.tscn`. Build chạy thử chương: `NEH-School.x86_64 -- --chapter home`.
+
+Bản build phải dùng `tools/package_build.sh linux|windows`: hub Electron, `data/` và ảnh `docs/` nằm cạnh file chạy, không vào được pck. Export trần từ editor sẽ không có Gaaglu.

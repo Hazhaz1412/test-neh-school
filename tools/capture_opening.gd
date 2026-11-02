@@ -2,7 +2,7 @@ extends SceneTree
 func _initialize() -> void:
 	call_deferred("capture")
 func capture() -> void:
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	for i in range(10): await physics_frame

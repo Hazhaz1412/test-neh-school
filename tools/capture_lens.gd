@@ -11,7 +11,7 @@ func frame_time(count: int) -> float:
 	return (Time.get_ticks_usec() - started) / (count * 1000.0)
 
 func run() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

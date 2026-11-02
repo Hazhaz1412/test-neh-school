@@ -28,7 +28,7 @@ func unhide() -> void:
 	school.player.end_hide()
 
 func run() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school
@@ -121,6 +121,7 @@ func run() -> void:
 	var struck := await until(func(): return not demon.stolen.is_empty() or school.player.health < 100.0, 10.0)
 	check(struck, "reaching the player ends in a grab")
 	check(school.player.health == 100.0 and demon.stolen.has("camera"), "the camera buys the player's life")
+	check(demon.state == demon.State.ADMIRE, "it stops to admire what it took")
 	school.player.inventory[1] = "camera"
 	check(demon.is_resting(), "after a catch the director calls it back")
 	# Left alone: A whispers, B hunts a hider holding their breath, nobody steers either.

@@ -29,7 +29,7 @@ func key(code: int, pressed := true, echo := false) -> void:
 	Input.flush_buffered_events()
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.enemy_count = 8
 	school.special_enemy_count = 5
 	school.smart_spawn_enabled = false

@@ -42,7 +42,7 @@ func aim(pos: Vector3, target: Vector3) -> void:
 	await frames(3)
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.envy_enabled = false # This suite covers the legacy ghosts.
 	school.enemy_count = 8
 	school.special_enemy_count = 5
@@ -213,7 +213,7 @@ func validate() -> void:
 	check(player.get_interaction_target() == school.survival.gate, "The original physical campus gate has a reachable sealed-gate interaction")
 	interact(school.survival.gate)
 	check(not school.survival.won and not school.survival.finished, "Returning with the key and pressing E cannot bypass time or soul rescue")
-	school.survival.advance_clock(720)
+	school.survival.advance_clock(1000)
 	check(school.survival.finished and not school.survival.won, "Dawn without a rescued soul does not complete night one")
 	key(KEY_N)
 	await frames(4)

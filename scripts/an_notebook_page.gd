@@ -37,7 +37,7 @@ func _draw() -> void:
 	var scale_by := size / Vector2(680,410)
 	draw_set_transform(Vector2.ZERO,0,scale_by)
 	draw_rect(Rect2(0,0,680,410),Color(0.74,0.68,0.51))
-	var font := ThemeDB.fallback_font
+	var font: Font = preload("res://scripts/horror_type.gd").WALL
 	var ink := Color(0.10,0.075,0.07)
 	var blood := Color(0.30,0.035,0.025,0.7)
 	for line in range(35,410,19): draw_line(Vector2(14,line),Vector2(666,line),Color(0.26,0.32,0.33,0.25))

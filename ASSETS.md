@@ -147,6 +147,7 @@ URL tải và SHA-256 của từng file nằm ở `assets/town_sources.json`, t�
 
 - **Poly Haven (CC0):** texture trong `assets/polyhaven_town/textures/`, model trong `models/`, bầu trời HDRI Qwantani trong `sky/`. Giấy phép: https://polyhaven.com/license . Nhà ống, đường, cầu và dây điện là mesh sinh bằng code, chỉ dùng các texture này. `models/jacaranda_street.glb` là bản rút gọn từ `jacaranda_tree` của Poly Haven (CC0) bằng `tools/build_town_tree.py`. Bộ cờ `models/chess_set/` là `chess_set` của Poly Haven (CC0). `Male_Child_01` thuộc Microsoft Rocketbox (MIT), cùng bộ với người dân khu phố.
 - **Microsoft Rocketbox (MIT):** 9 avatar người lớn trong `assets/rocketbox/townsfolk/` và các clip `f_*`, `m_gestic_*`, `m_sit_*` trong `assets/rocketbox/animations/`. Texture được thu nhỏ còn 1024 JPG. Giấy phép: `assets/rocketbox/LICENSE.txt`.
+- **Nhân vật ban đêm (Rocketbox, MIT):** mọi nhân vật dùng `humanoid_model.gd` giờ là Rocketbox. Lan là `Female_Adult_11`, Minh là `Male_Adult_02`, bóng lớp 306 là `Female_Adult_05`. An là `Female_Child_01` đổi tên thành `An_Student`, áo được `tools/build_an_textures.gd` nhuộm thành áo trắng. Clip chạy và ngồi thụp của Lan: `f_run_fast_01`, `f_crouch_idle`. Riêng cánh tay góc nhìn thứ nhất (`combat_limbs.gd`) vẫn là Quaternius CC0.
 - **"low poly scooter", Thomas Saint Pierre (s1pierro), CC BY 3.0:** `assets/polypizza_town/low_poly_scooter.glb`. Trang model: https://poly.pizza/m/awXCP7LUcz6 ; giấy phép: https://creativecommons.org/licenses/by/3.0/ . Bắt buộc ghi công khi phân phối. Runtime đổi tỷ lệ và màu thân xe, không sửa file gốc.
 - **Âm thanh:** `town_engine.wav`, `town_horn.wav`, `town_street.wav` do `tools/build_town_audio.py` tổng hợp, không có bản ghi ngoài.
 
@@ -166,4 +167,8 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 
 - **Nhạc (CC0):** `assets/music/chase_wolfgang.ogg` ("Chase!" của Wolfgang_) và `dark_ambience_gabovitch.ogg` ("Dark Ambience Loop" của Iwan Gabovitch). Nguồn ở `assets/music/corridor_sources.json`.
 - **Tiếng hù (CC0):** `assets/audio/corridor/` cắt từ "Horror Hit Soundpack 1" của psychhead_.
+- **Font (SIL OFL 1.1):** `assets/fonts/` gồm Grenze (Omnibus-Type), Protest Revolution (Octavio Pardo), Sedgwick Ave Display (Kevin Burke), tải từ kho google/fonts, giấy phép nằm cạnh font (`OFL-*.txt`). Cả ba đủ dấu tiếng Việt. `horror_type.gd` phân vai từng font.
+- **Tiếng thở dốc (CC0):** `assets/audio/corridor/panting.wav` cắt từ "breathing tired" của mikeask (https://opengameart.org/content/breathing-tired), chuẩn hóa âm lượng, tăng tốc 1,45 lần. Nguồn ở `assets/audio/corridor/sources.json`.
+- **Nhện (CC0):** `assets/opengameart_spider/` là "Spider 2" của br-n518 (https://opengameart.org/content/spider-2). `tools/build_spider.py` xuất file blend sang `spider.glb`, giữ nguyên rig và vòng đi.
+- **Bàn tay trong hầm (MIT):** không phải model riêng. `corridor_chute.gd` cắt cẳng tay và bàn tay của `Male_Child_01` (Rocketbox) lúc chạy game, dùng texture học sinh sẵn có.
 - **Model và texture (CC0, Poly Haven):** `assets/polyhaven_corridor/`, nguồn ở `sources.json` cùng thư mục.

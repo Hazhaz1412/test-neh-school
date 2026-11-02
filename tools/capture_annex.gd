@@ -16,7 +16,7 @@ func shot(scene: Node3D, pos: Vector3, focus: Vector3, filename: String, flashli
 	root.get_texture().get_image().save_png("res://docs/" + filename + ".png")
 
 func capture() -> void:
-	var scene: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var scene: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(scene)
 	current_scene = scene
 	for i in range(25):

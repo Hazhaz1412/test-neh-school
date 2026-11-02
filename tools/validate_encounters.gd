@@ -24,7 +24,7 @@ func check(ok: bool, description: String) -> void:
 		push_error(description)
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.envy_enabled = false # This suite covers the legacy ghosts.
 	root.add_child(school)
 	current_scene = school
@@ -185,9 +185,7 @@ func validate() -> void:
 	school.queue_free()
 	await frames(4)
 	Ghost.reshaped_meshes.clear()
-	Humanoid.animation_libraries.clear()
-	Humanoid.proportion_meshes.clear()
-	Humanoid.faceless_mesh = null
+	Humanoid.clip_libraries.clear()
 	Limbs.meshes.clear()
 	Soul.appearance_materials.clear()
 	quit(0 if failures == 0 else 1)

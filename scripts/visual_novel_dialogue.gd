@@ -53,7 +53,8 @@ func setup(ui: Control, character: String, close_action: Callable, custom_actor:
 	box.add_child(stack)
 	speaker = Label.new()
 	speaker.add_theme_color_override("font_color",accent)
-	speaker.add_theme_font_size_override("font_size",22)
+	speaker.add_theme_font_size_override("font_size",26)
+	speaker.add_theme_font_override("font",preload("res://scripts/horror_type.gd").TITLE)
 	speaker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(speaker)
 	speech = RichTextLabel.new()
@@ -121,9 +122,8 @@ func _build_portrait(character: String, custom_actor: Node3D) -> void:
 	actor = custom_actor
 	if actor == null:
 		actor = preload("res://scripts/humanoid_model.gd").new()
-		actor.variant = "Casual_Female"
+		actor.look = "Female_Adult_11" if character=="Lan" else "An_Student"
 		actor.target_height = 1.68 if character=="Lan" else 1.48
-		actor.shirt_color = Color(.38,.29,.48) if character=="Lan" else Color(.25,.36,.38)
 		actor.head_pitch = .08 if character=="Lan" else .20
 	portrait_viewport.add_child(actor)
 	actor.rotation.y = -.12
@@ -209,6 +209,8 @@ func _box_input(event: InputEvent) -> void:
 
 func _input(event: InputEvent) -> void:
 	if not visible or not event is InputEventKey or not event.pressed or event.echo: return
+	# A choice can end the scene, and this node has no viewport left once it does.
+	var viewport := get_viewport()
 	if event.keycode in [KEY_SPACE,KEY_ENTER,KEY_KP_ENTER]:
 		if is_typing(): reveal()
 		elif callbacks.size()==1: select_choice(0)
@@ -217,7 +219,7 @@ func _input(event: InputEvent) -> void:
 		if is_typing(): reveal()
 		else: select_choice(event.keycode-KEY_1)
 	else: return
-	get_viewport().set_input_as_handled()
+	viewport.set_input_as_handled()
 
 func _process(delta: float) -> void:
 	if not visible: return

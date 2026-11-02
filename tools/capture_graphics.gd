@@ -14,7 +14,7 @@ func view(at: Vector3, target: Vector3) -> void:
 	school.player.camera.look_at_from_position(at + Vector3.UP * 1.6, target)
 
 func run() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

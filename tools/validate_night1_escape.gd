@@ -37,7 +37,7 @@ func turn_to_angle(point: Vector3, degrees: float) -> void:
 	await frames(1)
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)
 	current_scene = school

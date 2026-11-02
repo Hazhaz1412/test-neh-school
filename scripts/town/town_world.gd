@@ -63,6 +63,7 @@ func _ready() -> void:
 	street_audio.volume_db = -14
 	add_child(street_audio)
 	street_audio.play()
+	_resume_day()
 	_opening()
 
 func _spawn_player() -> void:
@@ -113,8 +114,13 @@ func interact() -> void:
 			player.speed = 0.0
 		current.action.call()
 
+func _resume_day() -> void:
+	preload("res://scripts/game_progress.gd").mark("town")
+	minutes = mini(story.gear.minutes, DAY_END - 60)
+	sky.apply(phase_for(minutes))
+
 func _opening() -> void:
-	hud.banner.text = "Khu phố Bến Trầu · 07:00"
+	hud.banner.text = "Khu phố Bến Trầu · " + clock_text()
 	await get_tree().create_timer(1.8).timeout
 	var tween := create_tween()
 	tween.tween_property(hud.fade, "modulate:a", 0.0, 1.2)
@@ -146,6 +152,9 @@ func phase_for(time: int) -> int:
 
 func spend(amount: int) -> void:
 	minutes = mini(minutes + amount, DAY_END)
+	if amount > 0:
+		story.gear.minutes = minutes
+		story.pay(0)
 	sky.apply(phase_for(minutes))
 	if minutes >= DAY_END and not ending and not story.talking_now():
 		enter_night()

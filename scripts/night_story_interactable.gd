@@ -11,9 +11,8 @@ func _ready() -> void:
 	add_child(visual)
 	if kind == "lan":
 		var actor := preload("res://scripts/humanoid_model.gd").new()
-		actor.variant = "Casual_Female"
+		actor.look = "Female_Adult_11"
 		actor.target_height = 1.68
-		actor.shirt_color = Color(0.38, 0.29, 0.48)
 		visual.add_child(actor)
 	elif kind == "bear":
 		_build_bear()

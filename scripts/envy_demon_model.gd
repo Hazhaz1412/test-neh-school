@@ -7,6 +7,10 @@ var skeleton: Skeleton3D
 var animation: AnimationPlayer
 var medals: Array[Node3D] = []
 var sway := 0.0
+const GAZE_ARM := [["Bip01 R UpperArm", Vector3(0.0, -1.25, -0.5)], ["Bip01 R Forearm", Vector3(0.0, -0.3, -1.9)], ["Bip01 Head", Vector3(0.0, 0.0, 0.5)], ["Bip01 Spine1", Vector3(0.0, 0.0, 0.2)]]
+var gaze := 0.0
+var gazing := false
+var prize: MeshInstance3D
 
 func _ready() -> void:
 	visual = load("res://assets/envy_demon/envy_demon.glb").instantiate()
@@ -18,7 +22,7 @@ func _ready() -> void:
 	_matte()
 	_hang_medals()
 	animation.play("idle")
-
+	animation.mixer_applied.connect(_pose_gaze)
 # It has to stay black under a torch, so the skin gives back almost no highlight.
 func _matte() -> void:
 	var body: MeshInstance3D = visual.find_children("*", "MeshInstance3D", true, false)[0]
@@ -35,6 +39,47 @@ func move(title: String, pace := 1.0) -> void:
 	if animation.current_animation != title:
 		animation.play(title, 0.3)
 	animation.speed_scale = pace
+
+# Holds what it took up to its face. Layered over whatever clip is playing, so it blends away.
+func admire(item: String) -> void:
+	gazing = true
+	if prize == null:
+		var hand := BoneAttachment3D.new()
+		hand.bone_name = "Bip01 R Hand"
+		skeleton.add_child(hand)
+		prize = MeshInstance3D.new()
+		var disc := CylinderMesh.new()
+		disc.top_radius = 0.08
+		disc.bottom_radius = 0.08
+		disc.height = 0.03
+		prize.mesh = disc
+		var gold := StandardMaterial3D.new()
+		gold.metallic = 1.0
+		gold.roughness = 0.3
+		gold.emission_enabled = true
+		gold.emission_energy_multiplier = 0.15
+		prize.material_override = gold
+		hand.add_child(prize)
+		# The rig is authored at a tiny scale, so the medal cancels it out.
+		prize.scale = Vector3.ONE / skeleton.global_basis.get_scale().x
+	var shade := Color(0.95, 0.72, 0.2) if item == "medal" else Color(0.5, 0.56, 0.62)
+	prize.material_override.albedo_color = shade
+	prize.material_override.emission = shade
+	prize.show()
+
+func stop_admiring() -> void:
+	gazing = false
+	if prize != null:
+		prize.hide()
+
+func _pose_gaze() -> void:
+	if gaze <= 0.0:
+		return
+	for joint in GAZE_ARM:
+		var bone := skeleton.find_bone(joint[0])
+		if bone >= 0:
+			var turn := Quaternion.from_euler(joint[1] * gaze)
+			skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone) * turn)
 
 func _on_bone(bone_name: String, at: Vector3) -> Node3D:
 	var bind := BoneAttachment3D.new()
@@ -79,6 +124,7 @@ func _hang_medals() -> void:
 		medals.append(pendulum)
 
 func _process(delta: float) -> void:
+	gaze = move_toward(gaze, 1.0 if gazing else 0.0, delta * 2.5)
 	sway += delta * 7.0 * animation.speed_scale
 	for i in range(medals.size()):
 		medals[i].rotation.z = sin(sway + i * 1.3) * 0.16

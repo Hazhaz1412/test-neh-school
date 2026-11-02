@@ -27,7 +27,7 @@ func run() -> void:
 	town.queue_free()
 	await process_frame
 	set_meta("night_one", true)
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	while school.envy.demon == null:

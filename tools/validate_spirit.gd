@@ -19,7 +19,7 @@ func frames(count: int) -> void:
 		await physics_frame
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.enemy_count = 8
 	school.special_enemy_count = 5
 	school.smart_spawn_enabled = false
@@ -136,7 +136,7 @@ func validate() -> void:
 	check(school.death_panel.visible and not school.player.enabled, "Death stops movement and displays restart / B controls")
 	school.set_spirit_world(false)
 	check(not school.death_panel.visible and school.player.health == 100.0, "B recovers from death into the normal world")
-	var early_scene: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var early_scene: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(early_scene)
 	early_scene.set_spirit_world(true)
 	early_scene.set_spirit_world(false)

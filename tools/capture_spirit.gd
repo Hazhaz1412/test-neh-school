@@ -16,7 +16,7 @@ func shot(school: Node3D, pos: Vector3, focus: Vector3, filename: String, flashl
 	root.get_texture().get_image().save_png("res://docs/" + filename + ".png")
 
 func capture() -> void:
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	school.player.set_physics_process(false)

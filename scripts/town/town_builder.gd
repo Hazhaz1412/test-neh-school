@@ -318,6 +318,7 @@ func _shopfront(lot: Dictionary, frame: Transform3D, w: float, recess: float, ta
 		return
 	if kind == "home" and place.get("id", "") == "home":
 		var plate := Label3D.new()
+		plate.font = ThemeDB.fallback_font
 		plate.text = "14"
 		plate.font_size = 96
 		plate.pixel_size = 0.004
@@ -348,6 +349,7 @@ func _shop_sign(frame: Transform3D, w: float, tall: float, place: Dictionary) ->
 	var y := tall + 0.42
 	batch.box("paint", frame, Vector3(0, y, -0.14), Vector3(w - 0.12, 0.8, 0.14), color)
 	var label := Label3D.new()
+	label.font = ThemeDB.fallback_font
 	label.text = text.to_upper()
 	label.font_size = 64
 	label.pixel_size = 0.0058
@@ -446,6 +448,7 @@ func _civic(lot: Dictionary, frame: Transform3D) -> void:
 	batch.box("roof", frame, Vector3(0, height + 0.15, d * 0.5), Vector3(w + 0.6, 0.3, d + 0.4), Color(0.74, 0.46, 0.34))
 	batch.box("paint", frame, Vector3(0, height - 0.6, -0.08), Vector3(w * 0.72, 0.9, 0.12), place.sign)
 	var label := Label3D.new()
+	label.font = ThemeDB.fallback_font
 	label.text = place.label.to_upper()
 	label.font_size = 72
 	label.pixel_size = 0.0075
@@ -470,6 +473,7 @@ func _stall(lot: Dictionary, frame: Transform3D) -> void:
 	_solid(frame, Vector3(0, 0.4, 1.7), Vector3(1.6, 0.8, 0.7))
 	batch.box("paint", frame, Vector3(0, 2.0, -0.28), Vector3(3.2, 0.42, 0.05), Color(0.92, 0.88, 0.76))
 	var label := Label3D.new()
+	label.font = ThemeDB.fallback_font
 	label.text = lot.place.label.to_upper()
 	label.font_size = 48
 	label.pixel_size = 0.0058
@@ -505,6 +509,7 @@ func _market(lot: Dictionary, frame: Transform3D) -> void:
 	batch.quad("rust_tin", frame * Vector3(w * 0.5 + 0.6, height + 2.4, d * 0.5), frame * Vector3(-w * 0.5 - 0.6, height + 2.4, d * 0.5), frame * Vector3(-w * 0.5 - 0.6, height, d + 0.8), frame * Vector3(w * 0.5 + 0.6, height, d + 0.8), Color(0.5, 0.48, 0.44))
 	batch.box("paint", frame, Vector3(0, height + 0.5, -0.9), Vector3(13, 1.0, 0.14), Color(0.72, 0.12, 0.10))
 	var label := Label3D.new()
+	label.font = ThemeDB.fallback_font
 	label.text = place.label.to_upper()
 	label.font_size = 84
 	label.pixel_size = 0.0085
@@ -895,6 +900,7 @@ func _school() -> void:
 	_solid(frame, Vector3(0, 3, 0), Vector3(8, 12, 0.4))
 	batch.box("paint", frame, Vector3(0, 4.7, 0), Vector3(9.6, 0.9, 0.3), Color(0.32, 0.34, 0.34))
 	var label := Label3D.new()
+	label.font = ThemeDB.fallback_font
 	label.text = "TRƯỜNG THPT NEH"
 	label.font_size = 72
 	label.pixel_size = 0.0085
@@ -945,6 +951,7 @@ func _edges() -> void:
 				batch.box("paint", frame, Vector3(n * 2.0 - span * 0.5 + 1.0, 1.0, -0.92), Vector3(1.0, 0.3, 0.03), Color(0.75, 0.12, 0.10))
 			_solid(frame, Vector3(0, 3, -1.0), Vector3(span, 12, 0.5))
 			var label := Label3D.new()
+			label.font = ThemeDB.fallback_font
 			label.text = "CÔNG TRÌNH ĐANG THI CÔNG"
 			label.font_size = 48
 			label.pixel_size = 0.0055

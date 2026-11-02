@@ -14,7 +14,7 @@ func check(value: bool, description: String) -> void:
 		push_error(description)
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	for i in range(35):

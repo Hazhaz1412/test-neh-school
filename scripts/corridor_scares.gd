@@ -72,7 +72,8 @@ func setup(runner: Node3D) -> void:
 	shout.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	shout.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	shout.grow_vertical = Control.GROW_DIRECTION_BOTH
-	shout.add_theme_font_size_override("font_size", 64)
+	shout.add_theme_font_size_override("font_size", 84)
+	preload("res://scripts/horror_type.gd").title(shout)
 	shout.add_theme_color_override("font_color", Color(0.95, 0.06, 0.04))
 	shout.add_theme_color_override("font_outline_color", Color.BLACK)
 	shout.add_theme_constant_override("outline_size", 12)

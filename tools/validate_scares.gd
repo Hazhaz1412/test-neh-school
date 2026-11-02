@@ -25,7 +25,7 @@ func place(feet: Vector3, target: Vector3) -> void:
 	school._update_light_budget()
 
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	school.player.set_physics_process(false)

@@ -37,7 +37,7 @@ func shot(title: String) -> void:
 	root.get_texture().get_image().save_png("res://docs/" + title + ".png")
 
 func capture() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.smart_spawn_enabled = false
 	root.add_child(school)
 	current_scene = school
@@ -166,9 +166,7 @@ func capture() -> void:
 	school.queue_free()
 	await frames(4)
 	Ghost.reshaped_meshes.clear()
-	Humanoid.animation_libraries.clear()
-	Humanoid.proportion_meshes.clear()
-	Humanoid.faceless_mesh = null
+	Humanoid.clip_libraries.clear()
 	Limbs.meshes.clear()
 	Soul.appearance_materials.clear()
 	quit(0 if failures == 0 else 1)

@@ -62,11 +62,12 @@ func setup(town: Node3D) -> void:
 	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	banner.offset_left = -640
 	banner.offset_right = 640
-	banner.offset_top = -60
-	banner.offset_bottom = 60
+	banner.offset_top = -90
+	banner.offset_bottom = 90
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	banner.z_index = 31
+	preload("res://scripts/horror_type.gd").title(banner)
 
 func _label(size: int, color: Color, at: Vector2) -> Label:
 	var label := Label.new()

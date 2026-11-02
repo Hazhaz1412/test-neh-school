@@ -2,9 +2,9 @@
 	"checks": 28,
 	"corners": 10,
 	"failures": 0,
-	"hits": 0,
+	"hits": 2,
 	"jump_inputs": 13,
-	"lan_seconds": 75.0166666666637,
+	"lan_seconds": 99.1666666666623,
 	"moving_furniture": true,
 	"slide_inputs": 5
 }

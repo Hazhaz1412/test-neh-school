@@ -36,6 +36,7 @@ func _ready() -> void:
 	environment.adjustment_enabled = true
 	environment.adjustment_saturation = 1.14
 	environment.adjustment_contrast = 1.04
+	preload("res://scripts/game_settings.gd").track(environment)
 	var holder := WorldEnvironment.new()
 	holder.environment = environment
 	add_child(holder)

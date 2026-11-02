@@ -12,9 +12,10 @@ MODELS = ["plastic_monobloc_chair_01", "plastic_crate_01", "street_lamp_02", "po
           "chess_set", "Sofa_01", "dining_table", "dining_chair_02", "electric_stove", "television_02", "vintage_microwave"]
 SKIES = ["qwantani_morning_puresky", "qwantani_noon_puresky", "qwantani_late_afternoon_puresky", "qwantani_dusk_1_puresky"]
 PEOPLE = {"Adults": ["Female_Adult_02", "Female_Adult_05", "Female_Adult_07", "Female_Adult_12", "Male_Adult_01",
-                     "Male_Adult_06", "Male_Adult_08", "Male_Adult_14"], "Professions": ["Security_Male_01"], "Children": ["Male_Child_01"]}
+                     "Male_Adult_02", "Male_Adult_06", "Male_Adult_08", "Male_Adult_14", "Female_Adult_11"], "Professions": ["Security_Male_01"],
+          "Children": ["Male_Child_01", "Female_Child_01"]}
 CLIPS = ["static/f_idle_neutral_01", "static/f_gestic_talk_neutral_01", "static/f_sit_chair_idle_neutral_01",
-         "static/m_gestic_talk_neutral_01", "static/m_sit_chair_idle_neutral_01", "xy/f_walk_slow_01"]
+         "static/m_gestic_talk_neutral_01", "static/m_sit_chair_idle_neutral_01", "xy/f_walk_slow_01", "xy/f_run_fast_01", "static/f_crouch_idle"]
 ROCKETBOX = "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/"
 SCOOTER = "https://static.poly.pizza/98e3c49f-0ec8-42c6-8613-6859423309a7.glb"
 # CC0 on Poly Pizza; each was checked on its model page.

@@ -388,6 +388,7 @@ func seal_broken() -> void:
 	world.player.velocity = Vector3.ZERO
 
 func begin_first_chase() -> void:
+	preload("res://scripts/game_progress.gd").mark("corridor")
 	stage = Stage.CORRIDOR_RUN
 	stage_time = 0
 	laugh.stop()
@@ -506,7 +507,10 @@ func _farewell(index: int) -> void:
 func _go_home() -> void:
 	if world.get_tree().has_meta("story_stay_in_school"):
 		return
-	world.get_tree().change_scene_to_file("res://scenes/home.tscn")
+	var tree := world.get_tree()
+	if tree.has_meta("chapter_corridor"):
+		tree.remove_meta("chapter_corridor")
+	tree.change_scene_to_file.call_deferred("res://scenes/home.tscn")
 
 func close() -> void:
 	if panel != null: panel.hide()

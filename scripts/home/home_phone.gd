@@ -41,6 +41,9 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# A phone is the one ordinary thing left, so it keeps an ordinary font.
+	theme = Theme.new()
+	theme.default_font = ThemeDB.fallback_font
 	_build_shell()
 	_build_list()
 	_build_chat()

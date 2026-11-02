@@ -30,7 +30,7 @@ func e() -> void:
 	school.player._unhandled_input(event)
 
 func capture() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	school.set_process_unhandled_input(false)
 	current_scene = school

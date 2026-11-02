@@ -52,7 +52,7 @@ func run() -> void:
 	check(Gear.redeem(state, "camera").is_empty() and state.camera and state.money == before - 50, "the camera is redeemed at half value")
 	Gear.write(Gear.fresh().merged({"bag": ["salt_gun", "medal"]}, true))
 	set_meta("night_one", true)
-	var school: Node3D = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	for i in range(40): await physics_frame
@@ -88,6 +88,8 @@ func run() -> void:
 	check(demon_probe.area.x == 999.0, "but not from across the school")
 	player.select_item("crank")
 	player.crank_charge = 100.0
+	player.crank_on = false
+	player.flashlight.hide()
 	player.use_selected_item()
 	check(player.flashlight.visible and player.flashlight.light_energy >= 1.0, "it switches on")
 	for i in range(125): player.tick_survival(1.0 / 12.0, false)
@@ -101,7 +103,42 @@ func run() -> void:
 	check(player.seized and demon.state == demon.State.GRAB, "it lifts the player")
 	await wait_for(func(): return not player.seized, 3.0)
 	check(demon.stolen == ["medal"] and player.health == 100.0, "it takes the dearest thing and lets go")
-	check(player.inventory.has("torch") and player.inventory.has("camera"), "torch and lesser prizes stay")
+	check(demon.state == demon.State.ADMIRE, "then it stops to admire the prize")
+	var stood := 0.0
+	while demon.state == demon.State.ADMIRE and stood < 6.0:
+		await physics_frame
+		stood += 1.0 / 60.0
+		if player.seized: break
+	check(not player.seized and absf(stood - demon.ADMIRE_SECONDS) < 0.25, "for four seconds it ignores the player standing there: %.1f" % stood)
+	check(demon.state != demon.State.REST and demon.state != demon.State.GRAB, "then it goes back to normal: " + demon.state_name())
+	demon.global_position = player.global_position + Vector3(0, 0, -6)
+	demon.rotation.y = 0.0
+	demon.state = demon.State.ROAM
+	demon.fall_back(demon.global_position, 0.0)
+	demon.state = demon.State.CHASE
+	demon.unseen = 0.0
+	demon.last_seen = player.global_position
+	school.envy.set_physics_process(true)
+	school.envy.menace = 99.0
+	var backing := 0.0
+	var caught_backing := false
+	var fled := false
+	while backing < 7.0 and not caught_backing:
+		await physics_frame
+		backing += 1.0 / 60.0
+		var away: Vector3 = (player.global_position - demon.global_position)
+		away.y = 0.0
+		player.global_position += away.normalized() * 3.0 / 60.0
+		caught_backing = player.seized
+		fled = fled or demon.is_resting()
+	check(caught_backing and not fled, "backing away at walking speed gets the player caught, it never gives up: %.1f s" % backing)
+	school.envy.set_physics_process(false)
+	await wait_for(func(): return not player.seized, 4.0)
+	player.health = 100.0
+	player.enabled = true
+	demon.fall_back(demon.global_position, 0.0)
+	demon.model.stop_admiring()
+	check(player.inventory.has("torch"), "the torch is never taken")
 	demon = grab(school, ["torch", "salt_gun", "", "", "", ""])
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT

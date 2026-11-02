@@ -110,9 +110,8 @@ func _build_set() -> void:
 	animations.clear()
 	for i in range(4):
 		var actor: Node3D = preload("res://scripts/humanoid_model.gd").new()
-		actor.variant = "Casual_Female" if i == 1 else "Casual_Male"
-		actor.target_height = 1.76 if i == 1 else 1.86
-		actor.shirt_color = [Color(0.15, 0.26, 0.30), Color(0.33, 0.20, 0.21), Color(0.27, 0.29, 0.19), Color(0.16, 0.20, 0.24)][i]
+		actor.look = ["Male_Adult_02", "Female_Adult_11", "Male_Adult_08", "Male_Adult_06"][i]
+		actor.target_height = 1.68 if i == 1 else 1.78
 		actor.name = ["Minh", "Lan", "Khoa", "PlayerDouble"][i]
 		cast.add_child(actor)
 		actors.append(actor)

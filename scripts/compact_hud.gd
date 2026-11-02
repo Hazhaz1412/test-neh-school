@@ -21,7 +21,7 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func text_at(value: String, at: Vector2, color := Color(0.77, 0.84, 0.81), font_size := 16) -> void:
-	draw_string(ThemeDB.fallback_font, at, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	draw_string(get_theme_default_font(), at, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 func meter(at: Vector2, amount: float, color: Color, width := 100.0) -> void:
 	draw_rect(Rect2(at, Vector2(width, 3)), Color(0.08, 0.12, 0.14, 0.8))

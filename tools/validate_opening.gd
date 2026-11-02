@@ -1,6 +1,6 @@
 extends "res://tools/validate_progression.gd"
 func validate() -> void:
-	school = load(ProjectSettings.get_setting("application/run/main_scene")).instantiate()
+	school = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
 	await frames(15)

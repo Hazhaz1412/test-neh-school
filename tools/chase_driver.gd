@@ -7,6 +7,7 @@ var slides := 0
 var corners := {}
 var shifted_seen := false
 var last_yaw := 0.0
+var shake_sign := 1.0
 
 func key(code: int, down: bool) -> void:
 	if runner.held_keys.get(code,false)==down: return
@@ -18,6 +19,9 @@ func key(code: int, down: bool) -> void:
 
 func tick() -> void:
 	var p: CharacterBody3D = world.player
+	if runner.chute.active:
+		steer_slide()
+		return
 	var lateral := 0.0
 	var hazard: Dictionary = {}
 	for obstacle in runner.obstacles:
@@ -62,3 +66,14 @@ func tick() -> void:
 			key(KEY_CTRL,true)
 			key(KEY_CTRL,false)
 			if runner.slide_remaining>0: slides += 1
+
+# Leans towards the next open lane, and shakes spiders off when they land.
+func steer_slide() -> void:
+	var chute: Node3D = runner.chute
+	var p: CharacterBody3D = world.player
+	if chute.spiders.crawling():
+		shake_sign = -shake_sign
+		chute.look(Vector2(shake_sign * 90.0, 0))
+		return
+	var wanted := clampf((chute.safe_arc(chute.metres) - chute.arc) * 0.7, -0.9, 0.9)
+	chute.look(Vector2((wanted - chute.lean) / p.LOOK_SENSITIVITY, 0))
