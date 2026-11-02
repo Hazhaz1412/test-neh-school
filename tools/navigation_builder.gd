@@ -10,9 +10,11 @@ static func bake(school: Node3D, path := "res://scenes/campus_navigation.tres") 
 	mesh.cell_height = 0.25
 	mesh.agent_height = 1.75
 	mesh.agent_radius = 0.50
-	mesh.agent_max_climb = 0.25
+	mesh.agent_max_climb = 0.5 # Two voxels: at one, a 26 degree stair flight bakes as a row of ledges.
 	mesh.agent_max_slope = 35.0
 	mesh.region_min_size = 2.0
+	# Half-turn stairs are one helix to the default partition, which then drops or mangles them.
+	mesh.sample_partition_type = NavigationMesh.SAMPLE_PARTITION_LAYERS
 	mesh.filter_baking_aabb = AABB(Vector3(-59, -1, -83), Vector3(118, 17, 162))
 	var geometry := NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(mesh, geometry, school)

@@ -693,11 +693,11 @@ func campus_patrol_route(variant: int) -> Array[Vector3]:
 		Vector3(8, 0, 48), Vector3(23.5, 0, 48), Vector3(23.5, 0, 14),
 		Vector3(12, 0, 7.5), Vector3(1.5, 0, -18), Vector3(18, 0, -40.5),
 		Vector3(-18, 0, -40.5), Vector3(-37, 0, -40.5), Vector3(-45, 0, -44),
-		Vector3(1.5, 0, -10), Vector3(-18, 0, 7.5), Vector3(-23.5, 0, 48),
-		Vector3(-23.5, 3.9, 14), Vector3(12, 3.9, 7.5),
+		Vector3(-39.5, 0, -16), Vector3(-18, 0, 7.5), Vector3(-23.5, 0, 48),
+		Vector3(-23.5, 3.9, 14), Vector3(12, 3.9, 7.5), Vector3(39.5, 3.9, -16),
 		Vector3(18, 3.9, -40.5), Vector3(-18, 3.9, -40.5), Vector3(-18, 3.9, 7.5),
-		Vector3(-23.5, 7.8, 14), Vector3(12, 7.8, 7.5),
-		Vector3(18, 7.8, -40.5), Vector3(-18, 7.8, -40.5),
+		Vector3(-23.5, 7.8, 14), Vector3(-39.5, 7.8, -16), Vector3(-18, 7.8, -40.5),
+		Vector3(18, 7.8, -40.5), Vector3(1.5, 7.8, -18), Vector3(12, 7.8, 7.5),
 		Vector3(18, 7.8, 7.5), Vector3(23.5, 7.8, 48), Vector3(-23.5, 0, 14)]
 	if posmod(variant, 2) == 1:
 		route.reverse()

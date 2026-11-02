@@ -307,6 +307,9 @@ func build_night() -> void:
 	moon.directional_shadow_max_distance = 130.0
 	moon.look_at_from_position(Vector3(0.58, 0.40, -0.71) * 100, Vector3.ZERO)
 
+# x, the wall the block stands against, and which way it runs from there. Gates: SIDE_STAIRS.
+const STAIR_BLOCKS: Array[Vector3] = [Vector3(-23.5, 56, 1), Vector3(23.5, 56, 1), Vector3(39.5, -42, -1)]
+
 func build() -> void:
 	school = Node3D.new()
 	school.name = "School"
@@ -334,6 +337,10 @@ func build() -> void:
 		build_side_wing(1, floor_index + 1)
 		build_connector(floor_index + 1)
 		build_annex(floor_index + 1)
+		for side in [-1, 1]:
+			build_link(side, floor_index + 1)
+		for block in STAIR_BLOCKS:
+			build_stair_block(block.x, block.y, block.z, floor_index + 1)
 	elevation = 0.0
 	build_stairwell()
 	build_service_storage()
@@ -541,8 +548,6 @@ func build_north_wing(floor_number: int) -> void:
 		door_partition(Vector2(x, 6), 15, true, 0.0, number)
 		register_room(x, -3, 15, 18, number, kinds[index], "A", (index + floor_number) % 3)
 		sign_text(architecture, "A-%d / %s" % [number, ROOM_TITLES[kinds[index]]], Vector3(x, 2.87, 6.2), 0, 20)
-	for x in [-38.0, 38.0]:
-		wall(Vector3(x, 1.8, 7.5), Vector3(0.25, 3.6, 3))
 	if floor_number == 1:
 		for side in [-1, 1]:
 			window_wall_z(9, side * 11.8, 20.4)
@@ -570,12 +575,6 @@ func build_side_wing(side: int, floor_number: int) -> void:
 		register_room(x, z, 13, 24, number, kinds[index], "A", (index + floor_number + (1 if side > 0 else 0)) % 3)
 		sign_text(architecture, "A-%d / %s" % [number, ROOM_TITLES[kinds[index]]], Vector3(side * 24.8, 2.87, z + 5.0), -side * PI / 2, 20)
 	window_wall(side * 22.0, 32.5, 47)
-	if floor_number > 1:
-		wall(Vector3(side * 23.5, 1.8, 56), Vector3(3, 3.6, 0.25))
-	else:
-		for offset in [-1.30, 1.30]:
-			wall(Vector3(side * 23.5 + offset, 1.8, 56), Vector3(0.40, 3.6, 0.25))
-		box(architecture, "WingEntranceHeader", Vector3(side * 23.5, 3.1, 56), Vector3(2.2, 1.0, 0.25), wall_mat)
 	for z in [15.0, 29.0, 43.0, 53.0]:
 		fixture(Vector3(side * 23.5, 2.85, z), false)
 	box(architecture, "WingFloorBand", Vector3(side * 21.95, 3.65, 32.5), Vector3(0.32, 0.22, 47), dark_mat, false)
@@ -615,16 +614,94 @@ func build_annex(floor_number: int) -> void:
 	# Close the southern side of the hall around the connector mouth.
 	for x in [-5.0, 6.5]:
 		wall(Vector3(x, 1.8, -39), Vector3(10 if x < 0 else 7, 3.6, 0.25))
-	if floor_number == 1:
-		for z in [-41.8, -39.2]:
-			wall(Vector3(-32, 1.8, z), Vector3(0.25, 3.6, 0.4))
-		box(architecture, "AnnexServiceExitHeader", Vector3(-32, 3.1, -40.5), Vector3(0.25, 1.0, 2.2), wall_mat)
-	else:
-		window_wall(-32, -40.5, 3)
-	window_wall(32, -40.5, 3)
 	for x in [-25.0, -12.0, 1.5, 14.0, 27.0]:
 		fixture(Vector3(x, 2.85, -40.5), false)
 	sign_text(architecture, "B / THƯ VIỆN · LỚP HỌC · PHÒNG CHỨC NĂNG", Vector3(1.5, 2.8, -41.8), 0, 20)
+
+# The outer corridors joining the ends of A's hall to the ends of B's. With the middle corridor
+# they turn every floor into two rings, so no chase has to end at a wall.
+func build_link(side: int, floor_number: int) -> void:
+	floor_area(Vector2(side * 39.5, -17), Vector2(3, 50))
+	floor_area(Vector2(side * 35, -40.5), Vector2(6, 3))
+	box(architecture, "LinkLowCeiling", Vector3(side * 39.5, 3.05, -17), Vector3(3, 0.18, 50), wall_mat)
+	box(architecture, "LinkLowCeiling", Vector3(side * 35, 3.05, -40.5), Vector3(6, 0.18, 3), wall_mat)
+	window_wall(side * 41, -15.5, 47)
+	window_wall(side * 38, -25.5, 27)
+	wall(Vector3(side * 38, 1.8, -3), Vector3(0.25, 3.6, 18))
+	wall(Vector3(side * 37.5, 1.8, 6), Vector3(1.25, 3.6, 0.25))
+	wall(Vector3(side * 39.5, 1.8, 8), Vector3(3.25, 3.6, 0.25))
+	window_wall_z(-39, side * 35, 6)
+	# East stops short: the stair block's own wall carries on from here.
+	wall(Vector3(side * 36.5 if side < 0 else 34.15, 1.8, -42), Vector3(9 if side < 0 else 4.3, 3.6, 0.25))
+	if floor_number == 1:
+		for z in [-41.8, -39.2]:
+			wall(Vector3(side * 41, 1.8, z), Vector3(0.25, 3.6, 0.4))
+		box(architecture, "AnnexServiceExitHeader", Vector3(side * 41, 3.1, -40.5), Vector3(0.25, 1.0, 2.2), wall_mat)
+	else:
+		window_wall(side * 41, -40.5, 3)
+	for z in [-32.0, -20.0, -8.0, 3.0]:
+		fixture(Vector3(side * 39.5, 2.85, z), false)
+	fixture(Vector3(side * 35, 2.85, -40.5), false)
+	sign_text(architecture, "KHU B ↑ / TẦNG %d" % floor_number, Vector3(side * 39.5, 2.75, 1.5), 0, 22)
+	sign_text(architecture, "KHU A ↑", Vector3(side * 39.5, 2.75, -36.5), PI, 22)
+	if floor_number == 3:
+		box(campus, "LinkRoof", Vector3(side * 39.5, 3.95, -17), Vector3(3.5, 0.2, 50.5), dark_mat)
+		box(campus, "LinkRoof", Vector3(side * 36.5, 3.95, -40.5), Vector3(9.5, 0.2, 3.5), dark_mat)
+
+func stair_flight(x: float, from_z: float, to_z: float, rise: float) -> void:
+	var ramp := StaticBody3D.new()
+	add(architecture, ramp, "StairRamp")
+	ramp.position.y = elevation
+	var collision := CollisionShape3D.new()
+	var shape := ConvexPolygonShape3D.new()
+	var vertices := PackedVector3Array()
+	for edge in [x - 1.45, x + 1.45]:
+		vertices.append(Vector3(edge, rise, from_z))
+		vertices.append(Vector3(edge, rise - 0.2, from_z))
+		vertices.append(Vector3(edge, rise + 1.95, to_z))
+		vertices.append(Vector3(edge, rise + 1.75, to_z))
+	shape.points = vertices
+	collision.shape = shape
+	add(ramp, collision, "SmoothStairCollider")
+	var run := (to_z - from_z) / 12.0
+	for step in range(12):
+		var y := rise + (step + 0.5) * 1.95 / 12.0
+		box(architecture, "StairTread", Vector3(x, y - 0.04, from_z + (step + 0.5) * run), Vector3(2.9, 0.08, absf(run)), exterior_mat, false)
+		box(architecture, "StairRiser", Vector3(x, y - 0.08, from_z + step * run), Vector3(2.9, 0.16, 0.03), exterior_mat, false)
+
+# One storey of a half-turn stair: up away from the door, round at the far wall and back, with a
+# solid core between the flights. Stops at floor 3; only the middle stairs reach the rooftop.
+func build_stair_block(x: float, near: float, dir: float, floor_number: int) -> void:
+	var first := signf(x) * 1.6
+	var far := near + dir * 8.4
+	box(architecture, "StairLanding", Vector3(x, -0.10, near + dir * 1.125), Vector3(6.4, 0.20, 2.25), floor_mat)
+	if floor_number < 3:
+		box(architecture, "StairLanding", Vector3(x, 1.85, near + dir * 7.325), Vector3(6.4, 0.20, 2.15), floor_mat)
+		stair_flight(x + first, near + dir * 2.25, near + dir * 6.25, 0)
+		stair_flight(x - first, near + dir * 6.25, near + dir * 2.25, 1.95)
+	else:
+		gallery_rail(Vector3(x + first, 0, near + dir * 2.25), 2.95, true)
+		box(campus, "StairBlockRoof", Vector3(x, 3.95, near + dir * 4.2), Vector3(6.9, 0.2, 8.9), dark_mat)
+	box(architecture, "StairCore", Vector3(x, 1.95, near + dir * 4.25), Vector3(0.25, 3.9, 4), exterior_mat)
+	wall(Vector3(x, 1.95, far), Vector3(6.65, 3.9, 0.25))
+	for offset in [-2.15, 2.15]:
+		wall(Vector3(x + offset, 1.95, near), Vector3(2.1, 3.9, 0.25))
+	box(architecture, "StairDoorHeader", Vector3(x, 3.25, near), Vector3(2.2, 1.3, 0.25), wall_mat)
+	# The ground floor of a wing block keeps the way out that used to be at the end of the wing.
+	var exit_side := -signf(x) if floor_number == 1 and near > 0 else 0.0
+	for side in [-1.0, 1.0]:
+		var edge: float = x + side * 3.2
+		if side == exit_side:
+			wall(Vector3(edge, 1.95, near + dir * 5.25), Vector3(0.25, 3.9, 6.3))
+			box(architecture, "WingEntranceHeader", Vector3(edge, 3.25, near + dir * 1.05), Vector3(0.25, 1.3, 2.1), wall_mat)
+		else:
+			wall(Vector3(edge, 1.95, near + dir * 4.2), Vector3(0.25, 3.9, 8.4))
+	if floor_number == 1:
+		# Seals the wedge under the return flight, which only a monster could get stuck in.
+		wall(Vector3(x - first, 1.8, near + dir * 2.25), Vector3(2.95, 3.6, 0.25))
+	fixture(Vector3(x, 3.55, near + dir * 1.1), false)
+	if floor_number < 3:
+		sign_text(architecture, "TẦNG %d ↑" % (floor_number + 1), Vector3(x + first, 2.3, near + dir * 8.25), 0 if dir < 0 else PI, 26)
 
 func build_service_storage() -> void:
 	floor_area(Vector2(-45, -53), Vector2(12, 12))
@@ -736,7 +813,7 @@ func build_campus() -> void:
 		planter(Vector2(side * 12, 43), Vector2(10, 10))
 		prop("tree_detailed", Vector3(side * 12, 0.05, 24), 7.1, side * 0.5, true, true)
 		prop("tree_oak", Vector3(side * 12, 0.05, 44), 7.0, side, true, true)
-		prop("tree_detailed_fall", Vector3(side * 21, 0.05, 65), 7.1, side * 0.7, true, true)
+		prop("tree_detailed_fall", Vector3(side * 17, 0.05, 67), 7.1, side * 0.7, true, true)
 		for z in [20.0, 37.0, 50.0]:
 			prop("bench", Vector3(side * 19.0, 0.02, z), 0.85, -side * PI / 2)
 		for z in [16.0, 46.0, 62.0, 75.0]:
@@ -759,7 +836,7 @@ func build_campus() -> void:
 	for x in range(-54, 55, 8):
 		prop("tree_pineRoundB", Vector3(x, 0, -76), rng.randf_range(8.0, 12.0), rng.randf() * TAU, true, true)
 	for i in range(28):
-		var p := Vector3(rng.randf_range(-54, -40), 0, rng.randf_range(-15, 50))
+		var p := Vector3(rng.randf_range(-54, -42.5), 0, rng.randf_range(-15, 50))
 		prop("stone_largeA" if i % 2 else "plant_bushLarge", p, rng.randf_range(0.35, 0.9), rng.randf() * TAU, false, true)
 		prop("grass", p + Vector3(0.8, 0, 0.4), 0.35, 0, false, true)
 	box(campus, "GardenPondBorder", Vector3(-45, 0.04, 43), Vector3(9, 0.08, 8), dark_mat, false)
@@ -798,11 +875,11 @@ func build_campus() -> void:
 	sign_text(campus, "A / N E H   A C A D E M Y", Vector3(0, 3.3, 10.2), 0, 36, Color(0.85, 0.78, 0.57))
 	sign_text(campus, "CỔNG CHÍNH", Vector3(0, 3.35, 77.7), PI, 24)
 	box(campus, "CampusNoticeBoard", Vector3(-6.3, 1.4, 66), Vector3(3.0, 1.8, 0.15), wood_mat)
-	sign_text(campus, "NEH / KHU A + B\nKhu B qua hành lang sau cầu thang\nNhà kho ở sân dịch vụ phía Tây\n← Vườn phía Tây     Sân thể thao →", Vector3(-6.3, 1.4, 66.09), 0, 20)
+	sign_text(campus, "NEH / KHU A + B\nKhu B: hành lang giữa hoặc hai bên\nNhà kho ở sân dịch vụ phía Tây\n← Vườn phía Tây     Sân thể thao →", Vector3(-6.3, 1.4, 66.09), 0, 20)
 
 func build_rear_grounds() -> void:
 	box(campus, "RearCampusGround", Vector3(0, -0.26, -64), Vector3(120, 0.45, 40), ground_material(Color(0.22, 0.30, 0.20)))
-	box(campus, "ServiceWalk", Vector3(-38.5, -0.014, -40.5), Vector3(14, 0.048, 3), floor_mat, false)
+	box(campus, "ServiceWalk", Vector3(-43.25, -0.014, -40.5), Vector3(4.5, 0.048, 3), floor_mat, false)
 	box(campus, "StorageApproach", Vector3(-45, -0.014, -44), Vector3(3, 0.048, 8), floor_mat, false)
 	for side in [-1, 1]:
 		box(campus, "RearSideBoundary", Vector3(side * 58, 0.55, -61), Vector3(0.30, 1.1, 42), exterior_mat)
@@ -815,7 +892,7 @@ func build_rear_grounds() -> void:
 		box(campus, "AnnexRoofSouth", Vector3(side * 21, 11.75, -31), Vector3(22.5, 0.2, 16.5), dark_mat)
 	# Match A's rooftop: the old 15 cm lip trapped the non-jumping player.
 	box(campus, "ConnectorRoof", Vector3(1.5, 11.60, -21.5), Vector3(3.5, 0.2, 35), dark_mat)
-	lamp(Vector3(-35, 0, -38.5))
+	lamp(Vector3(-42.6, 0, -37.5))
 	lamp(Vector3(-47, 0, -44))
 	sign_text(campus, "B / KHU HỌC TẬP VÀ CHỨC NĂNG", Vector3(1.5, 3.3, -38.7), 0, 26)
 

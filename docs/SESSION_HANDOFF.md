@@ -187,3 +187,11 @@ F4 đổi độ sáng (100, 130, 160, 200, 250%), lưu trong `user://settings.cf
 Game mở ở `scenes/main_menu.tscn` (cảnh 3D `scripts/menu_scene.gd`). Tiến trình ở `user://progress.cfg`, sáu chương trong `scripts/game_progress.gd`. Cài đặt ở `scripts/game_settings.gd`, F4 mở bảng cài đặt qua autoload `GameShell`. Tools nạp thẳng `res://scenes/school_runtime.tscn`. Build chạy thử chương: `NEH-School.x86_64 -- --chapter home`.
 
 Bản build phải dùng `tools/package_build.sh linux|windows`: hub Electron, `data/` và ảnh `docs/` nằm cạnh file chạy, không vào được pck. Export trần từ editor sẽ không có Gaaglu.
+
+## Map trường
+
+Mỗi tầng là hai vòng kín: hành lang A, hai hành lang nối bên (x=±39.5), hành lang B, thêm hành lang giữa làm thanh ngang. Có bốn cầu thang: cầu thang giữa lên tới sân thượng, ba cầu thang chữ U lên tới tầng 3 (`STAIR_BLOCKS` ở đầu hai cánh A và góc đông khu B). Cổng sắt của chúng nằm ở `SIDE_STAIRS` trong `school_progression.gd`, hai danh sách phải đi cùng nhau.
+
+Sửa kiến trúc thì chạy `tools/build_map.gd` rồi `tools/bake_night_navigation.gd`. Navmesh bắt buộc giữ `SAMPLE_PARTITION_LAYERS` và `agent_max_climb` 0.5: với thiết lập cũ, cầu thang chữ U bị coi là một vòng xoắn và bake mất đoạn ramp mà không báo lỗi. Kiểm tra bằng đường đi thật trong `validate_annex.gd`, đừng tin số polygon.
+
+Chỗ nấp: mỗi phòng một chỗ theo loại phòng (`table_room` trong `tools/hiding_builder.gd`), tủ hành lang luôn đứng theo cặp, tủ áp sát tường.

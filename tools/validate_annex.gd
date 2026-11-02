@@ -48,6 +48,22 @@ func validate() -> void:
 		var to := Vector3(18, y, -40.5)
 		var path := NavigationServer3D.map_get_path(nav_map, from, to, true)
 		check(not path.is_empty() and path[path.size() - 1].distance_to(to) < 1.0, "Floor %d: A connects to B through the long corridor" % (floor_index + 1))
+		# From either end of A's hall the side corridor is the short way, so each floor is a ring.
+		for side in [-1.0, 1.0]:
+			var ring_to := Vector3(side * 25, y, -40.5)
+			var ring := NavigationServer3D.map_get_path(nav_map, Vector3(side * 25, y, 7.5), ring_to, true)
+			var outer := false
+			for point in ring:
+				outer = outer or absf(point.x) > 38.0
+			check(outer and ring[ring.size() - 1].distance_to(ring_to) < 1.0, "Floor %d: the %s end of A runs on round to B" % [floor_index + 1, "west" if side < 0 else "east"])
+		if floor_index < 2:
+			for stair in [Vector3(-23.5, y, 54), Vector3(23.5, y, 54), Vector3(39.5, y, -40.5)]:
+				var above: Vector3 = stair + Vector3.UP * 3.9
+				var flight := NavigationServer3D.map_get_path(nav_map, stair, above, true)
+				var length := 0.0
+				for i in range(1, flight.size()):
+					length += flight[i - 1].distance_to(flight[i])
+				check(flight[flight.size() - 1].distance_to(above) < 1.0 and length < 26.0, "Side stairs at %s go straight up a floor (%d m)" % [stair, length])
 		for room in rooms:
 			if room.block != "B" or absf(room.center.y - y) > 0.1:
 				continue

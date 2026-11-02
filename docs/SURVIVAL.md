@@ -32,7 +32,7 @@ Mặc định 6 thực thể trong pool, thường tối đa 2 hoạt động, c
 
 **M không dừng AI trong lượt sinh tồn.** Esc vẫn dừng game đơn. Pin, hơi thở, chuông và AI không trôi khi Esc; N không cho hồi tài nguyên giữa một lượt sống. Thắng/thua mới cho bắt đầu đêm mới, R luôn bắt đầu lại từ đầu.
 
-47 tủ/gầm bàn tiếp tục có collider và tương tác E thật. Gầm bàn hạ capsule và camera; tủ nhìn qua khe. Đèn tắt khi vào và chỉ trở lại nếu còn pin. Lối ra bị chắn không đẩy player xuyên collider. Ma chứng kiến lúc chui vào hoặc Kẻ Dò Tiếng nghe được ở đó tới kiểm tra rồi ép player ra.
+66 tủ/gầm bàn/gầm giường tiếp tục có collider và tương tác E thật. Gầm bàn hạ capsule và camera; tủ nhìn qua khe. Đèn tắt khi vào và chỉ trở lại nếu còn pin. Lối ra bị chắn không đẩy player xuyên collider. Ma chứng kiến lúc chui vào hoặc Kẻ Dò Tiếng nghe được ở đó tới kiểm tra rồi ép player ra.
 
 ## Chỉnh trong project
 

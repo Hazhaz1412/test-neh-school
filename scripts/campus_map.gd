@@ -22,7 +22,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	draw_style_box(_panel(), Rect2(Vector2.ZERO, size))
 	caption("NEH ACADEMY / KHU A + B", Vector2(26, 36), 22)
-	caption("M đóng sơ đồ · ▲ người chơi · cầu thang khu A lên 3 tầng và sân thượng", Vector2(26, 62), 14)
+	caption("M đóng sơ đồ · ▲ người chơi · cầu thang giữa lên sân thượng · ba cầu thang phụ lên tầng 3", Vector2(26, 62), 14)
 	region(Vector2(0, -2), Vector2(116, 160), Color(0.09, 0.15, 0.13))
 	region(Vector2(0, 32), Vector2(44, 44), Color(0.24, 0.26, 0.22))
 	region(Vector2(0, 66), Vector2(8, 24), Color(0.24, 0.26, 0.22))
@@ -39,7 +39,11 @@ func _draw() -> void:
 	draw_arc(point(0, 32), 17, 0, TAU, 32, Color(0.70, 0.72, 0.55), 2)
 	region(Vector2(1.5, -21.5), Vector2(3, 35), Color(0.35, 0.29, 0.20))
 	region(Vector2(0, -52), Vector2(64, 20), Color(0.24, 0.34, 0.37))
-	region(Vector2(0, -40.5), Vector2(64, 3), Color(0.35, 0.29, 0.20))
+	region(Vector2(0, -40.5), Vector2(82, 3), Color(0.35, 0.29, 0.20))
+	for side in [-1, 1]:
+		region(Vector2(side * 39.5, -17), Vector2(3, 50), Color(0.35, 0.29, 0.20))
+		region(Vector2(side * 23.5, 60.2), Vector2(6.4, 8.4), Color(0.45, 0.38, 0.25))
+	region(Vector2(39.5, -46.2), Vector2(6.4, 8.4), Color(0.45, 0.38, 0.25))
 	for side in [-1, 1]:
 		region(Vector2(side * 21, -31), Vector2(22, 16), Color(0.24, 0.34, 0.37))
 	region(Vector2(-45, -53), Vector2(12, 12), Color(0.32, 0.25, 0.19))
@@ -56,6 +60,10 @@ func _draw() -> void:
 	caption("NỐI A–B", point(5, -21), 12)
 	caption("KHU A / CHỮ U", point(-21, -15), 14)
 	caption("CẦU THANG", point(-12, 3), 12)
+	for at in [Vector2(-27, 60), Vector2(20, 60), Vector2(36, -46)]:
+		caption("CT", point(at.x, at.y), 11)
+	caption("NỐI TÂY", point(-52, -19), 11)
+	caption("NỐI ĐÔNG", point(42, -19), 11)
 	var quest: Node3D = player.get_parent().soul_quest
 	if quest != null and progression.briefing_complete and not player.get_parent().survival.soul_rescued:
 		var soul_point := point(quest.soul.position.x, quest.soul.position.z)

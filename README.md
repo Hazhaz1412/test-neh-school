@@ -90,7 +90,7 @@ Thân/rig và animation Idle/Walk/Punch dùng Quaternius Suit_Male; sprint dùng
 
 ## Nấp và cắt đuôi
 
-Có **47 chỗ nấp**: mỗi phòng/kho có một tủ hoặc bàn làm việc có gầm trống, sáu tủ hành lang ở A/B trên ba tầng và thêm một bàn trong kho. Các tủ hành lang và hai chỗ trong nhà kho dùng được trước khi có chìa khóa tổng.
+Có **66 chỗ nấp**: mỗi phòng/kho có một tủ hoặc bàn có gầm trống tùy loại phòng, mỗi tầng có ba cặp tủ hành lang, hai phòng y tế có giường và thêm một bàn trong kho. Các tủ hành lang và hai chỗ trong nhà kho dùng được trước khi có chìa khóa tổng.
 
 Nhìn vào mặt tủ hoặc mép gầm bàn rồi **E** để nấp; **E** lần nữa để ra. Nấp tự tắt đèn pin, dừng bước chân, giữ khả năng nhìn qua khe tủ hoặc từ góc thấp dưới bàn; chuột chỉ xoay trong phạm vi chỗ nấp. Ra ngoài trả lại đèn pin và capsule đứng. Nếu có vật/người chặn lối ra, game giữ người chơi trong chỗ nấp và báo thử lại, tránh đưa người chơi xuyên vật thể.
 

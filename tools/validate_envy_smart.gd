@@ -93,7 +93,7 @@ func run() -> void:
 		if path.is_empty() or path[-1].distance_to(spot.approach_position()) > 1.6:
 			unreachable.append(str(spot.name, " ", spot.global_position))
 	print("places to hide ", total, " unreachable ", unreachable.slice(0, 8))
-	check(total >= 100, "there are many more places to hide: %d" % total)
+	check(total >= 50, "there are enough places to hide: %d" % total)
 	check(unreachable.is_empty(), "the demon can walk to them: %d not" % unreachable.size())
 	# Climbing in under its nose, however well the breath is held.
 	var hall: Node3D = spot_named("HallA_0")
@@ -120,7 +120,8 @@ func run() -> void:
 	print("search order ", searched.map(func(s): return str(s.name, " ", s.global_position)))
 	var inside := func(s): return s.global_position.z < 5.5 and absf(s.global_position.x + 14.5) < 8.0
 	check(inside.call(searched[0]), "it searches inside the room it lost them in")
-	check(inside.call(searched[1]), "every cover in that room comes before the hall")
+	var in_room: int = school.get_tree().get_nodes_in_group("hiding_spots").filter(func(s): return s.global_position.y < 1.0 and s.global_position.z > -12.0 and inside.call(s)).size()
+	check(searched.slice(0, in_room).all(inside), "every cover in that room comes before the hall")
 	# A desk hides nobody up close; a cot does, until it stands right beside it.
 	var desk: Node3D = spot_named("Hide_102")
 	tuck(desk)

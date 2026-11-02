@@ -1,6 +1,6 @@
 extends Node3D
 
-# A folding iron gate across the only staircase. It stays jammed until the
+# A folding iron gate across a staircase. It stays jammed until the
 # club scare, then concertinas towards its right-hand post by itself.
 var progression: Node3D
 var gate_size := Vector3(3.8, 3.5, 0.16)

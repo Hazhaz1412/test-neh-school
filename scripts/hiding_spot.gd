@@ -110,16 +110,16 @@ func build_cover() -> void:
 	add_child(cover)
 	if kind == Kind.LOCKER:
 		var metal := Color(0.19, 0.28, 0.25)
-		_box(cover, "Back", Vector3(0, 1.14, -0.55), Vector3(1.2, 2.28, 0.09), metal)
-		for x in [-0.57, 0.57]:
-			_box(cover, "Side", Vector3(x, 1.14, 0), Vector3(0.09, 2.28, 1.18), metal)
-		_box(cover, "Top", Vector3(0, 2.25, 0), Vector3(1.2, 0.09, 1.18), metal)
+		_box(cover, "Back", Vector3(0, 1.05, -0.355), Vector3(0.94, 2.1, 0.09), metal)
+		for x in [-0.425, 0.425]:
+			_box(cover, "Side", Vector3(x, 1.05, 0), Vector3(0.09, 2.1, 0.8), metal)
+		_box(cover, "Top", Vector3(0, 2.06, 0), Vector3(0.94, 0.09, 0.8), metal)
 		# Closed door with a narrow eye-level slit, visible from inside the cabinet.
-		_box(cover, "DoorLower", Vector3(0, 0.72, 0.56), Vector3(1.02, 1.44, 0.06), metal)
-		_box(cover, "DoorUpper", Vector3(0, 1.97, 0.56), Vector3(1.02, 0.50, 0.06), metal)
-		for x in [-0.44, 0.44]:
-			_box(cover, "VentEdge", Vector3(x, 1.58, 0.56), Vector3(0.14, 0.28, 0.06), metal)
-		_box(cover, "Handle", Vector3(0.35, 1.12, 0.62), Vector3(0.055, 0.22, 0.06), Color(0.55, 0.51, 0.36), false)
+		_box(cover, "DoorLower", Vector3(0, 0.72, 0.37), Vector3(0.76, 1.44, 0.06), metal)
+		_box(cover, "DoorUpper", Vector3(0, 1.87, 0.37), Vector3(0.76, 0.30, 0.06), metal)
+		for x in [-0.33, 0.33]:
+			_box(cover, "VentEdge", Vector3(x, 1.58, 0.37), Vector3(0.10, 0.28, 0.06), metal)
+		_box(cover, "Handle", Vector3(0.27, 1.12, 0.42), Vector3(0.05, 0.22, 0.05), Color(0.55, 0.51, 0.36), false)
 	elif kind == Kind.BED:
 		_build_bed(cover)
 	else:
@@ -150,7 +150,7 @@ func build_cover() -> void:
 	var label := Label3D.new()
 	label.name = "HideSign"
 	label.text = ["TỦ DỤNG CỤ / E", "GẦM BÀN / E", "GẦM GIƯỜNG / E"][kind]
-	label.position = [Vector3(0, 2.04, 0.605), Vector3(0, 1.18, 0.76), Vector3(0, 0.62, BED_SIZE.z * 0.5 + 0.02)][kind]
+	label.position = [Vector3(0, 1.9, 0.405), Vector3(0, 1.18, 0.76), Vector3(0, 0.62, BED_SIZE.z * 0.5 + 0.02)][kind]
 	label.font_size = 22
 	label.pixel_size = 0.0025
 	label.modulate = Color(0.72, 0.77, 0.63)
@@ -161,9 +161,9 @@ func build_cover() -> void:
 	area.collision_mask = 0
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = [Vector3(1.15, 2.2, 0.18), Vector3(2.4, 0.85, 0.2), Vector3(2.0, 0.75, 0.2)][kind]
+	shape.size = [Vector3(0.86, 2.0, 0.18), Vector3(2.4, 0.85, 0.2), Vector3(2.0, 0.75, 0.2)][kind]
 	collision.shape = shape
-	collision.position = [Vector3(0, 1.1, 0.68), Vector3(0, 0.55, 0.87), Vector3(0, 0.4, BED_SIZE.z * 0.5 + 0.12)][kind]
+	collision.position = [Vector3(0, 1.0, 0.48), Vector3(0, 0.55, 0.87), Vector3(0, 0.4, BED_SIZE.z * 0.5 + 0.12)][kind]
 	area.add_child(collision)
 	add_child(area)
 

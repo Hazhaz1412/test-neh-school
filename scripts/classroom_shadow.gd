@@ -1,8 +1,18 @@
 extends Node3D
 
-# The figure the player follows upstairs. It first waits at a top-floor window,
-# a reward for looking up after the scare, then at the far end of the wing.
-enum Mode { HIDDEN, WINDOW, HALL, GLIDE, GONE }
+# The figure the player follows upstairs. After the scare it stands backlit at the foot of the
+# stairs, right outside room 102, and climbs once seen. Then it waits at a top-floor window, a
+# reward for looking up, and finally at the far end of the wing.
+enum Mode { HIDDEN, LANDING, CLIMB, WINDOW, HALL, GLIDE, GONE }
+const LANDING := Vector3(-5.1,0.05,7.4)
+const LANDING_VIEW := Vector3(-14.5,0.05,7.4)
+const CLIMB_PATH := [Vector3(-4.8,0.05,6.2), Vector3(-4.8,3.95,-2.0)]
+const CLIMB_SPEED := 2.3
+const LANDING_HOLD := 0.9
+const LANDING_NEAR := 5.0
+const LANDING_BACKLIGHT := Vector3(-0.8,2.3,7.5)
+const LEFT_THE_HALL_Z := 9.5
+const LEFT_THE_HALL_FEET := 2.0
 const WINDOW := Vector3(-22.45,7.85,22.2)
 const HALL := Vector3(-23.5,7.85,47.6)
 const GLIDE_PATH := [Vector3(-25.0,7.85,49.0), Vector3(-28.0,7.85,49.0)]
@@ -18,6 +28,7 @@ var model: Node3D
 var pane: MeshInstance3D
 var rim: OmniLight3D
 var hall_light: OmniLight3D
+var back_light: OmniLight3D
 var slam: AudioStreamPlayer3D
 var classroom: Node3D
 var seen_clock := 0.0
@@ -66,6 +77,12 @@ func setup(school: Node3D, progression: Node3D) -> void:
 	hall_light.light_energy = 1.6
 	hall_light.omni_range = 10
 	add_child(hall_light)
+	back_light = OmniLight3D.new()
+	back_light.position = LANDING_BACKLIGHT
+	back_light.light_color = Color(0.5,0.66,0.8)
+	back_light.light_energy = 2.4
+	back_light.omni_range = 10
+	add_child(back_light)
 	slam = AudioStreamPlayer3D.new()
 	slam.stream = load("res://assets/audio/door_bang.wav")
 	slam.unit_size = 24
@@ -93,11 +110,24 @@ func reset() -> void:
 	_refresh()
 
 func _refresh() -> void:
-	model.visible = mode in [Mode.WINDOW,Mode.HALL,Mode.GLIDE]
+	model.visible = mode in [Mode.LANDING,Mode.CLIMB,Mode.WINDOW,Mode.HALL,Mode.GLIDE]
+	back_light.visible = mode in [Mode.LANDING,Mode.CLIMB]
 	pane.visible = mode == Mode.WINDOW
 	rim.visible = mode == Mode.WINDOW
 	hall_light.visible = mode in [Mode.HALL,Mode.GLIDE]
-	model.animation.speed_scale = 0.4 if mode in [Mode.WINDOW,Mode.HALL] else 0.0
+	model.animation.speed_scale = _pace()
+
+func _pace() -> float:
+	if mode == Mode.CLIMB: return 1.0
+	return 0.4 if mode in [Mode.LANDING,Mode.WINDOW,Mode.HALL] else 0.0
+
+func show_on_landing() -> void:
+	mode = Mode.LANDING
+	seen_clock = 0
+	_place(LANDING)
+	_face(LANDING_VIEW)
+	model.animation.play("idle")
+	_refresh()
 
 func show_at_window() -> void:
 	mode = Mode.WINDOW
@@ -127,8 +157,30 @@ func _begin_glide() -> void:
 	classroom.set_open(true)
 	_refresh()
 
+func _begin_climb() -> void:
+	mode = Mode.CLIMB
+	glide_step = 0
+	model.animation.play("walk")
+	_refresh()
+
 func tick(delta: float) -> void:
 	match mode:
+		Mode.LANDING:
+			# Whoever goes round another way still finds it, up at the window.
+			var feet: Vector3 = world.player.global_position
+			if feet.y >= LEFT_THE_HALL_FEET or feet.z >= LEFT_THE_HALL_Z:
+				show_at_window()
+			elif player_sees():
+				seen_clock += delta
+				if seen_clock >= LANDING_HOLD or feet.distance_to(model.position) < LANDING_NEAR:
+					_begin_climb()
+		Mode.CLIMB:
+			var step_to: Vector3 = CLIMB_PATH[glide_step]
+			_face(Vector3(step_to.x,model.position.y,step_to.z))
+			model.position = model.position.move_toward(step_to,delta*CLIMB_SPEED)
+			if model.position.distance_to(step_to) < 0.01:
+				glide_step += 1
+				if glide_step >= CLIMB_PATH.size(): show_at_window()
 		Mode.WINDOW:
 			if world.player.global_position.y >= TOP_FLOOR_FEET:
 				mode = Mode.HALL
@@ -160,7 +212,7 @@ func tick(delta: float) -> void:
 func _process(_delta: float) -> void:
 	slam.stream_paused = not world.simulation_active()
 	if not world.simulation_active(): model.animation.speed_scale = 0
-	elif mode in [Mode.WINDOW,Mode.HALL]: model.animation.speed_scale = 0.4
+	elif mode in [Mode.LANDING,Mode.CLIMB,Mode.WINDOW,Mode.HALL]: model.animation.speed_scale = _pace()
 
 func _exit_tree() -> void:
 	if slam != null:

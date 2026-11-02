@@ -52,7 +52,12 @@ func validate() -> void:
 	var player: CharacterBody3D = school.player
 	player.set_physics_process(false)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	check(school.get_node("HidingSpots").get_child_count() >= 100, "over a hundred covers span rooms, both halls and warehouse")
+	var covers: int = school.get_node("HidingSpots").get_child_count()
+	check(covers >= 50 and covers <= 75, "One cover a room plus a few locker pairs, not a cabinet at every turn (%d)" % covers)
+	for spot in school.get_node("HidingSpots").get_children():
+		if not spot.name.begins_with("Hall"):
+			continue
+		check(spot.get_node("Cover") != null and (spot.name.ends_with("b") or school.get_node("HidingSpots").has_node(String(spot.name) + "b")), "%s stands in a pair" % spot.name)
 	var kinds := {0: 0, 1: 0, 2: 0}
 	for spot in school.get_node("HidingSpots").get_children():
 		# Room 103 is emptied for the opening lure, and Lan's return table waits for its moment.

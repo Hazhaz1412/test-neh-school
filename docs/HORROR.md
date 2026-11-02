@@ -14,7 +14,7 @@ Ma có nhịp khựng đầu nhìn player 0,34 giây rồi lao 6,4 m/s trong 1,1
 
 [Ma lao tới](ghost-rush-preview.png) · [Tủ bên ngoài](hiding-locker-preview.png) · [Nhìn từ trong tủ](hiding-locker-inside.png) · [Nấp dưới bàn](hiding-table-inside.png)
 
-47 chỗ nấp có collider thật và được bake vào đường đi: 40 chỗ trong các phòng/kho, 6 tủ ngoài hành lang, 1 bàn bổ sung trong kho. Tủ có khe nhìn, bàn dùng model Kenney desk và collider riêng cho mặt/chân, không dùng hộp kín cả gầm. Vị trí cover giữ ổn định ở cả hai thế giới; chỉ vật liệu đổi khi B. Runtime gộp mesh và collider tĩnh của cover vào các batch không gian, giữ script/vùng tương tác riêng để tránh tăng nhiều lượt vẽ.
+66 chỗ nấp có collider thật và được bake vào đường đi: 40 chỗ trong các phòng/kho, 18 tủ ngoài hành lang xếp theo cặp, 6 giường y tế, 1 bàn bổ sung trong kho và bàn Lan. Tủ có khe nhìn, bàn dùng model Kenney desk và collider riêng cho mặt/chân, không dùng hộp kín cả gầm. Vị trí cover giữ ổn định ở cả hai thế giới; chỉ vật liệu đổi khi B. Runtime gộp mesh và collider tĩnh của cover vào các batch không gian, giữ script/vùng tương tác riêng để tránh tăng nhiều lượt vẽ.
 
 **E** nhìn gần mặt tủ/gầm bàn để vào; E lần nữa để ra. Tự tắt đèn pin, hạ camera/capsule khi dưới bàn; bước chân dừng và camera chỉ xoay trong phạm vi cover. Chọn vị trí đứng trống khi thoát, giữ nguyên trạng thái khi B, dừng AI khi M/Esc. Không cho tương tác từ xa hoặc lúc pause.
 

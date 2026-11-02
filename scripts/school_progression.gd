@@ -2,6 +2,8 @@ extends Node3D
 
 enum Stage { ROOM_LURE, BLOOD_TRAIL, CLUB_SCARE, ASCEND, DOOR_SIEGE, ESCAPE_RUN, GATE_INTERFERENCE, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE, LAN_FAREWELL }
 const NOTEBOOK_SPOT := Vector3(-29.4,7.85,49.6)
+const SIDE_STAIRS: Array[Vector3] = [Vector3(-25.1,0,58.15),Vector3(25.1,0,58.15),Vector3(41.1,0,-44.15)]
+const KNOCK_DELAY := 2.5
 const TOP_FLOOR_HEIGHT := 7.8
 var world: Node3D
 var stage := Stage.ROOM_LURE
@@ -88,35 +90,27 @@ func setup(school: Node3D) -> void:
 	return_table.position = Vector3(12.8, 0.05, 1.5)
 	world.get_node("HidingSpots").add_child(return_table)
 	return_table.get_node("Cover/HideSign").hide()
-	blood = Node3D.new()
-	blood.name = "MysteriousBloodTrail"
+	blood = preload("res://scripts/blood_trail.gd").new()
 	add_child(blood)
-	for i in range(12):
-		var patch := MeshInstance3D.new()
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.13 + (i%3)*0.055
-		mesh.bottom_radius = mesh.top_radius
-		mesh.height = 0.006
-		mesh.radial_segments = 9
-		patch.mesh = mesh
-		patch.position = Vector3(9-i*2.05, 0.025, 7.5+sin(i*2.4)*0.38)
-		patch.scale.z = 1.7
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.29, 0.018, 0.013)
-		material.roughness = 0.35
-		patch.material_override = material
-		blood.add_child(patch)
+	blood.setup(world)
 	stair_gate = preload("res://scripts/progression_gate.gd").new()
 	stair_gate.progression = self
 	stair_gate.position = Vector3(-5.1, 0, 5.3)
 	add_child(stair_gate)
+	# The figure must be the first thing up, so the side stairs wait behind gates of their own.
+	for place in SIDE_STAIRS:
+		var gate: Node3D = preload("res://scripts/progression_gate.gd").new()
+		gate.progression = self
+		gate.gate_size.x = 2.95
+		gate.position = place
+		add_child(gate)
 	fear = preload("res://scripts/fear_overlay.gd").new()
 	add_child(fear)
 	strange_sound = AudioStreamPlayer3D.new()
 	strange_sound.stream = loop_wav("res://assets/audio/strange_knock.wav")
 	strange_sound.position = Vector3(-14.5, 1.2, 2.5)
 	strange_sound.unit_size = 10
-	strange_sound.max_distance = 35
+	strange_sound.max_distance = 46
 	strange_sound.volume_db = -10
 	add_child(strange_sound)
 	laugh = AudioStreamPlayer.new()
@@ -249,7 +243,7 @@ func current_goal() -> String:
 		Stage.ROOM_LURE: return "Khám phá ngôi trường"
 		Stage.BLOOD_TRAIL: return "Vết máu ở phía đối diện... tiếng gì đang lặp lại sau cánh cửa?"
 		Stage.CLUB_SCARE: return "..."
-		Stage.ASCEND: return "Có người đứng ở cửa sổ tầng trên cùng"
+		Stage.ASCEND: return "Có bóng người trên lầu · Tiếng hát ru vọng xuống"
 		Stage.DOOR_SIEGE: return "..."
 		Stage.ESCAPE_RUN: return "THOÁT KHỎI ĐÂY · Chạy ra cổng chính!"
 		Stage.GATE_INTERFERENCE: return "Cổng không mở... tiếng rè đang nuốt mọi thứ"
@@ -328,7 +322,8 @@ func interact_with(item: Node3D) -> bool:
 		stage = Stage.BLOOD_TRAIL
 		stage_time = 0
 		lure_light.hide()
-		blood.show()
+		world.soundscape.at("lamp_pop", lure_light.global_position, -8)
+		blood.reveal()
 		return true
 	if item == clubs and stage == Stage.BLOOD_TRAIL:
 		collect_clubs()
@@ -352,7 +347,7 @@ func collect_clubs() -> void:
 func begin_uneasy_music() -> void:
 	uneasy_music.volume_db = -30
 	uneasy_music.play()
-	room_shadow.show_at_window()
+	room_shadow.show_on_landing()
 
 func release_stairs() -> void:
 	stairs_open = true
@@ -576,7 +571,8 @@ func _physics_process(delta: float) -> void:
 	if not world.simulation_active() or not world.survival.active: return
 	stage_time += delta
 	var p: CharacterBody3D = world.player
-	if stage == Stage.BLOOD_TRAIL and p.global_position.distance_to(Vector3(-14.5, 0.05, 7.5)) < 14 and not strange_sound.playing:
+	# The knocking starts where the trail ends, so it pulls the player along from the first room.
+	if stage == Stage.BLOOD_TRAIL and (stage_time >= KNOCK_DELAY or p.global_position.distance_to(Vector3(-14.5, 0.05, 7.5)) < 14) and not strange_sound.playing:
 		strange_sound.play()
 	elif stage == Stage.CLUB_SCARE:
 		club_scare.tick(delta)
