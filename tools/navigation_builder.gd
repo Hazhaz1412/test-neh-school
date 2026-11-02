@@ -1,6 +1,6 @@
 extends RefCounted
 
-static func bake(school: Node3D) -> NavigationRegion3D:
+static func bake(school: Node3D, path := "res://scenes/campus_navigation.tres") -> NavigationRegion3D:
 	if school.has_node("Navigation"):
 		school.get_node("Navigation").free()
 	var mesh := NavigationMesh.new()
@@ -18,7 +18,7 @@ static func bake(school: Node3D) -> NavigationRegion3D:
 	NavigationServer3D.parse_source_geometry_data(mesh, geometry, school)
 	NavigationServer3D.bake_from_source_geometry_data(mesh, geometry)
 	assert(mesh.get_polygon_count() > 0, "Navigation bake produced no polygons")
-	assert(ResourceSaver.save(mesh, "res://scenes/campus_navigation.tres", ResourceSaver.FLAG_CHANGE_PATH) == OK)
+	assert(ResourceSaver.save(mesh, path, ResourceSaver.FLAG_CHANGE_PATH) == OK)
 	var region := NavigationRegion3D.new()
 	region.name = "Navigation"
 	region.navigation_mesh = mesh

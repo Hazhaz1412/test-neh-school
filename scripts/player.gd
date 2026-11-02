@@ -499,10 +499,10 @@ func begin_hide(spot: Node3D) -> void:
 	global_position = spot.hide_position()
 	rotation.y = spot.rotation.y + PI
 	camera.rotation = Vector3.ZERO
-	camera.position = Vector3(0, 0.52 if spot.kind == 1 else 1.58, 0)
+	camera.position = Vector3(0, spot.eye_height(), 0)
 	camera.fov = 66
-	$Collision.shape.height = 0.68 if spot.kind == 1 else 1.75
-	$Collision.position.y = 0.36 if spot.kind == 1 else 0.9
+	$Collision.shape.height = spot.body_height()
+	$Collision.position.y = 0.36 if spot.body_height() < 1.0 else 0.9
 	velocity = Vector3.ZERO
 	get_parent().soundscape.cue("paper", -26)
 

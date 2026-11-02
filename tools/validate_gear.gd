@@ -152,7 +152,7 @@ func run() -> void:
 	check(not player.inventory.has("salt_gun"), "the shot is spent")
 	check(player.global_position.distance_to(hold) > 0.5, "the player is thrown")
 	check(player.combat.adrenaline_remaining > 7.5 and player.combat.sprint_multiplier() == 0.5, "adrenaline halves stamina drain for 8 s")
-	check(demon.has_area == false and demon.last_seen != null and school.envy.hint_clock > 15.0, "A goes silent and the trail is lost")
+	check(demon.has_area == false and demon.last_seen != null and school.envy.hint_clock > 11.0, "A goes silent and the trail is lost")
 	await wait_for(func(): return demon.state == demon.State.REST, 5.0)
 	check(demon.state == demon.State.REST, "it limps away instead of chasing")
 	demon.fall_back(demon.global_position, 0.0)

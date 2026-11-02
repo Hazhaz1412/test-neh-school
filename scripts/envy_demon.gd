@@ -4,16 +4,35 @@ const Gear := preload("res://scripts/night_gear.gd")
 # it hears and the areas the director whispers. It searches rooms and hiding places itself.
 enum State {ROAM, SWEEP, LISTEN, CHASE, STRIKE, REST, GRAB, STAGGER, ADMIRE}
 const NAMES := {State.ROAM: "đi lang thang", State.SWEEP: "tự lục soát", State.LISTEN: "nghe trước chỗ trốn", State.CHASE: "đuổi", State.STRIKE: "vồ", State.REST: "bị gọi lui", State.GRAB: "chụp người chơi", State.STAGGER: "đau, mất dấu", State.ADMIRE: "ngắm chiến lợi phẩm"}
-const STALK_SPEED := 3.1
-const SEARCH_SPEED := 2.6
-const CHASE_SPEED := 4.75
-const SIGHT_RANGE := 22.0
-const TORCH_SIGHT_RANGE := 34.0
-const SIGHT_CONE := 0.42
+const STALK_SPEED := 3.6
+const SEARCH_SPEED := 3.2
+const CHASE_SPEED := 4.9
+# A long chase winds it up until a sprint alone no longer outruns it.
+const RAGE_SPEED := 5.75
+const RAGE_SECONDS := 7.0
+const POUNCE_REACH := 6.0
+const POUNCE_SPEED := 8.0
+const POUNCE_SECONDS := 0.6
+const POUNCE_REST := 5.0
+const SIGHT_RANGE := 26.0
+const TORCH_SIGHT_RANGE := 38.0
+const SIGHT_CONE := 0.3
 const SENSE_ALWAYS := 2.6
-const NOTICE_SECONDS := 0.35
-const LOSE_SECONDS := 2.6
-const LISTEN_SECONDS := 1.7
+const NOTICE_SECONDS := 0.2
+const LOSE_SECONDS := 3.5
+# For a moment after losing sight it still follows the footsteps.
+const TRACK_SECONDS := 1.2
+const LISTEN_SECONDS := 2.2
+const YANK_SECONDS := 0.4
+const LOST_RADIUS := 14.0
+const SUSPECT_LIMIT := 4
+const HIDER_EYE := 0.3
+const SEARCH_EYE := 1.7
+const BEHIND_WALL := 2.0
+const COVER_DEPTH := 0.8
+const HIDER_CLEARANCE := 1.6
+const PREDICT_SECONDS := 1.0
+const PREDICT_TRUST := 1.5
 const LOOK_SECONDS := 1.5
 const STRIKE_REACH := 1.9
 const GRAB_SECONDS := 1.3
@@ -24,11 +43,11 @@ const STAGGER_SECONDS := 3.0
 const ADMIRE_SECONDS := 4.0
 const LUNGE_SPEED := 6.5
 const LOW_EYE := 1.3
-const BLIND_SECONDS := 16.0
+const BLIND_SECONDS := 10.0
 const THROW_REACH := 3.5
 const ESCAPE_GRACE := 2.0
 const MOUTH_PITCH := 0.45
-const FORGET_SECONDS := 70.0
+const FORGET_SECONDS := 45.0
 const STRIDE := 1.25
 const STOOP := 0.64
 const SHAKE_RANGE := 24.0
@@ -72,6 +91,11 @@ var area_visited := false
 var grab_from := Vector3.ZERO
 var grab_clock := 0.0
 var armed := false
+var certain := false
+var suspects: Array[Node3D] = []
+var chase_time := 0.0
+var pounce_left := 0.0
+var pounce_clock := 0.0
 var shot_sound: AudioStreamPlayer3D
 var shout: Label
 
@@ -161,18 +185,28 @@ func hear(heard_at: Vector3, radius: float, source: String) -> void:
 		whisper(heard_at, 5.0)
 		_next_search()
 
-# Seen climbing in: that spot is no longer a guess.
+# Seen climbing in: that spot is no longer a guess, and nothing else matters now.
 func witness(spot: Node3D) -> void:
-	if _can_see_player(false):
-		witnessed = spot
+	if state != State.GRAB and not is_resting() and _can_see_player(false):
+		_saw_hiding(spot)
+
+func _saw_hiding(spot: Node3D) -> void:
+	witnessed = spot
+	roar_sound.play()
+	_next_search()
 
 func fall_back(point: Vector3, seconds: float) -> void:
 	state = State.REST
 	rest_left = seconds
+	_forget()
+	agent.target_position = point
+
+func _forget() -> void:
 	goal = null
 	witnessed = null
+	certain = false
+	suspects.clear()
 	has_area = false
-	agent.target_position = point
 
 func _player_exposed() -> bool:
 	return not player.is_hidden() and not world.is_soul_sanctuary(player.global_position)
@@ -211,16 +245,70 @@ func _sense(delta: float) -> void:
 		notice += 0.15
 		if notice >= NOTICE_SECONDS and not is_hunting():
 			state = State.CHASE
+			chase_time = 0.0
+			certain = false
 			roar_sound.play()
+	elif not certain and _glimpses_hider():
+		notice += 0.15
+		if notice >= NOTICE_SECONDS:
+			notice = 0.0
+			_saw_hiding(player.hidden_spot)
 	else:
 		notice = maxf(0.0, notice - 0.15)
 		if state == State.CHASE:
 			unseen += 0.15
 
+# A desk hides nobody from anything standing close, a cot only from what does not bend down.
+func _glimpses_hider() -> bool:
+	var spot: Node3D = player.hidden_spot
+	if spot == null or spot.seen_from() <= 0.0:
+		return false
+	var offset: Vector3 = spot.global_position - global_position
+	if offset.length() > spot.seen_from():
+		return false
+	if offset.length() > SENSE_ALWAYS and -global_basis.z.dot(offset.normalized()) < SIGHT_CONE:
+		return false
+	var low: Vector3 = spot.global_position + Vector3.UP * HIDER_EYE
+	var ray := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * LOW_EYE, low, 1)
+	ray.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+	return hit.is_empty() or hit.position.distance_to(low) < HIDER_CLEARANCE
+
+# How far it really is on foot. A locker behind a wall may be close, but it is not near.
+func _walk_distance(from: Vector3, to: Vector3) -> float:
+	var path := NavigationServer3D.map_get_path(get_world_3d().navigation_map, from, to, true)
+	var length := 0.0
+	for i in range(1, path.size()):
+		length += path[i - 1].distance_to(path[i])
+	return length if path.size() > 1 else INF
+
+# No wall between them: the room they vanished in gets emptied before the corridor outside.
+func _same_space(from: Vector3, spot: Node3D) -> bool:
+	var target: Vector3 = spot.global_position + Vector3.UP * SEARCH_EYE
+	var ray := PhysicsRayQueryParameters3D.create(from + Vector3.UP * SEARCH_EYE, target, 1)
+	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+	return hit.is_empty() or spot.is_ancestor_of(hit.collider) or hit.position.distance_to(target) < COVER_DEPTH
+
+# Lost them: the hiding places a short walk from the last sighting come first, checked or not.
+func _lost_sight() -> void:
+	area = last_seen
+	area_radius = LOST_RADIUS
+	has_area = true
+	area_visited = false
+	var ranked := []
+	for spot in _spots_nearby():
+		var walk := _walk_distance(last_seen, spot.approach_position())
+		ranked.append([walk if _same_space(last_seen, spot) else walk * BEHIND_WALL, spot])
+	ranked.sort_custom(func(a, b): return a[0] < b[0])
+	suspects.clear()
+	for entry in ranked.slice(0, SUSPECT_LIMIT):
+		suspects.append(entry[1])
+	_next_search()
+
 func _spots_nearby() -> Array:
 	var found := []
 	for spot in get_tree().get_nodes_in_group("hiding_spots"):
-		if _in_area(spot.global_position):
+		if spot.visible and _in_area(spot.global_position):
 			found.append(spot)
 	return found
 
@@ -233,10 +321,18 @@ func _fresh(place: Node3D) -> bool:
 # Nearest unchecked hiding place or classroom in the suspected area. Neither is chosen by
 # whether anyone is there; that would be cheating.
 func _next_search() -> void:
+	certain = false
 	if witnessed != null:
 		goal = witnessed
 		goal_is_spot = true
 		witnessed = null
+		certain = true
+		suspects.clear()
+		_head_for(goal)
+		return
+	if not suspects.is_empty():
+		goal = suspects.pop_front()
+		goal_is_spot = true
 		_head_for(goal)
 		return
 	var places := []
@@ -250,7 +346,8 @@ func _next_search() -> void:
 	var best := INF
 	goal = null
 	for place in places:
-		var distance: float = global_position.distance_to(place[0].global_position) * randf_range(0.8, 1.2)
+		var target: Vector3 = place[0].approach_position() if place[1] else place[0].global_position
+		var distance: float = _walk_distance(global_position, target) * randf_range(0.9, 1.1)
 		if distance < best:
 			best = distance
 			goal = place[0]
@@ -327,7 +424,7 @@ func _sweep(delta: float) -> void:
 			checked[goal] = Time.get_ticks_msec()
 			_next_search()
 		return
-	_walk(SEARCH_SPEED, delta)
+	_walk(CHASE_SPEED if certain else SEARCH_SPEED, delta)
 	stuck_clock += delta
 	if stuck_clock > 3.0:
 		if global_position.distance_to(stuck_from) < 0.6:
@@ -339,13 +436,13 @@ func _sweep(delta: float) -> void:
 	if agent.is_navigation_finished():
 		if goal_is_spot:
 			state = State.LISTEN
-			wait = LISTEN_SECONDS
+			wait = YANK_SECONDS if certain else LISTEN_SECONDS
 			rattle_sound.play()
 			model.move("idle", 0.6)
 		else:
 			wait = LOOK_SECONDS
 
-# It stands at the locker and listens. A held breath is the only defence.
+# It stands at the locker and listens. A held breath fools it, unless it saw you climb in.
 func _listen(delta: float) -> void:
 	wait -= delta
 	var face: Vector3 = goal.global_position - global_position
@@ -355,28 +452,44 @@ func _listen(delta: float) -> void:
 		return
 	var hider: CharacterBody3D = goal.occupant
 	checked[goal] = Time.get_ticks_msec()
-	if hider != null and not hider.holding_breath:
+	if hider != null and (certain or not hider.holding_breath):
+		certain = false
 		hider.end_hide()
 		last_seen = hider.global_position
 		state = State.CHASE
+		chase_time = 0.0
 		unseen = 0.0
 		roar_sound.play()
 		return
 	_next_search()
 
 func _chase(delta: float) -> void:
-	agent.target_position = player.global_position if unseen <= 0.0 else last_seen
-	_walk(CHASE_SPEED, delta)
-	if _player_exposed() and global_position.distance_to(player.global_position) < STRIKE_REACH:
+	chase_time += delta
+	pounce_clock -= delta
+	pounce_left -= delta
+	if unseen <= TRACK_SECONDS:
+		last_seen = player.global_position
+	agent.target_position = _intercept() if unseen <= 0.0 else last_seen
+	var gap: float = global_position.distance_to(player.global_position)
+	if unseen <= 0.0 and pounce_clock <= 0.0 and gap < POUNCE_REACH and gap > STRIKE_REACH:
+		pounce_clock = POUNCE_REST
+		pounce_left = POUNCE_SECONDS
+		roar_sound.play()
+	var speed := lerpf(CHASE_SPEED, RAGE_SPEED, clampf(chase_time / RAGE_SECONDS, 0.0, 1.0))
+	_walk(POUNCE_SPEED if pounce_left > 0.0 else speed, delta)
+	if _player_exposed() and gap < STRIKE_REACH:
 		state = State.STRIKE
 		wait = 0.45
 		model.move("idle", 1.4)
 		return
 	if unseen > LOSE_SECONDS:
-		area = last_seen
-		area_radius = 10.0
-		has_area = true
-		_next_search()
+		_lost_sight()
+
+# Runs for where the prey is going, unless that is somewhere it could not walk to.
+func _intercept() -> Vector3:
+	var ahead: Vector3 = player.global_position + player.velocity * Vector3(1, 0, 1) * minf(global_position.distance_to(player.global_position) / CHASE_SPEED, PREDICT_SECONDS)
+	var walkable := NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, ahead)
+	return walkable if walkable.distance_to(ahead) < PREDICT_TRUST else player.global_position
 
 # The reach is a lunge, not a pause: stepping backwards must not outrun the wind-up.
 func _strike(delta: float) -> void:
@@ -449,9 +562,7 @@ func _decide() -> void:
 	state = State.ADMIRE
 	wait = ADMIRE_SECONDS
 	velocity = Vector3.ZERO
-	goal = null
-	witnessed = null
-	has_area = false
+	_forget()
 	notice = 0.0
 	model.admire(prize)
 	director.caught_someone()
@@ -480,9 +591,7 @@ func fire_salt() -> void:
 	world.notify("Nó rú lên và ném bạn đi · Chạy mau!")
 	state = State.STAGGER
 	wait = STAGGER_SECONDS
-	goal = null
-	witnessed = null
-	has_area = false
+	_forget()
 	notice = 0.0
 	director.driven_off(STAGGER_SECONDS + BLIND_SECONDS)
 
@@ -540,7 +649,7 @@ func _unstick(direction: Vector3, delta: float) -> void:
 		pin_clock = 0.0
 		return
 	pin_clock += delta
-	if pin_clock > 2.0:
+	if pin_clock > 1.2:
 		pin_clock = 0.0
 		global_position = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, global_position + direction * 0.9) + Vector3.UP * 0.05
 

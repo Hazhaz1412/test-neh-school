@@ -1,15 +1,15 @@
 extends Node
 # AI A, the director. It always knows where every player is and never tells the demon:
 # it may only whisper an area. Keeping the two apart is what makes the demon's search fair.
-const FIRST_HINT := 6.0
-const SLOW_HINT := 12.0
-const FAST_HINT := 6.0
-const WIDE_AREA := 24.0
-const TIGHT_AREA := 7.0
-const PATIENCE := 60.0
-const MENACE_LIMIT := 100.0
+const FIRST_HINT := 4.0
+const SLOW_HINT := 8.0
+const FAST_HINT := 4.0
+const WIDE_AREA := 18.0
+const TIGHT_AREA := 5.0
+const PATIENCE := 35.0
+const MENACE_LIMIT := 170.0
 const MENACE_NEAR := 13.0
-const REST_SECONDS := 25.0
+const REST_SECONDS := 12.0
 var world: Node3D
 var demon: CharacterBody3D
 var started := false

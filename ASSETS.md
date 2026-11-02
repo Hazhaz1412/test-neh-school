@@ -168,6 +168,7 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 - **Nhạc (CC0):** `assets/music/chase_wolfgang.ogg` ("Chase!" của Wolfgang_) và `dark_ambience_gabovitch.ogg` ("Dark Ambience Loop" của Iwan Gabovitch). Nguồn ở `assets/music/corridor_sources.json`.
 - **Tiếng hù (CC0):** `assets/audio/corridor/` cắt từ "Horror Hit Soundpack 1" của psychhead_.
 - **Font (SIL OFL 1.1):** `assets/fonts/` gồm Grenze (Omnibus-Type), Protest Revolution (Octavio Pardo), Sedgwick Ave Display (Kevin Burke), tải từ kho google/fonts, giấy phép nằm cạnh font (`OFL-*.txt`). Cả ba đủ dấu tiếng Việt. `horror_type.gd` phân vai từng font.
+- **Giường y tế:** dùng lại `assets/home/bed.glb` (CC0, Poly Pizza) kê trên chân sắt dựng bằng code, chỉ đặt ở phòng y tế.
 - **Tiếng thở dốc (CC0):** `assets/audio/corridor/panting.wav` cắt từ "breathing tired" của mikeask (https://opengameart.org/content/breathing-tired), chuẩn hóa âm lượng, tăng tốc 1,45 lần. Nguồn ở `assets/audio/corridor/sources.json`.
 - **Nhện (CC0):** `assets/opengameart_spider/` là "Spider 2" của br-n518 (https://opengameart.org/content/spider-2). `tools/build_spider.py` xuất file blend sang `spider.glb`, giữ nguyên rig và vòng đi.
 - **Bàn tay trong hầm (MIT):** không phải model riêng. `corridor_chute.gd` cắt cẳng tay và bàn tay của `Male_Child_01` (Rocketbox) lúc chạy game, dùng texture học sinh sẵn có.

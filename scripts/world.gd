@@ -93,6 +93,7 @@ var death_text: Label
 @onready var player: CharacterBody3D = $Player
 
 func _ready() -> void:
+	preload("res://scripts/campus_fixes.gd").apply(self)
 	_build_ui()
 	VisualUpgrade.apply(self)
 	_prepare_spirit_world()

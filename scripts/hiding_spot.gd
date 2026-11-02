@@ -1,6 +1,13 @@
 extends Node3D
 
-enum Kind { LOCKER, TABLE }
+enum Kind { LOCKER, TABLE, BED }
+# How close something has to come to spot a hider. Metal doors hide you completely, a desk barely.
+const SEEN_FROM := {Kind.LOCKER: 0.0, Kind.TABLE: 5.5, Kind.BED: 1.3}
+const EYE_HEIGHT := {Kind.LOCKER: 1.58, Kind.TABLE: 0.52, Kind.BED: 0.16}
+const CRAWL_HEIGHT := 0.68
+const BED_SIZE := Vector3(2.1, 0.38, 1.0)
+const BED_DECK := 0.42
+const BED_HEM := 0.3
 @export var kind: Kind = Kind.LOCKER
 var world: Node3D
 var occupant: CharacterBody3D
@@ -14,7 +21,7 @@ func _ready() -> void:
 		build_cover()
 
 func interaction_text() -> String:
-	return "E / Nấp trong tủ" if kind == Kind.LOCKER else "E / Nấp dưới bàn"
+	return ["E / Nấp trong tủ", "E / Nấp dưới bàn", "E / Chui xuống gầm giường"][kind]
 
 func approach_position() -> Vector3:
 	return to_global(Vector3(0, 0.05, 1.45))
@@ -22,11 +29,20 @@ func approach_position() -> Vector3:
 func hide_position() -> Vector3:
 	return to_global(Vector3(0, 0.05, 0))
 
+func body_height() -> float:
+	return 1.75 if kind == Kind.LOCKER else CRAWL_HEIGHT
+
+func eye_height() -> float:
+	return EYE_HEIGHT[kind]
+
+func seen_from() -> float:
+	return SEEN_FROM[kind]
+
 func interact(actor: CharacterBody3D) -> bool:
 	if occupant != null or actor != world.player or not world.simulation_active() or actor.is_hidden() or actor.get_interaction_target() != self:
 		return false
 	entry_position = actor.global_position
-	if not actor.can_fit(hide_position(), 0.68 if kind == Kind.TABLE else 1.75):
+	if not actor.can_fit(hide_position(), body_height()):
 		world.notify("Chỗ nấp đang bị chắn.")
 		return false
 	# Evaluate sight BEFORE lowering the camera or concealing the player.
@@ -104,6 +120,8 @@ func build_cover() -> void:
 		for x in [-0.44, 0.44]:
 			_box(cover, "VentEdge", Vector3(x, 1.58, 0.56), Vector3(0.14, 0.28, 0.06), metal)
 		_box(cover, "Handle", Vector3(0.35, 1.12, 0.62), Vector3(0.055, 0.22, 0.06), Color(0.55, 0.51, 0.36), false)
+	elif kind == Kind.BED:
+		_build_bed(cover)
 	else:
 		# Reuse the existing Kenney desk, with explicit top/leg colliders so the
 		# underside is genuinely hollow rather than its old full AABB collider.
@@ -131,8 +149,8 @@ func build_cover() -> void:
 				_box(cover, "TableLeg", Vector3(x, 0.52, z), Vector3(0.12, 1.04, 0.12), wood)
 	var label := Label3D.new()
 	label.name = "HideSign"
-	label.text = "TỦ DỤNG CỤ / E" if kind == Kind.LOCKER else "GẦM BÀN / E"
-	label.position = Vector3(0, 2.04, 0.605) if kind == Kind.LOCKER else Vector3(0, 1.18, 0.76)
+	label.text = ["TỦ DỤNG CỤ / E", "GẦM BÀN / E", "GẦM GIƯỜNG / E"][kind]
+	label.position = [Vector3(0, 2.04, 0.605), Vector3(0, 1.18, 0.76), Vector3(0, 0.62, BED_SIZE.z * 0.5 + 0.02)][kind]
 	label.font_size = 22
 	label.pixel_size = 0.0025
 	label.modulate = Color(0.72, 0.77, 0.63)
@@ -143,8 +161,47 @@ func build_cover() -> void:
 	area.collision_mask = 0
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(1.15, 2.2, 0.18) if kind == Kind.LOCKER else Vector3(2.4, 0.85, 0.2)
+	shape.size = [Vector3(1.15, 2.2, 0.18), Vector3(2.4, 0.85, 0.2), Vector3(2.0, 0.75, 0.2)][kind]
 	collision.shape = shape
-	collision.position = Vector3(0, 1.1, 0.68) if kind == Kind.LOCKER else Vector3(0, 0.55, 0.87)
+	collision.position = [Vector3(0, 1.1, 0.68), Vector3(0, 0.55, 0.87), Vector3(0, 0.4, BED_SIZE.z * 0.5 + 0.12)][kind]
 	area.add_child(collision)
 	add_child(area)
+
+# A sick-bay cot: the CC0 bed raised on steel legs. The sheet hangs low on every side, so from
+# underneath only the floor and whatever is walking on it can be seen.
+func _build_bed(cover: Node3D) -> void:
+	var model: Node3D = preload("res://assets/home/bed.glb").instantiate()
+	model.name = "Cot"
+	cover.add_child(model)
+	var bounds := AABB()
+	var started := false
+	for mesh in model.find_children("*", "MeshInstance3D", true, false):
+		var part: AABB = model.global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()
+		bounds = bounds.merge(part) if started else part
+		started = true
+	var fit := Vector3(BED_SIZE.z, BED_SIZE.y, BED_SIZE.x) / bounds.size
+	model.scale = fit
+	model.rotation.y = PI * 0.5
+	model.position = Basis(Vector3.UP, PI * 0.5) * (-bounds.get_center() * fit) + Vector3(0, BED_DECK + BED_SIZE.y * 0.5, 0)
+	var steel := Color(0.34, 0.36, 0.37)
+	var sheet := Color(0.56, 0.58, 0.54)
+	_box(cover, "CotDeck", Vector3(0, BED_DECK, 0), Vector3(BED_SIZE.x, 0.05, BED_SIZE.z), steel, false)
+	for x in [-0.98, 0.98]:
+		for z in [-0.42, 0.42]:
+			_box(cover, "CotLeg", Vector3(x, BED_DECK * 0.5, z), Vector3(0.06, BED_DECK, 0.06), steel)
+	var drop: float = BED_DECK + 0.08 - BED_HEM
+	for z in [-0.5, 0.5]:
+		_box(cover, "Sheet", Vector3(0, BED_HEM + drop * 0.5, z * BED_SIZE.z), Vector3(BED_SIZE.x, drop, 0.02), sheet, false)
+	for x in [-0.5, 0.5]:
+		_box(cover, "Sheet", Vector3(x * BED_SIZE.x, BED_HEM + drop * 0.5, 0), Vector3(0.02, drop, BED_SIZE.z), sheet, false)
+	# Solid only above crawling height, so the capsule fits underneath.
+	var top := StaticBody3D.new()
+	top.name = "CotTop"
+	top.collision_mask = 0
+	var collider := CollisionShape3D.new()
+	var plate := BoxShape3D.new()
+	plate.size = Vector3(BED_SIZE.x, 0.2, BED_SIZE.z)
+	collider.shape = plate
+	collider.position.y = CRAWL_HEIGHT + 0.2
+	top.add_child(collider)
+	cover.add_child(top)

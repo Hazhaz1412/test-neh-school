@@ -22,7 +22,7 @@ func aim(spot: Node3D) -> void:
 	school.player.global_position = spot.approach_position()
 	school.player.rotation = Vector3.ZERO
 	school.player.camera.rotation = Vector3.ZERO
-	school.player.camera.look_at(spot.to_global(Vector3(0, 1.1 if spot.kind == 0 else 0.55, 0.72)))
+	school.player.camera.look_at(spot.to_global(Vector3(0, [1.1, 0.55, 0.4][spot.kind], 0.72)))
 	await frames(2)
 
 func press_e() -> void:
@@ -52,9 +52,12 @@ func validate() -> void:
 	var player: CharacterBody3D = school.player
 	player.set_physics_process(false)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	check(school.get_node("HidingSpots").get_child_count() == 47, "47 authored covers span rooms, both halls and warehouse")
-	var kinds := {0: 0, 1: 0}
+	check(school.get_node("HidingSpots").get_child_count() >= 100, "over a hundred covers span rooms, both halls and warehouse")
+	var kinds := {0: 0, 1: 0, 2: 0}
 	for spot in school.get_node("HidingSpots").get_children():
+		# Room 103 is emptied for the opening lure, and Lan's return table waits for its moment.
+		if not spot.visible or spot.has_method("set_available"):
+			continue
 		kinds[spot.kind] += 1
 		await aim(spot)
 		check(player.can_fit(player.global_position), "%s has a clear standing approach" % spot.name)
@@ -63,11 +66,11 @@ func validate() -> void:
 		check(player.is_hidden() and player.hidden_spot == spot, "%s accepts E and conceals the player" % spot.name)
 		if not player.is_hidden():
 			continue
-		check(not player.flashlight.visible and player.can_fit(player.global_position, 0.68 if spot.kind == 1 else 1.75), "%s has a clear physical interior and extinguishes the flashlight" % spot.name)
+		check(not player.flashlight.visible and player.can_fit(player.global_position, spot.body_height()), "%s has a clear physical interior and extinguishes the flashlight" % spot.name)
 		await frames(2)
 		press_e()
 		check(not player.is_hidden() and player.can_fit(player.global_position), "%s exits to a clear standing capsule" % spot.name)
-	check(kinds[0] > 0 and kinds[1] > 0, "Both lockers and hollow tables are playable")
+	check(kinds[0] > 0 and kinds[1] > 0 and kinds[2] > 0, "Lockers, hollow tables and cots are all playable")
 	var cabinet: Node3D = school.get_node("HidingSpots/HallA_0")
 	await aim(cabinet)
 	press_e()
@@ -97,7 +100,7 @@ func validate() -> void:
 	school.set_spirit_world(true)
 	await frames(10)
 	for cover in school.get_node("HidingSpots").get_children():
-		check(player.can_fit(cover.hide_position(), 0.68 if cover.kind == 1 else 1.75), "%s retains a clear hiding interior in the cursed realm" % cover.name)
+		check(player.can_fit(cover.hide_position(), cover.body_height()), "%s retains a clear hiding interior in the cursed realm" % cover.name)
 	for ghost in school.enemies:
 		ghost.set_physics_process(false)
 	var ghost: CharacterBody3D = school.enemies[0]
