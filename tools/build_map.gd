@@ -473,7 +473,8 @@ const ROOM_TITLES := {
 	"classroom": "LỚP HỌC", "library": "THƯ VIỆN", "computer": "PHÒNG MÁY TÍNH",
 	"lab": "PHÒNG THÍ NGHIỆM", "staff": "PHÒNG GIÁO VIÊN", "infirmary": "PHÒNG Y TẾ",
 	"art": "PHÒNG MỸ THUẬT", "music": "PHÒNG ÂM NHẠC", "lecture": "PHÒNG ĐA NĂNG",
-	"club": "PHÒNG CÂU LẠC BỘ", "archive": "PHÒNG LƯU TRỮ", "storage": "KHO THIẾT BỊ"
+	"club": "PHÒNG CÂU LẠC BỘ", "archive": "PHÒNG LƯU TRỮ", "storage": "KHO THIẾT BỊ",
+	"restroom": "NHÀ VỆ SINH"
 }
 
 func register_room(x: float, z: float, width: float, depth: float, number: int, kind: String, block: String, variant := 0, turn := false) -> void:
@@ -589,6 +590,8 @@ func furnish_room(x: float, z: float, width: float, depth: float, number: int, k
 			student_desk(Vector3(right - 3, 0, front + 3), PI, true)
 			prop("bookcaseOpen", Vector3(right - 1.5, 0, front + 1), 2)
 			sign_text(architecture, "＋ Y TẾ / FIRST AID", Vector3(x, 2.0, front + 0.20), 0, 30)
+		"restroom":
+			furnish_restroom(x, z, width, depth)
 		"music":
 			# Semicircle seating faces a low rehearsal platform.
 			box(architecture, "RehearsalPlatform", Vector3(x, 0.10, front + 2), Vector3(width - 3, 0.2, 2.5), wood_mat)
@@ -599,6 +602,88 @@ func furnish_room(x: float, z: float, width: float, depth: float, number: int, k
 	for offset in [-width * 0.25, width * 0.25]:
 		fixture(Vector3(x + offset, 3.48, z), true)
 	prop("trashcan", Vector3(right - 1.0, 0, front + 1.2), 0.65)
+
+# A shared school toilet: tiled floor and walls, a row of stalls on the east wall and the
+# washbasins on the west. The wall mirror and the cleaning cabinet are built at runtime by
+# restroom_scene.gd, because the prologue breaks the one and opens the other.
+func furnish_restroom(x: float, z: float, width: float, depth: float) -> void:
+	var left := x - width * 0.5
+	var right := x + width * 0.5
+	var back := z + depth * 0.5
+	var front := z - depth * 0.5
+	var tiles := StandardMaterial3D.new()
+	tiles.albedo_texture = load("res://assets/polyhaven_school/floor_tiles_08_diff_1k.jpg")
+	tiles.normal_enabled = true
+	tiles.normal_texture = load("res://assets/polyhaven_school/floor_tiles_08_nor_1k.jpg")
+	tiles.albedo_color = Color(0.78, 0.80, 0.78)
+	tiles.roughness = 0.35
+	tiles.uv1_triplanar = true
+	tiles.uv1_world_triplanar = true
+	tiles.uv1_scale = Vector3(0.5, 0.5, 0.5)
+	box(architecture, "RestroomFloorTiles", Vector3(x, 0.018, z), Vector3(width - 0.26, 0.014, depth - 0.26), tiles, false)
+	var wall_tiles := tiles.duplicate() as StandardMaterial3D
+	wall_tiles.albedo_color = Color(0.86, 0.90, 0.90)
+	wall_tiles.uv1_scale = Vector3(0.8, 0.8, 0.8)
+	# Waist-to-shoulder tiling on the three solid walls; the door wall keeps its opening clear.
+	box(architecture, "RestroomWallTiles", Vector3(left + 0.14, 1.0, z), Vector3(0.03, 2.0, depth - 0.3), wall_tiles, false)
+	box(architecture, "RestroomWallTiles", Vector3(right - 0.14, 1.0, z), Vector3(0.03, 2.0, depth - 0.3), wall_tiles, false)
+	for side in [-1, 1]:
+		var span := (width - DOOR_OPENING) * 0.5 - 0.2
+		box(architecture, "RestroomWallTiles", Vector3(x + side * (DOOR_OPENING * 0.5 + 0.1 + span * 0.5), 1.0, back - 0.14), Vector3(span, 2.0, 0.03), wall_tiles, false)
+	box(architecture, "RestroomWallTiles", Vector3(x, 0.6, front + 0.14), Vector3(width - 0.3, 1.2, 0.03), wall_tiles, false)
+	# Stalls: six cubicles along the east wall, doors facing the room, half of them ajar.
+	var panel := material(Color(0.36, 0.47, 0.50))
+	panel.roughness = 0.55
+	var stall_depth := 1.7
+	var stall_width := 1.55
+	var first := front + 1.9
+	for i in range(7):
+		var pz := first + i * stall_width
+		box(architecture, "StallPartition", Vector3(right - stall_depth * 0.5, 1.05, pz), Vector3(stall_depth, 1.9, 0.05), panel)
+	# The stall doors swing, so restroom_scene.gd builds them at runtime.
+	for i in range(6):
+		var pz := first + (i + 0.5) * stall_width
+		prop_model("res://assets/home/toilet.glb", "Toilet", Vector3(right - 0.45, 0, pz), 0.78, -PI / 2)
+		sign_text(architecture, str(i + 1), Vector3(right - stall_depth - 0.03, 1.75, pz), -PI / 2, 22, Color(0.85, 0.88, 0.86))
+	box(architecture, "StallHeaderRail", Vector3(right - stall_depth, 2.0, first + stall_width * 3), Vector3(0.06, 0.06, stall_width * 6), dark_mat, false)
+	# Washbasins on a tiled counter along the west wall, under where the mirror hangs.
+	var counter := material(Color(0.70, 0.72, 0.70))
+	counter.roughness = 0.3
+	box(architecture, "BasinCounter", Vector3(left + 0.42, 0.82, z + 1.2), Vector3(0.62, 0.08, 6.4), counter)
+	box(architecture, "BasinCounterFront", Vector3(left + 0.70, 0.55, z + 1.2), Vector3(0.05, 0.5, 6.4), wall_tiles, false)
+	for i in range(4):
+		var bz: float = z + 1.2 + (i - 1.5) * 1.5
+		prop_model("res://assets/home/basin.glb", "Basin", Vector3(left + 0.40, 0.86, bz), 0.22, PI / 2, false)
+		box(furniture, "Faucet", Vector3(left + 0.18, 1.02, bz), Vector3(0.05, 0.2, 0.05), material(Color(0.7, 0.72, 0.74)), false)
+		box(furniture, "FaucetSpout", Vector3(left + 0.26, 1.10, bz), Vector3(0.16, 0.035, 0.035), material(Color(0.7, 0.72, 0.74)), false)
+	sign_text(architecture, "GIỮ GÌN VỆ SINH CHUNG", Vector3(x, 2.35, back - 0.2), PI, 22, Color(0.30, 0.42, 0.44))
+
+func prop_model(path: String, label: String, pos: Vector3, height: float, yaw := 0.0, solid := true) -> Node3D:
+	var pivot := Node3D.new()
+	add(furniture, pivot, label)
+	pivot.position = pos + Vector3(0, elevation, 0)
+	pivot.rotation.y = yaw
+	var model := (load(path) as PackedScene).instantiate() as Node3D
+	add(pivot, model, "Model")
+	var bounds := AABB()
+	var started := false
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var part: AABB = (model.global_transform.affine_inverse() * node.global_transform) * node.get_aabb()
+		bounds = bounds.merge(part) if started else part
+		started = true
+	var factor := height / bounds.size.y
+	model.scale = Vector3.ONE * factor
+	model.position = -Vector3(bounds.get_center().x, bounds.position.y, bounds.get_center().z) * factor
+	if solid:
+		var body := StaticBody3D.new()
+		add(pivot, body, "FurnitureCollision")
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = bounds.size * factor
+		collision.shape = shape
+		collision.position.y = shape.size.y * 0.5
+		add(body, collision, "Collision")
+	return pivot
 
 func window_wall_z(z: float, x: float, length: float) -> void:
 	window_band(Vector2(x, z), length, true)
@@ -617,7 +702,7 @@ func build_north_wing(floor_number: int) -> void:
 	box(architecture, "CorridorDroppedCeiling", Vector3(0, 3.05, 7.5), Vector3(76, 0.18, 3), wall_mat)
 	var kinds: Array = [
 		["staff", "classroom", "classroom", "infirmary"],
-		["computer", "classroom", "classroom", "lab"],
+		["computer", "classroom", "restroom", "lab"],
 		["art", "classroom", "classroom", "music"]][floor_number - 1]
 	for index in range(4):
 		var x: float = [-29.5, -14.5, 14.5, 29.5][index]

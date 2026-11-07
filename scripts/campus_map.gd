@@ -47,7 +47,7 @@ func _draw() -> void:
 	for side in [-1, 1]:
 		region(Vector2(side * 21, -31), Vector2(22, 16), Color(0.24, 0.34, 0.37))
 	region(Vector2(-45, -53), Vector2(12, 12), Color(0.32, 0.25, 0.19))
-	var codes := {"library": "TV", "lab": "TN", "computer": "MT", "staff": "GV", "infirmary": "YT", "storage": "KHO", "archive": "LT", "music": "AN", "art": "MỸ", "club": "CLB", "lecture": "ĐN", "classroom": "LỚP"}
+	var codes := {"library": "TV", "lab": "TN", "computer": "MT", "staff": "GV", "infirmary": "YT", "storage": "KHO", "archive": "LT", "music": "AN", "art": "MỸ", "club": "CLB", "lecture": "ĐN", "classroom": "LỚP", "restroom": "WC"}
 	var floor_y := clampi(int((player.position.y + 0.2) / 3.9), 0, 2) * 3.9
 	for room in player.get_parent().get_meta("room_catalog", []):
 		if absf(room.center.y - floor_y) < 0.2:

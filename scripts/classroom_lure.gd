@@ -7,6 +7,8 @@ var lamps: Array[Light3D] = []
 var elapsed := 0.0
 var normal_ambient := 0.0
 var moon: DirectionalLight3D
+var glares: Array[MeshInstance3D] = []
+var buzz := 0.0
 
 func setup(school: Node3D, progression: Node3D) -> void:
 	world = school
@@ -47,7 +49,47 @@ func setup(school: Node3D, progression: Node3D) -> void:
 	hallway.shadow_enabled = true
 	add_child(hallway)
 	lamps.append(hallway)
+	_build_glare()
 	reset()
+
+# A bare tube lamp on the ceiling of 103 with a faint halo, so the one lit room in the school
+# reads as a light source from the corridor and the courtyard, not just a warm patch.
+func _build_glare() -> void:
+	var tube := MeshInstance3D.new()
+	tube.name = "LureLampTube"
+	var tube_mesh := CylinderMesh.new()
+	tube_mesh.top_radius = 0.025
+	tube_mesh.bottom_radius = 0.025
+	tube_mesh.height = 1.2
+	tube.mesh = tube_mesh
+	tube.rotation.z = PI / 2
+	tube.position = story.lure_light.position + Vector3(0, 0.95, 0)
+	var glow := StandardMaterial3D.new()
+	glow.albedo_color = Color(1.0, 0.9, 0.7)
+	glow.emission_enabled = true
+	glow.emission = Color(1.0, 0.82, 0.55)
+	glow.emission_energy_multiplier = 4.0
+	tube.material_override = glow
+	tube.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(tube)
+	for spot in [[tube.position, Vector2(1.9, 1.9), 0.32], [Vector3(13.5, 1.9, 9.1), Vector2(1.6, 1.6), 0.10], [Vector3(16.9, 1.9, 9.1), Vector2(1.6, 1.6), 0.10]]:
+		var halo := MeshInstance3D.new()
+		halo.name = "LureGlare"
+		var quad := QuadMesh.new()
+		quad.size = spot[1]
+		halo.mesh = quad
+		halo.position = spot[0]
+		var mat := ShaderMaterial.new()
+		mat.shader = preload("res://assets/materials/glint.gdshader")
+		mat.set_shader_parameter("tint", Color(1.0, 0.78, 0.48))
+		mat.set_shader_parameter("intensity", spot[2])
+		mat.set_shader_parameter("rays", 0.35)
+		mat.set_shader_parameter("twinkle_speed", 0.6)
+		halo.material_override = mat
+		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		halo.set_meta("base", spot[2])
+		add_child(halo)
+		glares.append(halo)
 
 func reset() -> void:
 	elapsed = 0
@@ -64,5 +106,10 @@ func _process(delta: float) -> void:
 	if not visible or not world.simulation_active(): return
 	elapsed += delta
 	var shimmer := 0.94 + sin(elapsed * 8.5) * 0.025 + sin(elapsed * 19) * 0.015
+	# Now and then the old tube stutters for a moment, enough to catch the eye.
+	buzz -= delta
+	if buzz < -randf_range(5.0, 11.0): buzz = 0.35
+	if buzz > 0.0: shimmer *= 0.55 + 0.45 * float(int(elapsed * 30.0) % 3 != 0)
+	for halo in glares: halo.material_override.set_shader_parameter("intensity", float(halo.get_meta("base")) * shimmer)
 	for material in panes: material.set_shader_parameter("brightness", shimmer)
 	for i in range(lamps.size()): lamps[i].light_energy = (2.0 if i == 2 else 3.5) * shimmer

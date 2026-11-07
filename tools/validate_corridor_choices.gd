@@ -54,7 +54,7 @@ func validate() -> void:
 	school.survival.set_physics_process(false)
 	story = school.progression
 	story.set_physics_process(false)
-	story.stage = story.Stage.GATE_INTERFERENCE
+	story.stage = story.Stage.BASEMENT_DESCENT
 	story.stage_time = 3
 	school.survival.begin_midnight()
 	runner = story.runner

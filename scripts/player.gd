@@ -213,6 +213,8 @@ func take_photo() -> bool:
 		return false
 	battery -= PHOTO_COST
 	flashlight.hide()
+	if get_parent().get("progression") != null:
+		get_parent().progression.photo_taken()
 	return true
 
 func drop_selected_item() -> bool:
@@ -397,7 +399,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	var jump_pressed := Input.is_physical_key_pressed(KEY_SPACE)
-	if jump_pressed and not jump_held and is_on_floor() and not crouching and stamina >= JUMP_STAMINA:
+	# Space holds the breath while the guard searches the stalls, so it must not jump too.
+	var breath_beat: bool = get_parent().get("progression") != null and get_parent().progression.guard_part != null and get_parent().progression.guard_part.blocks_jump()
+	if jump_pressed and not jump_held and is_on_floor() and not crouching and stamina >= JUMP_STAMINA and not breath_beat:
 		velocity.y = JUMP_VELOCITY
 		stamina -= JUMP_STAMINA
 	jump_held = jump_pressed

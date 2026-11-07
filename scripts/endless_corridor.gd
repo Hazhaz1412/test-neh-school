@@ -1,6 +1,8 @@
 extends Node3D
 
-const ORIGIN := Vector3(220, 0, 0)
+# The service tunnels run deep under the school, well clear of the campus and of the city
+# backdrop around it (whose buildings and trees used to poke through these walls at y = 0).
+const ORIGIN := Vector3(220, -300, 0)
 const LAN_AFTER_SECONDS := 75.0
 const RUN_SPEED := 10.5
 const WALK_SPEED := 7.0
@@ -389,7 +391,8 @@ func build() -> void:
 		corridor_lights.append(lamp)
 	for index in range(SCHEDULE.size()):
 		build_obstacle(SCHEDULE[index][0], SCHEDULE[index][1], index)
-	for i in range(5):
+	# One pursuer: the guard followed the player down into the tunnels.
+	for i in range(1):
 		var ghost := preload("res://scripts/chase_apparition.gd").new()
 		add_child(ghost)
 		ghosts.append(ghost)
@@ -572,7 +575,7 @@ func start() -> void:
 	for i in range(13): trail.append({"distance":float(i),"position":route_frame(i).origin+Vector3.UP*.05})
 	for i in range(ghosts.size()):
 		var frame := route_frame(ghost_distance-i*0.95)
-		ghosts[i].appear(ORIGIN+frame.origin+frame.basis.x*(i-2)*0.65+Vector3.UP*0.05,world.player.global_position)
+		ghosts[i].appear(ORIGIN+frame.origin+frame.basis.x*(i-(ghosts.size()-1)*0.5)*0.65+Vector3.UP*0.05,world.player.global_position)
 	_update_lights()
 	music_bed.play()
 	music.play()
@@ -748,7 +751,7 @@ func tick(delta: float) -> void:
 		return
 	lane_x = projected.y
 	lane = clampi(roundi(lane_x/LANE_WIDTH)+1,0,2)
-	jump_height = maxf(0,p.position.y-0.05)
+	jump_height = maxf(0,p.position.y-(ORIGIN.y+0.05))
 	jump_velocity = p.velocity.y
 	for i in range(p.get_slide_collision_count()):
 		var collision: KinematicCollision3D = p.get_slide_collision(i)
@@ -836,8 +839,8 @@ func _tick_ghosts(delta: float) -> void:
 	for i in range(ghosts.size()):
 		var frame := _trail_frame(ghost_distance-i*0.95)
 		ghosts[i].transform = frame
-		ghosts[i].position = _outside_room(ghosts[i].position+frame.basis.x*((i-2)*0.65+sin(clock*3+i)*0.16)+Vector3.UP*0.05)
-		ghosts[i].look_at(Vector3(p.position.x,0.05,p.position.z))
+		ghosts[i].position = _outside_room(ghosts[i].position+frame.basis.x*((i-(ghosts.size()-1)*0.5)*0.65+sin(clock*3+i)*0.16)+Vector3.UP*0.05)
+		ghosts[i].look_at(Vector3(p.position.x,ghosts[i].global_position.y,p.position.z))
 		ghosts[i].animate(delta,clampf(1-ghost_gap/16,0,1))
 	if ghosts[0].global_position.distance_to(p.global_position)<1.7 and not entering_room and attack_clock<=0:
 		p.invulnerable_time = 0
@@ -846,7 +849,7 @@ func _tick_ghosts(delta: float) -> void:
 		attack_clock = 2.5
 		# Torn free: the blow costs health, and the shove back buys one more chance to run.
 		ghost_distance -= CATCH_SHOVE
-		scares.fire([0,"scream"])
+		story.subtitle("Bác bảo vệ","Đứng lại! Mày chạy đâu cho thoát!",1.6)
 
 func _outside_room(at: Vector3) -> Vector3:
 	if distance<ROOM_DISTANCE-DOOR_NEAR: return at

@@ -19,11 +19,11 @@ func validate() -> void:
 	school.survival.set_physics_process(false)
 	story = school.progression
 	story.set_physics_process(false)
-	story.stage = story.Stage.GATE_INTERFERENCE
+	story.stage = story.Stage.BASEMENT_DESCENT
 	story.stage_time = 3
 	school.survival.begin_midnight()
 	var runner: Node3D = story.runner
-	check(runner.active and runner.ghosts.size()==5 and not school.test_cheats.enabled,"Manual chase starts with five hostile ghosts and no cheats")
+	check(runner.active and runner.ghosts.size()==1 and not school.test_cheats.enabled,"Manual chase starts with the guard behind and no cheats")
 	check(runner.junctions.size()==10 and runner.dead_ends.size()==20,"Ten physical junctions offer wrong branches with visible barricades")
 	check(runner.obstacles.any(func(item):return item.challenge=="weave") and runner.obstacles.any(func(item):return item.challenge=="drop_gate"),"The run includes slalom furniture and dropping low gates")
 	check(runner.obstacles.filter(func(item):return item.kind=="slide").size()>=5,"Low passages require Ctrl repeatedly throughout the chase")
@@ -113,7 +113,7 @@ func validate() -> void:
 	# A stopped player must face real consequences, rather than an autorun rescue.
 	school.survival.active = false
 	school.survival.start_run(false)
-	story.stage = story.Stage.GATE_INTERFERENCE
+	story.stage = story.Stage.BASEMENT_DESCENT
 	story.stage_time = 3
 	school.survival.begin_midnight()
 	for frame in range(900):

@@ -4,7 +4,7 @@ extends Node3D
 # Every segment feeds one value, the pursuer's gap in metres. Rubber-banding in
 # _update_pursuer keeps it close whatever the player does, and being caught only
 # restarts the current segment. attempts/report are the data for that tuning.
-enum Segment { NONE, CORRIDOR, STAIRS, COURTYARD, GATE }
+enum Segment { NONE, CORRIDOR, STAIRS, GATE }
 const F1 := 0.05
 const F2 := 3.95
 const F3 := 7.85
@@ -14,8 +14,14 @@ const GHOST_START: Array[Vector3] = [Vector3(-23.5,F3,53.5),Vector3(-23.5,F3,47.
 const STAIR_RAIL: Array[Vector3] = [Vector3(-1.2,F3,7.5),Vector3(-.2,F3,6.5),Vector3(-.2,F3,-1.9),Vector3(-1.2,F3,-3),Vector3(-3.6,F3,-3),Vector3(-4.8,F3,-2),
 	Vector3(-4.8,F2,6),Vector3(-4.8,F2,6.8),Vector3(-3.8,F2,7.5),Vector3(-1.2,F2,7.5),Vector3(-.2,F2,6.5),Vector3(-.2,F2,-1.9),Vector3(-1.2,F2,-3),Vector3(-3.6,F2,-3),Vector3(-4.8,F2,-2),
 	Vector3(-4.8,F1,6),Vector3(-4.8,F1,6.8),Vector3(-3.8,F1,7.5),Vector3(-.8,F1,7.5),Vector3(0,F1,8.3),Vector3(0,F1,10)]
-const LAMP_ROUTE: Array[Vector3] = [Vector3(5.7,0,16),Vector3(-5.7,0,46),Vector3(20,0,53),Vector3(5.7,0,62),Vector3(-5.7,0,75)]
+# Out of the stairwell, round the fountain and straight at the main gate.
+const GATE_ROUTE: Array[Vector3] = [Vector3(5.7,F1,16),Vector3(5.7,F1,46),Vector3(1.5,F1,62)]
 const GATE_STOP := Vector3(0,F1,76.2)
+# The gate is chained. The guard's booth beside it has the service stairs down to the tunnels.
+const BOOTH := Vector3(6.8,F1,74.5)
+const BOOTH_DOOR := Vector3(5.45,F1,74.5)
+const RATTLE_SECONDS := 1.3
+const DOOR_PULLS := 8
 const START_GAP := 6.5
 const GATE_START_GAP := 8.0
 const GAP_HIGH := 7.5
@@ -41,16 +47,9 @@ const BEAT_FASTEST := 0.52
 const BEAT_WINDOW := 0.15
 const GRACE_BEATS := 3
 const MISS_PENALTY := 1.5
-const COURTYARD_SPEED := 6.1
-const LAMP_REACHED := 4.2
-const OFF_COURSE_CLOSING := 2.2
-const OFF_COURSE_PENALTY := 2.4
-const BEAM_PUSH := 2.8
-const BEAM_DRAIN := 14.0
-const BEAM_DEGREES := 28.0
+const GATE_SPEED := 6.1
 const GATE_DRAIN := 0.62
-const SLIP_PENALTY := 1.2
-const HINTS := {Segment.CORRIDOR:"A / D né  ·  SPACE nhảy  ·  CTRL cúi",Segment.STAIRS:"SPACE đúng nhịp tim",Segment.COURTYARD:"Chuột / A D: chạy về phía đèn còn sáng  ·  Giữ chuột phải: soi đèn pin ra sau",Segment.GATE:"Giữ chuột trái, vẽ lại ký hiệu trong cuốn vở"}
+const HINTS := {Segment.CORRIDOR:"A / D né  ·  SPACE nhảy  ·  CTRL cúi",Segment.STAIRS:"SPACE đúng nhịp tim",Segment.GATE:"Cổng khóa xích!  ·  Nhấn E liên tục để giật cửa hầm"}
 var story: Node3D
 var world: Node3D
 var active := false
@@ -90,21 +89,17 @@ var beats_heard := 0
 var beat_answered := true
 var next_answered := false
 var breath := 100.0
-var lamp_index := 0
-var lamp_lights: Array[OmniLight3D] = []
-var previous_target_distance := 0.0
-var off_course := false
-var beam_on_ghost := false
 var approaching := false
+var rattle := 0.0
+var pulls := 0
 var hint_time := 0.0
 var ghost: Node3D
 var music: AudioStreamPlayer
 var breathing: AudioStreamPlayer
 var steps: AudioStreamPlayer3D
-var pop: AudioStreamPlayer3D
-var trace: Control
 var hint: Label
-var seal: Node3D
+var booth: Node3D
+var booth_door: Node3D
 
 func setup(owner_story: Node3D) -> void:
 	story = owner_story
@@ -123,40 +118,11 @@ func setup(owner_story: Node3D) -> void:
 	steps.unit_size = 10
 	steps.max_distance = 40
 	add_child(steps)
-	pop = AudioStreamPlayer3D.new()
-	pop.stream = load("res://assets/audio/lamp_pop.wav")
-	pop.unit_size = 14
-	pop.max_distance = 50
-	add_child(pop)
-	var lit := StandardMaterial3D.new()
-	lit.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	lit.albedo_color = Color(1,.86,.6)
-	for i in range(2):
-		var light := OmniLight3D.new()
-		light.light_color = Color(1,.8,.52)
-		light.omni_range = 17
-		light.light_energy = 3.4
-		light.shadow_enabled = false
-		add_child(light)
-		lamp_lights.append(light)
-		# The stock lantern frame hides its own glass, so the lit lamp needs this.
-		var lantern := MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = Vector3(.42,.46,.42)
-		lantern.mesh = box
-		lantern.material_override = lit
-		lantern.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		light.add_child(lantern)
 	_build_pool()
-	_build_seal()
+	_build_booth()
 	var layer := CanvasLayer.new()
 	layer.layer = 21
 	add_child(layer)
-	trace = preload("res://scripts/seal_trace.gd").new()
-	trace.world = world
-	layer.add_child(trace)
-	trace.completed.connect(_finish)
-	trace.slipped.connect(func(): gap -= SLIP_PENALTY)
 	hint = Label.new()
 	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.offset_left = -420
@@ -182,37 +148,61 @@ func _build_pool() -> void:
 			holder.hide()
 			pool[kind].append(holder)
 
-func _build_seal() -> void:
-	seal = Node3D.new()
-	seal.name = "GateSeal"
-	seal.position = Vector3(0,1.5,77.82)
-	add_child(seal)
-	var glow := StandardMaterial3D.new()
-	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glow.albedo_color = Color(.9,.12,.08)
-	var stroke: Array[Vector2] = preload("res://scripts/seal_trace.gd").STROKE
-	for i in range(stroke.size()-1):
-		var from := Vector2(stroke[i].x,-stroke[i].y)*.62
-		var to := Vector2(stroke[i+1].x,-stroke[i+1].y)*.62
-		_bar(seal,(from+to)/2,Vector2(from.distance_to(to)+.03,.045),(to-from).angle(),glow)
-	var iron := StandardMaterial3D.new()
-	iron.albedo_color = Color(.1,.1,.11)
-	iron.metallic = .7
-	iron.roughness = .45
-	for i in range(16):
-		var along := -2.1+i*.28
-		_bar(seal,Vector2(along,along*.42),Vector2(.24,.09),.4,iron)
-		_bar(seal,Vector2(along,-along*.42),Vector2(.24,.09),-.4,iron)
-
-func _bar(parent: Node3D, at: Vector2, dimensions: Vector2, angle: float, mat: Material) -> void:
-	var part := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(dimensions.x,dimensions.y,.03)
-	part.mesh = box
-	part.material_override = mat
-	part.position = Vector3(at.x,at.y,0)
-	part.rotation.z = angle
-	parent.add_child(part)
+# A small concrete guard booth inside the gate. Its back half is the head of the service
+# stairs; the steel door on the courtyard side is what the player wrenches open.
+func _build_booth() -> void:
+	booth = Node3D.new()
+	booth.name = "GuardBooth"
+	booth.position = BOOTH
+	add_child(booth)
+	var concrete := StandardMaterial3D.new()
+	concrete.albedo_color = Color(.55,.54,.5)
+	concrete.roughness = .95
+	var steel := StandardMaterial3D.new()
+	steel.albedo_color = Color(.22,.27,.25)
+	steel.metallic = .6
+	steel.roughness = .5
+	for spec in [[Vector3(0,1.3,-1.2),Vector3(2.6,2.6,.2)],[Vector3(0,1.3,1.2),Vector3(2.6,2.6,.2)],[Vector3(1.2,1.3,0),Vector3(.2,2.6,2.6)],
+			[Vector3(-1.2,1.3,-.8),Vector3(.2,2.6,1.0)],[Vector3(-1.2,1.3,.8),Vector3(.2,2.6,1.0)],[Vector3(-1.2,2.35,0),Vector3(.2,.5,.6)],[Vector3(0,2.7,0),Vector3(2.9,.2,2.9)]]:
+		var wall := StaticBody3D.new()
+		wall.position = spec[0]
+		booth.add_child(wall)
+		var mesh := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = spec[1]
+		mesh.mesh = box
+		mesh.material_override = concrete
+		wall.add_child(mesh)
+		var shape := CollisionShape3D.new()
+		var bounds := BoxShape3D.new()
+		bounds.size = spec[1]
+		shape.shape = bounds
+		wall.add_child(shape)
+	booth_door = Node3D.new()
+	booth_door.name = "BasementDoor"
+	booth_door.position = Vector3(-1.2,0,.3)
+	booth.add_child(booth_door)
+	var leaf := MeshInstance3D.new()
+	var plate := BoxMesh.new()
+	plate.size = Vector3(.06,2.1,.6)
+	leaf.mesh = plate
+	leaf.material_override = steel
+	leaf.position = Vector3(0,1.05,-.3)
+	booth_door.add_child(leaf)
+	var sign := Label3D.new()
+	sign.text = "HẦM KỸ THUẬT\nCẤM VÀO"
+	sign.font_size = 34
+	sign.pixel_size = .006
+	sign.modulate = Color(.9,.75,.3)
+	sign.position = Vector3(-1.32,2.35,0)
+	sign.rotation.y = -PI/2
+	booth.add_child(sign)
+	var lamp := OmniLight3D.new()
+	lamp.light_color = Color(1,.25,.15)
+	lamp.light_energy = .8
+	lamp.omni_range = 3.5
+	lamp.position = Vector3(-1.6,2.3,0)
+	booth.add_child(lamp)
 
 func reset() -> void:
 	active = false
@@ -227,18 +217,17 @@ func reset() -> void:
 	travel = 0
 	hint_time = 0
 	hint.hide()
-	trace.hide()
-	seal.hide()
 	ghost.vanish()
 	_clear_hazards()
-	_set_lamps_active(false)
-	for audio in [music,breathing,steps,pop]: audio.stop()
+	rattle = 0
+	pulls = 0
+	booth_door.rotation.y = 0
+	for audio in [music,breathing,steps]: audio.stop()
 
 func start() -> void:
 	var p: CharacterBody3D = world.player
 	reset()
 	active = true
-	seal.show()
 	p.flashlight.show()
 	p.velocity = Vector3.ZERO
 	p.camera.rotation = Vector3(p.camera.rotation.x,0,0)
@@ -247,11 +236,14 @@ func start() -> void:
 	breathing.play()
 	steps.play()
 	story.fear.clear()
-	for at in GHOST_START: trail.append({"distance":travel,"position":at})
-	travel = GHOST_START[0].distance_to(GHOST_START[1])
-	trail[1].distance = travel
-	last_feet = GHOST_START[1]
-	ghost.appear(GHOST_START[0],p.global_position)
+	# The guard sets off from wherever he stood when the flash went off.
+	var from: Vector3 = story.guard_position() if story.has_method("guard_position") else GHOST_START[0]
+	var feet := Vector3(p.global_position.x,from.y,p.global_position.z)
+	trail.append({"distance":0.0,"position":from})
+	travel = from.distance_to(feet)
+	trail.append({"distance":travel,"position":feet})
+	last_feet = feet
+	ghost.appear(from,p.global_position)
 	begin_segment(Segment.CORRIDOR)
 
 func begin_segment(next: int) -> void:
@@ -268,7 +260,7 @@ func begin_segment(next: int) -> void:
 		p.battery = checkpoint.battery
 	else:
 		checkpoint = {"travel":travel,"trail_size":trail.size(),"feet":last_feet,"battery":p.battery}
-	gap = GATE_START_GAP if segment == Segment.GATE else START_GAP
+	gap = GATE_START_GAP if segment == Segment.GATE else (minf(START_GAP,travel) if segment == Segment.CORRIDOR and not retrying else START_GAP)
 	clock = 0
 	speed = 0
 	lateral = 0
@@ -277,14 +269,12 @@ func begin_segment(next: int) -> void:
 	slide_remaining = 0
 	stumble = 0
 	look_yaw = 0
-	off_course = false
-	beam_on_ghost = false
 	approaching = false
+	rattle = 0
+	pulls = 0
 	_clear_hazards()
-	_set_lamps_active(false)
 	story.fear.ring = -1
 	story.fear.darkness = 0
-	if segment != Segment.GATE: trace.hide()
 	if int(attempts[segment]) == 0:
 		hint.text = HINTS[segment]
 		hint_time = 3.5
@@ -314,24 +304,14 @@ func begin_segment(next: int) -> void:
 			next_answered = false
 			breath = 100
 			music.volume_db = -36
-		Segment.COURTYARD:
-			p.global_position = Vector3(0,F1,10)
-			p.rotation = Vector3(0,PI,0)
-			p.camera.rotation = Vector3.ZERO
-			p.velocity = Vector3.ZERO
-			lamp_index = 0
-			_set_lamps_active(true)
-			previous_target_distance = _target_distance()
-			story.laugh.play()
-			story.laughter_echo.play(2.0)
-			music.volume_db = -13
 		Segment.GATE:
-			story.laugh.stop()
-			story.laughter_echo.stop()
-			music.volume_db = -22
-			var line: Array[Vector3] = [p.global_position,GATE_STOP]
+			music.volume_db = -16
+			var line: Array[Vector3] = [p.global_position]
+			if not retrying: line.append_array(GATE_ROUTE)
+			line.append(GATE_STOP)
 			_set_rail(line)
 			beat_clock = 0
+			booth_door.rotation.y = 0
 			approaching = true
 
 func _set_rail(points: Array[Vector3]) -> void:
@@ -485,7 +465,7 @@ func _place_on_rail(delta: float, offset: float) -> void:
 	p.global_position = feet+direction.cross(Vector3.UP)*(0.0 if in_room else offset)+Vector3.UP*jump_height
 	p.velocity = Vector3.ZERO
 	p.rotation.y = lerp_angle(p.rotation.y,atan2(-direction.x,-direction.z)+look_yaw,clampf(delta*9,0,1))
-	if not in_room: _record_trail(feet)
+	_record_trail(feet)
 
 func jump() -> bool:
 	if segment != Segment.CORRIDOR or jump_height > 0 or jump_velocity > 0 or slide_remaining > 0: return false
@@ -541,91 +521,60 @@ func _tick_stairs(delta: float) -> void:
 	story.fear.darkness = clampf(.25+descent*.25+(1-breath/100)*.45,0,.92)
 	_place_on_rail(delta,0)
 	p.camera.position.y = 1.62+sin(clock*12)*.04-stumble*.5
-	if rail_s >= rail_lengths[-1]: begin_segment(Segment.COURTYARD)
+	if rail_s >= rail_lengths[-1]: begin_segment(Segment.GATE)
 
-# --- Courtyard: the lamps left lit are the way out ---
-
-func current_lamp() -> Vector3:
-	return LAMP_ROUTE[mini(lamp_index,LAMP_ROUTE.size()-1)]
-
-func _target_distance() -> float:
-	var at: Vector3 = world.player.global_position
-	return Vector2(at.x-current_lamp().x,at.z-current_lamp().z).length()
-
-func _lamp_head(at: Vector3) -> Vector3:
-	return at+Vector3.UP*3.1 if absf(at.x) < 10 else at+Vector3.UP
-
-func _set_lamps_active(on: bool) -> void:
-	for i in range(lamp_lights.size()):
-		var index := lamp_index+i
-		lamp_lights[i].visible = on and index < LAMP_ROUTE.size()
-		if not lamp_lights[i].visible: continue
-		lamp_lights[i].position = _lamp_head(LAMP_ROUTE[index])
-		lamp_lights[i].light_energy = 3.4 if i==0 else 2.2
-
-func _tick_courtyard(delta: float) -> void:
-	var p: CharacterBody3D = world.player
-	p.rotation.y -= (float(held(KEY_D))-float(held(KEY_A)))*1.9*delta
-	var forward: Vector3 = -p.global_basis.z
-	speed = move_toward(speed,COURTYARD_SPEED,delta*14)
-	p.velocity = Vector3(forward.x*speed,-1,forward.z*speed)
-	p.move_and_slide()
-	p.camera.position.y = 1.62+sin(clock*17)*.035
-	_record_trail(Vector3(p.global_position.x,F1,p.global_position.z))
-	var distance := _target_distance()
-	var closing := (previous_target_distance-distance)/maxf(delta,.001)
-	previous_target_distance = distance
-	off_course = closing < OFF_COURSE_CLOSING
-	if off_course: gap -= OFF_COURSE_PENALTY*(1-.18*assist)*delta
-	story.fear.darkness = move_toward(story.fear.darkness,.6 if off_course else .22,delta*1.6)
-	_tick_beam(delta)
-	if distance < LAMP_REACHED:
-		pop.global_position = _lamp_head(current_lamp())
-		pop.play()
-		lamp_index += 1
-		if lamp_index >= LAMP_ROUTE.size():
-			begin_segment(Segment.GATE)
-			return
-		_set_lamps_active(true)
-		previous_target_distance = _target_distance()
-
-func _tick_beam(delta: float) -> void:
-	var p: CharacterBody3D = world.player
-	beam_on_ghost = false
-	if not looking_back or p.battery <= 0: return
-	var to: Vector3 = ghost.global_position+Vector3.UP*1.2-p.camera.global_position
-	if rad_to_deg((-p.camera.global_basis.z).angle_to(to)) > BEAM_DEGREES or to.length() > 16: return
-	beam_on_ghost = true
-	gap = minf(GAP_HIGH+3,gap+BEAM_PUSH*delta)
-	p.battery = maxf(0,p.battery-BEAM_DRAIN*delta)
-	if p.battery <= 0: p.flashlight.hide()
-
-# --- Gate: redraw the notebook's symbol before the ghost arrives ---
+# --- Gate: chained shut, so wrench open the basement door in the guard's booth ---
 
 func _tick_gate(delta: float) -> void:
 	var p: CharacterBody3D = world.player
 	if approaching:
-		speed = move_toward(speed,COURTYARD_SPEED,delta*14)
+		speed = move_toward(speed,GATE_SPEED,delta*14)
 		rail_s += speed*delta
 		_place_on_rail(delta,0)
-		var bearing: float = p.rotation.y
-		p.rotation.y = lerp_angle(bearing,PI,clampf(delta*7,0,1))
 		if rail_s >= rail_lengths[-1]:
 			approaching = false
+			rattle = RATTLE_SECONDS
 			p.rotation.y = PI
 			p.camera.rotation = Vector3(.05,0,0)
 			looking_back = false
-			trace.begin(assist)
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			look_yaw = 0
+			world.soundscape.cue("lock",-4)
+			world.soundscape.at("door_bang",GATE_STOP+Vector3(0,1.2,1.6),-6)
 		return
-	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if rattle > 0:
+		# Both hands on the chain: it holds. Then the eye goes to the booth door.
+		rattle -= delta
+		p.camera.position.x = sin(clock*38)*.03
+		p.rotation.y = lerp_angle(p.rotation.y,PI if rattle > .5 else atan2(-(BOOTH_DOOR.x-p.global_position.x),-(BOOTH_DOOR.z-p.global_position.z)),clampf(delta*6,0,1))
+		if rattle <= 0:
+			p.camera.position.x = 0
+			var line: Array[Vector3] = [p.global_position,BOOTH_DOOR+Vector3(-.75,0,0)]
+			_set_rail(line)
+			speed = 3.0
+		return
+	if rail_s < rail_lengths[-1]:
+		speed = move_toward(speed,4.5,delta*10)
+		rail_s += speed*delta
+		_place_on_rail(delta,0)
+		if rail_s >= rail_lengths[-1]: p.rotation.y = -PI/2
 	gap -= GATE_DRAIN*(1-.18*assist)*delta
+	booth_door.rotation.y = move_toward(booth_door.rotation.y,0.0,delta*.6)
 	story.fear.darkness = clampf(.72-gap/GATE_START_GAP*.6,.1,.8)
 	beat_clock -= delta
 	if beat_clock <= 0:
 		var calm := clampf(gap/GATE_START_GAP,0,1)
 		story.fear.beat(lerpf(-2,-14,calm))
 		beat_clock = lerpf(.42,1.1,calm)
+
+# E at the jammed door: each pull wrenches it a little further, the last one tears it open.
+func pull_door() -> bool:
+	if segment != Segment.GATE or approaching or rattle > 0 or rail_s < rail_lengths[-1] - .05: return false
+	pulls += 1
+	booth_door.rotation.y = -float(pulls)/DOOR_PULLS*.35
+	world.soundscape.at("door",BOOTH_DOOR+Vector3.UP,-10)
+	world.player.camera.position.x = .03 if pulls % 2 == 0 else -.03
+	if pulls >= DOOR_PULLS: _finish()
+	return true
 
 func _finish() -> void:
 	var p: CharacterBody3D = world.player
@@ -634,15 +583,14 @@ func _finish() -> void:
 	for audio in [music,breathing,steps]: audio.stop()
 	ghost.vanish()
 	hint.hide()
-	seal.hide()
 	story.fear.clear()
+	booth_door.rotation.y = -1.6
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	world.soundscape.cue("lock",-6)
-	world.soundscape.at("chair_impact",seal.global_position,-8)
+	world.soundscape.at("door_bang",BOOTH_DOOR+Vector3.UP,-4)
 	p.camera.rotation = Vector3.ZERO
+	p.camera.position.x = 0
 	story.runner.restore_pose()
-	p.rotation.y = PI
-	story.seal_broken()
+	story.enter_basement()
 
 # --- Shared pursuer ---
 
@@ -668,7 +616,7 @@ func _update_pursuer(delta: float) -> void:
 	var p: CharacterBody3D = world.player
 	# Rubber-banding: a clean run never shakes the ghost off, and a bad run is
 	# not punished at once. Only mistakes in quick succession close the gap.
-	if segment != Segment.GATE and not beam_on_ghost:
+	if segment != Segment.GATE:
 		if gap > GAP_HIGH: gap -= CATCH_UP*delta
 		elif gap < GAP_LOW: gap += EASE_OFF*delta
 	report[segment].lowest_gap = minf(report[segment].lowest_gap,gap)
@@ -678,6 +626,7 @@ func _update_pursuer(delta: float) -> void:
 		return
 	var at := trail_position(travel-gap)
 	ghost.global_position = at
+	ghost.show()
 	var flat := Vector3(p.global_position.x,at.y,p.global_position.z)
 	if at.distance_squared_to(flat) > .01: ghost.look_at(flat)
 	var danger := clampf(1-gap/10,0,1)
@@ -693,8 +642,8 @@ func _caught() -> void:
 	world.player.startle = 1
 	world.hit_flash = .7
 	story.fear.ring = -1
-	trace.hide()
 	world.soundscape.cue("hurt",-8)
+	story.subtitle("Bác bảo vệ","Bắt được rồi nhé!",1.4)
 	if ghost.visible: ghost.global_position = trail_position(travel-.4)
 
 func _tick_fade(delta: float) -> void:
@@ -711,7 +660,7 @@ func _restart_position() -> void:
 	match segment:
 		Segment.CORRIDOR: p.global_position = CORRIDOR_RAIL[0]
 		Segment.STAIRS: p.global_position = STAIR_RAIL[0]
-		Segment.GATE: p.global_position = GATE_STOP
+		Segment.GATE: p.global_position = Vector3(1.5,F1,66)
 	p.camera.position = Vector3(0,1.62,0)
 
 func tick(delta: float) -> void:
@@ -729,7 +678,6 @@ func tick(delta: float) -> void:
 	match segment:
 		Segment.CORRIDOR: _tick_corridor(delta)
 		Segment.STAIRS: _tick_stairs(delta)
-		Segment.COURTYARD: _tick_courtyard(delta)
 		Segment.GATE: _tick_gate(delta)
 	if active: _update_pursuer(delta)
 
@@ -738,8 +686,7 @@ func held(code: int) -> bool:
 
 func look(relative: Vector2) -> void:
 	var p: CharacterBody3D = world.player
-	if segment == Segment.COURTYARD: p.rotation.y -= relative.x*p.LOOK_SENSITIVITY
-	else: look_yaw = clampf(look_yaw-relative.x*p.LOOK_SENSITIVITY,-1.2,1.2)
+	look_yaw = clampf(look_yaw-relative.x*p.LOOK_SENSITIVITY,-1.2,1.2)
 	p.camera.rotation.x = clampf(p.camera.rotation.x-relative.y*p.LOOK_SENSITIVITY,-1.1,1.1)
 
 func _input(event: InputEvent) -> void:
@@ -751,9 +698,12 @@ func _input(event: InputEvent) -> void:
 		looking_back = false
 		world.player.camera.rotation.y = 0
 	if not world.simulation_active() or fade_clock > 0: return
-	if trace.visible: return
 	if event is InputEventKey:
 		var code: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+		if code == KEY_E and event.pressed and not event.echo and segment == Segment.GATE:
+			pull_door()
+			get_viewport().set_input_as_handled()
+			return
 		if code in [KEY_A,KEY_D,KEY_SPACE,KEY_CTRL]:
 			held_keys[code] = event.pressed
 			if event.pressed and not event.echo:
@@ -772,11 +722,11 @@ func _input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	var paused: bool = not world.simulation_active()
-	for audio in [music,breathing,steps,pop]: audio.stream_paused = paused
+	for audio in [music,breathing,steps]: audio.stream_paused = paused
 	if paused and ghost.visible: ghost.model.animation.speed_scale = 0
 
 func _exit_tree() -> void:
-	for audio in [music,breathing,steps,pop]:
+	for audio in [music,breathing,steps]:
 		if audio != null:
 			audio.stream_paused = false
 			audio.stop()

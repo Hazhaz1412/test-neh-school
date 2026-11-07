@@ -8,43 +8,60 @@
 
 Nhóm điều tra hiện tượng siêu nhiên tiến vào ngôi trường bỏ hoang, nơi từng xảy ra nhiều vụ án mạng và tự tử bí ẩn. Người chơi bắt đầu khám phá lúc **22:30**. Đồng hồ cứ trôi theo thời gian chơi, không dừng để chờ manh mối và không bắt buộc biến cố xảy ra đúng nửa đêm.
 
-**Sự kiện 1 — Ánh đèn:** Một phòng học bỗng sáng lên: hai ô cửa kính ánh vàng nổi bật giữa ngôi trường tối, ánh sáng hắt qua hành lang xuống sân. Phòng này không có bóng người. Không hiện chữ kể chuyện, chỉ đường hay đánh dấu gấu trên bản đồ; ánh sáng khơi gợi tò mò. Khi sát đồ vật hoặc cửa chỉ hiện phím **E**.
+**Sự kiện 1 — Ánh đèn:** Một phòng học bỗng sáng lên: hai ô cửa kính ánh vàng nổi bật giữa ngôi trường tối. Bóng đèn tuýp trên trần có quầng chói nhẹ và thỉnh thoảng chập chờn, đủ gây chú ý mà không chói mắt. Không hiện chữ kể chuyện hay đánh dấu trên bản đồ; khi sát đồ vật hoặc cửa chỉ hiện phím **E**.
 
-**Phòng đầu tiên chỉ có con gấu bông**; nhặt nó bằng E là hoàn thành manh mối đầu tiên, đèn tắt, không cần đọc giấy hay giải câu đố và không có thông báo bằng chữ. Vật chứng vẫn được lưu trong nhật ký J khi người chơi tự mở.
+**Phòng đầu tiên trống trơn, chỉ có một chiếc cài tóc bị gãy** (nhựa hồng, gãy đôi, rơi một cánh hoa đính đá). Nhặt bằng E là xong manh mối đầu tiên, lưu trong nhật ký J.
 
-## 2. Cây gậy dính máu
+## 2. Tiếng vỡ trên lầu và nhà vệ sinh
 
-**Cầu thang duy nhất bị một cửa sắt xếp chặn**, không dùng tường vô hình. **Vết máu bí ẩn** ở hành lang tầng trệt dẫn tới phòng 102; tiếng gõ lặp lại phát ra sau cánh cửa đó. Mở cửa không có gì xảy ra, trong phòng có những cây gậy dính máu.
+Vừa nhặt cài tóc, **tiếng kính vỡ** dội xuống từ tầng 2, ngay phía trên đầu. Đèn phòng chập chờn, bụi rơi từ trần. Đó là **nhà vệ sinh A-203**, nằm thẳng trên phòng 103.
 
-**Sự kiện 2 — Jumpscare:** nhặt gậy bằng E, rồi theo đúng sáu nhịp:
+Người chơi biết đi đâu nhờ chuỗi dấu vết thật, không cần chữ:
 
-1. Im lặng hoàn toàn khoảng 1,5 giây, tắt cả tiếng gõ và âm báo nhặt đồ.
-2. Sau lưng vang lên tiếng ghế kéo lê, âm 3D đặt đúng hướng phía sau.
-3. Game chờ người chơi tự quay lại. Khi góc nhìn vào hướng đó dưới 30°, ma lao tới cùng tiếng thét. Sau 6 giây chưa quay thì có tiếng thứ hai to hơn kèm tiếng gọi thì thầm. Camera không bao giờ tự xoay.
-4. Ma chạm vào mặt: màn hình đỏ, tim đập, khóa điều khiển 2,6 giây, viền tối co bóp theo nhịp tim. Nhịp chậm dần thì màu đỏ tan dần.
-5. Hết đỏ, nhạc rờn rợn chạy nền và lặp liên tục. Một ô cửa sổ tầng cao nhất sáng lên, có bóng người đứng đó; người chơi phải tự ngước lên mới thấy. Bóng là phần thưởng sau cú sợ, không đặt trước, vì đặt trước thì người chơi sẽ bỏ qua tiếng động sau lưng.
-6. Một tiếng “cạch” và cửa sắt tự xếp lại. Không hiện chữ.
+1. Tiếng vỡ ở ngay trên đầu.
+2. Vài giây sau trần phòng 103 loang ố và **nhỏ giọt nước**, có tiếng tí tách.
+3. Cầu thang chính ở ngay cạnh phòng 103. Lên tới tầng 2 đã nghe **tiếng nước chảy xối**.
+4. **Vệt nước** lan dọc hành lang, từ khe cửa A-203 về phía cầu thang, loáng lên dưới đèn pin.
+5. Biển cửa "A-203 / NHÀ VỆ SINH", sơ đồ M ghi "WC".
 
-## 3. Lên tầng cao nhất
+Bước vào nhà vệ sinh thì nước trong ống chảy cạn, tiếng xối tắt dần trong 3 giây cho khỏi ồn. Trong nhà vệ sinh: **gương tường bị bể** rơi xuống làm vỡ vòi nước (lý do có tiếng vỡ). Tủ đồ ở góc hé cửa, **có thứ gì cứ chói chói** qua khe, lóe mạnh khi rọi đèn pin vào. Mở tủ thì **một bầy gián và nhện xổ ra**, lao thẳng vào màn hình và bò kín mặt kính, số còn lại tràn xuống sàn chui vào gầm buồng vệ sinh. Khi chúng tản đi, trên kệ là **một chiếc gương cầm tay bị vỡ**, manh mối thứ hai.
 
-Nhạc lớn dần theo từng tầng. Tầng trên cùng: ở cuối hành lang cánh Tây dài khoảng 40 m, bóng người đứng trước cửa phòng 306. Bóng chỉ di chuyển khi người chơi đã thấy nó: raycast xác nhận nằm trong tầm nhìn, cách trên 15 m, chờ 0,5 giây cho người chơi kịp nhận ra rồi lướt rất nhanh vào phòng và cửa đập sầm. Nếu người chơi nhìn thấy nó ở cự ly gần hơn 15 m, nó đi ngay để không bao giờ chạm mặt.
+Không có ma, máu hay thế lực siêu nhiên trong đoạn này.
 
-Trong phòng 306 có cuốn vở ghi tên **Nguyễn Bình An**, đầy chữ viết tay nguệch ngoạc, gạch xóa và **một ký hiệu con mắt khóc vẽ bằng máu**.
+## 3. Bác bảo vệ
 
-## 4. Thoát khỏi trường
+Vừa lấy gương cầm tay thì ngoài đầu cầu thang tầng 2 vang lên: **"Ai đó?! Đứa nào trên đó?!"** và tiếng chân chạy rầm rập. Người chơi chỉ có **khoảng 5 giây** để **chui vào một buồng có bồn cầu và đóng cửa lại (E)**.
 
-Nhặt vở: nhạc tắt hẳn, cửa đóng lại. Đóng vở: một tiếng đập vào cửa, rồi đập liên tục, xen tiếng khóc nức nở càng lúc càng gần. Đèn toàn trường chớp liên tục, cửa bật tung, điện tắt hẳn và nhân vật tự động bỏ chạy.
+Bác bảo vệ chạy thẳng vào nhà vệ sinh có chiếc gương vỡ ("Đứa nào vừa đập vỡ gương?!"), không ghé phòng nào khác, rồi soát từng buồng ngay.
+
+Đợi tiếng chân xa dần, người chơi vào **trạng thái lẩn tránh** và bám theo:
+
+- **Tiếng động:** chạy (Shift) rất ồn, đi thường vừa phải, bò (C) gần như không nghe thấy, nhưng sát lưng thì bác vẫn nghe. Mỗi tầng ở giữa làm tiếng nhỏ đi nhiều. Nghe thấy thì bác quay lại, đứng nghe ngóng.
+- **Tầm nhìn:** hành lang tối, bác chỉ thấy những gì đèn pin của bác chiếu tới (khoảng 14 m, cúi thấp thì 8 m), thứ ở rất gần, hoặc đèn pin của người chơi đang bật (F để tắt).
+- **Hành lang tầng 3 dài và trống:** thay vì chèn đồ vào, bác **dừng lại quay đầu soi đèn ở ba chỗ cố định** (đầu hành lang phía Bắc, giữa cánh Tây, trước phòng 306). Tiếng chìa khóa leng keng và tiếng bước chân ngừng lại là dấu hiệu. Người chơi giữ khoảng cách ngoài tầm đèn, tắt đèn pin, hoặc nấp vào cửa phòng 302, 305 đang mở.
+- Thanh "BỊ CHÚ Ý" đầy là bị bắt: màn hình tối lại, chơi lại đoạn đó từ điểm lưu (lúc trốn trong buồng, lúc bắt đầu bám theo, hoặc lúc bác đã vào 306).
+
+**Soát nhà vệ sinh:** bác vào nhà vệ sinh sau cùng, lần lượt đạp mở từng buồng, bắt đầu từ buồng xa người chơi nhất. Tim đập nhanh dần khi bác tới gần. Khi bác đứng ngay buồng bên cạnh hoặc trước cửa buồng của người chơi: **giữ Space để nín thở**. Thở bình thường lúc đó thì bác nghe thấy; nín quá lâu (khoảng 8 giây) thì hết hơi, thở hắt ra, cũng bị lộ. Cách đúng là thở khẽ khi bác còn cách hai buồng và nín khi bác ở sát. Trước cửa buồng người chơi, bác hỏi "Cửa này... sao lại đóng?", lắc tay nắm, "Có ai trong đó không?", và đúng lúc đó tầng 3 có tiếng đổ.
+
+Trong **phòng 306**, bác quay lưng ra cửa, dọn tập giấy tờ và một tấm ảnh lớp học trên bàn giáo viên. Người chơi lẻn vào giữa các dãy bàn, chọn máy ảnh (phím 2) và **chụp lại**: đó là manh mối thứ ba. Đèn flash làm lộ ngay: **"Ai?! Đứng lại đó!"**, tiếng còi, và bắt đầu chạy.
+
+## 4. Chạy khỏi trường
 
 | Đoạn | Thao tác |
 | --- | --- |
-| 1. Hành lang tầng 3 | Tự chạy. Bàn ghế bị hất văng ra giữa đường: A/D né, Space nhảy, Ctrl cúi. Mỗi pattern được kiểm tra luôn có đường né. |
-| 2. Cầu thang | Màn hình tối dần. Space đúng nhịp tim (chính tiếng tim của jumpscare) để giữ thở. Lệch nhịp thì hụt chân, ma áp sát. |
-| 3. Quảng trường | Đoạn dài, trống trải. Đèn tắt dần sau lưng. Chạy về phía đèn còn sáng; chạy sai hướng thì ma áp sát. Giữ chuột phải soi đèn pin ra sau làm ma chậm lại, nhưng pin tụt rất nhanh. |
-| 4. Cổng | Cổng khóa xích, trên đó có đúng ký hiệu trong vở. Giữ chuột trái vẽ lại ký hiệu trên bảng đen trong lúc ma tiến lại gần. Vẽ xong thì phong ấn vỡ. |
+| 1. Hành lang tầng 3 | Tự chạy, A/D né đồ đạc đổ ra lối, Space nhảy, Ctrl cúi. Bác bảo vệ đuổi sau lưng. |
+| 2. Cầu thang | Space đúng nhịp tim để không hụt chân. |
+| 3. Cổng | Cổng chính khóa xích. Người chơi giật cổng, rồi lao sang **chốt bảo vệ** bên cạnh: cửa sắt "HẦM KỸ THUẬT". **Nhấn E liên tục** để giật cửa trước khi bác tới. |
 
-Khoảng cách của ma dùng **rubber-banding**: chơi tốt ma vẫn bám sát, chơi kém ma không bắt ngay, nên lúc nào cũng có cảm giác suýt bị bắt. Bị bắt chỉ chơi lại đoạn đó, không mất máu; mỗi lần thua, đoạn đó dễ hơn một mức. Chi tiết **Dynamic Difficulty Adjustment** ở [PROGRESSION.md](docs/PROGRESSION.md).
+Đoạn chạy theo đèn ở quảng trường đã bỏ. Cách tính khoảng cách đuổi (rubber-banding, chơi lại từng đoạn, dễ dần theo số lần thua) giữ nguyên.
 
-Phong ấn vỡ nhưng cổng không mở. Tiếng điện rè kéo dài và nhiễu phủ lên màn hình, rồi người chơi bị kéo hoàn toàn vào thế giới linh hồn, xuất hiện trong một hành lang dài như vô tận. Đồng hồ tiếp tục từ thời điểm đang chạy.
+**Hành lang đỏ không còn là thế giới khác:** cửa hầm dẫn xuống **đường hầm kỹ thuật dưới trường**, mất điện nên chỉ còn **đèn sự cố màu đỏ**. Bác bảo vệ đuổi theo xuống hầm (một người, không còn năm con ma). Gầm bàn trong phòng trú là **nắp mương cáp** dẫn ngược lên sàn phòng 103, nên người chơi chui ra ở đúng phòng ban đầu, không còn chuyển thế giới.
+
+Đường hầm nằm sâu dưới lòng đất (y = −300), nên không còn bị nhà và cây của cảnh thành phố đâm xuyên qua tường như trước.
+
+**Đường hầm trượt** (hai lần sàn sập): ống cống dốc, không dùng phím, nghiêng camera để trượt. Bàn tay cũ được thay bằng **cụm thép gai gỉ và dây điện đứt tóe lửa** đâm ra từ vách. Mỗi cổng chỉ chừa **một khe**, thép chắn tới tận sát tường nên dạt hẳn sang trái hoặc phải không còn an toàn. Cổng dày dần (lần 1: 14 cổng, cách 14 m rồi 10 m; lần 2: 25 cổng, cách 11 m rồi 8,5 m), tốc độ tăng dần, và cứ vài cổng lại có cổng **đổi khe vào phút chót** (cách 11 m vách sụp, khe cũ bị chặn, khe bên cạnh mở). Trúng thép mất máu, khựng lại và bác bảo vệ áp sát hơn khi ra khỏi ống. Kiểm tra: `tools/validate_chute.gd`.
+
+*Đề xuất, chưa làm:* Lan là người thật đang trốn dưới hầm (có thể chính là người gây tiếng đổ trên tầng 3). Thoại của Lan trong `data/night1_dialogue.json` vẫn nói về lời nguyền, cần viết lại. Đường hầm vẫn còn chữ vẽ trên tường và nhện bò lên mặt của bản cũ.
 
 ## 5. Minigame hành lang
 
@@ -79,6 +96,6 @@ Với An, người chơi **chọn manh mối muốn hỏi rồi chọn lời đ�
 
 ## Gameplay loop
 
-**22:30 khám phá → Phòng sáng đèn → Nhặt gấu bông → Vết máu / âm thanh lặp → Nhặt gậy → Im lặng / tiếng sau lưng / tự quay lại → Jumpscare → Màn hình đỏ / tim đập → Nhạc rờn rợn / bóng ở cửa sổ tầng 3 → “Cạch”, cửa cầu thang mở → Lên tầng, nhạc lớn dần → Bóng lướt vào phòng 306 → Cuốn vở → Cửa bị đập / đèn chớp / cửa bật tung → Né đồ trong hành lang → Giữ nhịp tim xuống cầu thang → Chạy theo đèn qua quảng trường → Vẽ ký hiệu phá phong ấn cổng → Nhiễu điện → Tự chạy, quản lý stamina, chọn ngã rẽ có dấu hiệu, né / nhảy / trượt qua nội thất → Qua 75 giây và khúc rẽ gặp Lan → Theo Lan vào phòng núp → Hiểu lời nguyền → Chui gầm bàn → Chui ra dưới bàn trong trường → Gặp An / hội thoại AI → Sống đến bình minh.**
+**22:30 khám phá → Phòng sáng đèn → Cài tóc gãy → Tiếng kính vỡ trên lầu → Nước nhỏ từ trần → Nhà vệ sinh A-203, gương bể → Tủ đồ, gián và nhện → Gương cầm tay → Bác bảo vệ gọi → Trốn trong buồng → Bác soát phòng tầng 2 → Tiếng đổ trên tầng 3 → Bám theo, lẩn tránh → Phòng 306, chụp giấy tờ → Bị phát hiện → Né đồ trong hành lang → Giữ nhịp tim xuống cầu thang → Cổng khóa, giật cửa hầm → Đường hầm đèn đỏ → Gặp Lan → Mương cáp lên phòng 103 → Về nhà.**
 
 [Chi tiết gameplay và kiểm tra](docs/PROGRESSION.md).

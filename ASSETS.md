@@ -173,3 +173,17 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 - **Nhện (CC0):** `assets/opengameart_spider/` là "Spider 2" của br-n518 (https://opengameart.org/content/spider-2). `tools/build_spider.py` xuất file blend sang `spider.glb`, giữ nguyên rig và vòng đi.
 - **Bàn tay trong hầm (MIT):** không phải model riêng. `corridor_chute.gd` cắt cẳng tay và bàn tay của `Male_Child_01` (Rocketbox) lúc chạy game, dùng texture học sinh sẵn có.
 - **Model và texture (CC0, Poly Haven):** `assets/polyhaven_corridor/`, nguồn ở `sources.json` cùng thư mục.
+
+## Tiền truyện: nhà vệ sinh và côn trùng
+
+- **Gián (CC BY 3.0):** "Cockroach" by Poly by Google, https://poly.pizza/m/eSCFQN_47V4, giấy phép https://creativecommons.org/licenses/by/3.0/. File giữ nguyên ở `assets/polypizza_insects/cockroach.glb`, ghi công và mã băm ở `assets/polypizza_insects/CREDITS.md`. Khi phân phối demo phải giữ phần ghi công này.
+- **Nhện:** dùng lại "Spider 2" CC0 ở `assets/opengameart_spider/`.
+- **Nhà vệ sinh A-203:** bồn cầu, chậu rửa dùng lại `assets/home/toilet.glb`, `basin.glb` (CC0). Gạch dùng `floor_tiles_08` Poly Haven (CC0) có sẵn. Vách buồng, tủ đồ, gương tường dựng bằng mesh trong `tools/build_map.gd` và `scripts/restroom_scene.gd`.
+- **Cài tóc gãy, gương cầm tay vỡ:** không tìm được bản CC0 tải trực tiếp, nên dựng bằng mesh trong `scripts/night_story_interactable.gd`. Kính nứt và ánh lấp lánh là shader tự viết: `assets/materials/cracked_glass.gdshader`, `glint.gdshader`.
+- **Âm thanh:** `mirror_crash.wav`, `mirror_crash_muffled.wav`, `water_leak.wav`, `water_drip.wav`, `insect_burst.wav`, `insect_skitter.wav` tổng hợp bằng `tools/build_restroom_audio.py`.
+
+## Tiền truyện: bác bảo vệ
+
+- **Model:** `Security_Male_01` của Microsoft Rocketbox (MIT), đã có sẵn trong `assets/rocketbox/townsfolk/`. Mũ bảo vệ và đèn pin là mesh trong `scripts/security_guard.gd`.
+- **Động tác (MIT, Rocketbox):** thêm `m_idle_look_around_01`, `m_listen_door`, `m_documents_check`, `m_documents_take` (thư mục `all_animations_max_motextr_static/`) và `m_walk_fast_01` (thư mục `all_animations_max_motextr_xy/`) vào `assets/rocketbox/animations/`, tải từ https://github.com/microsoft/Microsoft-Rocketbox. Chạy dùng `m_run_fast_01` có sẵn. Tay cầm đèn pin giơ ra trước được dựng bằng IK trong `humanoid_model.gd` (`hand_target`).
+- **Âm thanh:** `guard_whistle.wav` (còi), `guard_keys.wav` (chùm chìa khóa), `floor_thud.wav` (đồ đổ trên tầng 3) tổng hợp bằng `tools/build_guard_audio.py`.

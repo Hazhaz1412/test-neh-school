@@ -171,7 +171,9 @@ func begin_midnight() -> void:
 	# This legacy hook now commits the gate transition, independently of the clock.
 	# The corridor owns its pursuers; campus enemies resume only after Lan.
 	world.set_spirit_world(false, true)
-	world.set_spirit_world(true, not world.progression.briefing_complete)
+	# The prologue runs into the service tunnels of the real school; only later nights use the realm.
+	if world.progression.briefing_complete:
+		world.set_spirit_world(true)
 	opening.remove_companions()
 	if not world.progression.briefing_complete:
 		world.progression.begin_first_chase()

@@ -44,8 +44,9 @@ func doorway_occupied() -> bool:
 			return true
 	return false
 
-func set_open(value: bool) -> bool:
-	if value and is_locked():
+# `with_key` is for people who hold the keys, like the night guard.
+func set_open(value: bool, with_key := false) -> bool:
+	if value and is_locked() and not with_key:
 		return false
 	if not value and doorway_occupied():
 		return false

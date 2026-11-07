@@ -251,6 +251,8 @@ func tick(delta: float) -> void:
 				_tick_ambush(entry, lead, delta)
 
 func _tick_ambush(entry: Dictionary, lead: float, delta: float) -> void:
+	# Nobody waits ahead in the tunnel any more: the only pursuer is the guard behind.
+	if ambusher == null or ambusher.get("torch") != null: return
 	if not entry.shifted or lead < -3.0:
 		return
 	if ambusher.owner_entry != entry:

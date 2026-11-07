@@ -16,11 +16,16 @@ var body_mesh: MeshInstance3D
 static var clip_libraries := {}
 # Avatars keep their own textures; students wear repainted uniforms. Clips target a sibling rig.
 const STUDENT := "student"
+const GUARD := "guard"
 const BONES := {"Head": "Head", "UpperArm.R": "R UpperArm", "UpperArm.L": "L UpperArm", "LowerArm.R": "R Forearm", "Fist.R": "R Hand", "Fist.L": "L Hand"}
 const MOTIONS := {
 	"f": {"idle": "f_idle_neutral_01", "walk": "f_walk_slow_01", "sprint": "f_run_fast_01", "crouch": "f_crouch_idle"},
 	"m": {"idle": "m_idle_neutral_01", "walk": "m_walk_slow_01", "sprint": "m_run_fast_01", "crouch": "m_idle_neutral_01"},
 	STUDENT: {"idle": "m_idle_neutral_01", "walk": "m_walk_bruised", "sprint": "m_run_injured", "crouch": "m_idle_neutral_01"},
+	# The school's night guard: patrol walk, a look round each room, an ear to the door and
+	# the paperwork he clears away in 306.
+	GUARD: {"idle": "m_idle_neutral_01", "walk": "m_walk_fast_01", "sprint": "m_run_fast_01", "crouch": "m_idle_neutral_01",
+		"look_around": "m_idle_look_around_01", "listen": "m_listen_door", "documents": "m_documents_check", "take": "m_documents_take"},
 }
 const ONE_SHOTS := ["attack-melee-right", "pickup"]
 
@@ -29,6 +34,7 @@ func bone(label: String) -> String:
 
 func _ready() -> void:
 	process_priority = 3
+	if variant == GUARD: look = "Security_Male_01"
 	var folder := "res://assets/rocketbox/" if variant == STUDENT else "res://assets/rocketbox/townsfolk/"
 	visual = load(folder + ("Male_Child_01.fbx" if variant == STUDENT else look + ".fbx")).instantiate()
 	add_child(visual)
@@ -42,7 +48,7 @@ func _ready() -> void:
 	visual.position.y = global_position.y - foot.y * scale_by + 0.06
 	animation = AnimationPlayer.new()
 	visual.add_child(animation)
-	var kind: String = STUDENT if variant == STUDENT else ("f" if look.begins_with("Female") else "m")
+	var kind: String = variant if variant in [STUDENT, GUARD] else ("f" if look.begins_with("Female") else "m")
 	var rig := visual.get_path_to(skeleton)
 	var key := "%s|%s|%s" % [kind, rig, skeleton.get_bone_name(0)]
 	if not clip_libraries.has(key):

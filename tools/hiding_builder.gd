@@ -11,6 +11,8 @@ static func build(school: Node3D) -> void:
 	# One cover a room, of the sort that room would really have. Back corners keep entrances,
 	# teaching desks and the central aisles free; a cabinet stands flat against the wall.
 	for room in school.get_meta("room_catalog", []):
+		if room.kind == "restroom":
+			continue
 		var center: Vector3 = room.center
 		var size: Vector2 = room.size
 		var table := table_room(room)

@@ -16,7 +16,7 @@ func setup(school: Node3D) -> void:
 	music.play()
 	voice = AudioStreamPlayer.new()
 	add_child(voice)
-	for title in ["footstep", "torch", "door", "lock", "pickup", "paper", "hurt", "memory", "rescue", "camera", "counter_grab", "counter_punch", "counter_kick", "chair_impact", "lamp_pop"]:
+	for title in ["footstep", "torch", "door", "door_bang", "lock", "pickup", "paper", "hurt", "memory", "rescue", "camera", "counter_grab", "counter_punch", "counter_kick", "chair_impact", "lamp_pop"]:
 		sounds[title] = load("res://assets/audio/%s.wav" % title)
 	for i in range(4):
 		var sound := AudioStreamPlayer3D.new()

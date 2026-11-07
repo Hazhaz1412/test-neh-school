@@ -333,7 +333,7 @@ func _process(delta: float) -> void:
 	if simulation_active():
 		elapsed += delta
 		startle_cooldown = maxf(0, startle_cooldown - delta)
-	var environmental_story: bool = survival.active and progression.stage <= progression.Stage.GATE_INTERFERENCE
+	var environmental_story: bool = survival.active and progression.stage <= progression.Stage.BASEMENT_DESCENT
 	objective_label.visible = false
 	objective_label.text = progression.current_goal()
 	var nearest := 16.0
@@ -449,6 +449,9 @@ func is_soul_sanctuary(feet: Vector3) -> bool:
 	return feet.y >= 11.35 and absf(feet.x) <= 38.5 and feet.z >= -12.5 and feet.z <= 56.2 and (feet.z <= 9.2 or absf(feet.x) >= 21.7)
 
 func emit_noise(position_heard: Vector3, radius: float, source: String) -> void:
+	# The prologue's guard listens in the ordinary school, not the spirit world.
+	if progression != null and simulation_active():
+		progression.hear_noise(position_heard, radius, source)
 	if not simulation_active() or not spirit_enabled or is_soul_sanctuary(position_heard):
 		return
 	for ghost in enemies:
