@@ -3,6 +3,17 @@ extends Node3D
 # Lightweight, deterministic cinematic using imported animated Quaternius characters.
 # Only the three companions remain after the camera returns to the player.
 const DURATION := 34.0
+# VinFast VF3 Plus, in metres with its wheels on y = 0 and its nose towards +Z
+# (as the old van was). The GLB is ~12% oversized and off-centre; these values
+# come from its mesh bounds, bringing it to the real car's 3.19 m length.
+const CAR_SCALE := 0.8927
+const CAR_OFFSET := Vector3(0.0182, 0.0058, 0.2829)
+# The car's x where it starts and stops; the wheels roll through the distance.
+const CAR_START_X := 32.0
+const CAR_STOP_X := 9.0
+# Tyre radius in metres (0.375 model units at CAR_SCALE).
+const WHEEL_RADIUS := 0.375 * CAR_SCALE
+
 var director: Node3D
 var playing := false
 var paused := false
@@ -12,6 +23,7 @@ var camera: Camera3D
 var scenery: Node3D
 var cast: Node3D
 var vehicle: Node3D
+var wheels: Array[Node3D] = [] # Spin pivots on the car's axles.
 var actors: Array[Node3D] = []
 var animations: Array[AnimationPlayer] = []
 var layer: CanvasLayer
@@ -75,14 +87,13 @@ func _build_set() -> void:
 	asphalt.roughness = 0.95
 	road.material_override = asphalt
 	scenery.add_child(road)
-	vehicle = preload("res://assets/kenney_car/van.glb").instantiate()
+	vehicle = _arrival_car()
 	vehicle.name = "InvestigationVan"
-	vehicle.scale = Vector3.ONE * 1.75
 	vehicle.rotation.y = -PI / 2
 	scenery.add_child(vehicle)
 	for side in [-1, 1]:
 		var headlight := SpotLight3D.new()
-		headlight.position = Vector3(side * 0.52, 0.67, 1.29)
+		headlight.position = Vector3(side * 0.62, 0.85, 1.62)
 		headlight.rotation.y = PI
 		headlight.spot_range = 18
 		headlight.spot_angle = 27
@@ -234,7 +245,10 @@ func sample(total_time: float) -> void:
 			foley.play()
 		if stage >= 2:
 			engine.stop()
-	vehicle.position = Vector3(lerpf(32, 9, smoothstep(0, 1, minf(time / 7, 1))), 0, 85)
+	vehicle.position = Vector3(lerpf(CAR_START_X, CAR_STOP_X, smoothstep(0, 1, minf(time / 7, 1))), 0, 85)
+	# Rolling forward turns the tyre top towards the nose (+Z), i.e. +X rotation.
+	for wheel in wheels:
+		wheel.rotation.x = (CAR_START_X - vehicle.position.x) / WHEEL_RADIUS
 	var entry: Node3D = director.world.get_node("Campus/ServiceEntry")
 	entry.set_open_amount(clampf((time - 18.5) / 2.8, 0, 1) * (1 - clampf((time - 26.8) / 0.7, 0, 1)))
 	cutters.visible = time >= 15 and time < 19.2
@@ -351,3 +365,61 @@ func _release_after_frame(node: Node) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	retained_materials.clear()
+
+func _arrival_car() -> Node3D:
+	var pivot := Node3D.new()
+	var model: Node3D = preload("res://assets/vinfast_vf3_plus_2026.glb").instantiate()
+	model.scale = Vector3.ONE * CAR_SCALE
+	model.position = CAR_OFFSET
+	pivot.add_child(model)
+	_split_wheels(model)
+	return pivot
+
+# The GLB has all four wheels (tyre, rim, caliper) in one mesh, so nothing can
+# turn. Split its triangles by corner into four meshes, each hung from a pivot
+# at its axle. Vertex data is shared; only the index lists are divided.
+func _split_wheels(model: Node3D) -> void:
+	wheels.clear()
+	var tyres: MeshInstance3D = null
+	for mesh in model.find_children("*", "MeshInstance3D", true, false):
+		var material: Material = mesh.mesh.surface_get_material(0)
+		if material != null and material.resource_name.begins_with("Tire"):
+			tyres = mesh
+	assert(tyres != null and tyres.mesh.get_surface_count() == 1, "VF3 tyre mesh not found")
+	# Tyre mesh space -> model space, so corners and axles are in car terms.
+	var to_model := tyres.transform
+	var node := tyres.get_parent()
+	while node != model:
+		to_model = node.transform * to_model
+		node = node.get_parent()
+	var arrays: Array = tyres.mesh.surface_get_arrays(0)
+	var points: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var middle := (to_model * tyres.mesh.get_aabb()).get_center()
+	var corner_indices: Array[PackedInt32Array] = [PackedInt32Array(), PackedInt32Array(), PackedInt32Array(), PackedInt32Array()]
+	var corner_bounds: Array[AABB] = [AABB(), AABB(), AABB(), AABB()]
+	var seen: Array[bool] = [false, false, false, false]
+	for t in range(0, indices.size(), 3):
+		var a: Vector3 = to_model * points[indices[t]]
+		var corner := (1 if a.x > middle.x else 0) + (2 if a.z > middle.z else 0)
+		corner_indices[corner].append_array(PackedInt32Array([indices[t], indices[t + 1], indices[t + 2]]))
+		corner_bounds[corner] = corner_bounds[corner].expand(a) if seen[corner] else AABB(a, Vector3.ZERO)
+		seen[corner] = true
+	for corner in range(4):
+		var part: Array = arrays.duplicate()
+		part[Mesh.ARRAY_INDEX] = corner_indices[corner]
+		var wheel_mesh := ArrayMesh.new()
+		# The source format carries the layout of its custom channels.
+		wheel_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, part, [], {}, tyres.mesh.surface_get_format(0))
+		wheel_mesh.surface_set_material(0, tyres.mesh.surface_get_material(0))
+		var axle := Node3D.new()
+		axle.name = "Wheel%d" % corner
+		axle.position = corner_bounds[corner].get_center()
+		model.add_child(axle)
+		var wheel := MeshInstance3D.new()
+		wheel.mesh = wheel_mesh
+		# Same placement as before, expressed from the axle.
+		wheel.transform = Transform3D(Basis(), -axle.position) * to_model
+		axle.add_child(wheel)
+		wheels.append(axle)
+	tyres.free()

@@ -89,11 +89,23 @@ func fixture(pos: Vector3, powered := false) -> void:
 	if not powered:
 		light.set_meta("flicker", true)
 
+# Realistic Poly Haven (CC0) replacements. Pivot names keep the desk/chair prefix
+# because realm_prop_rules.gd picks which furniture floats by that prefix.
+const REALISTIC_PROPS := {
+	"desk": "SchoolDesk_01",
+	"chair": "SchoolChair_01",
+	"chairDesk": "SchoolChair_01",
+	"deskTeacher": "metal_office_desk",
+}
+
 func prop(asset: String, pos: Vector3, height: float, yaw := 0.0, solid := true, nature := false) -> Node3D:
 	var directory := "res://assets/kenney_nature/" if nature else "res://assets/kenney_furniture/"
 	if asset == "fountain":
 		directory = "res://assets/poly_fountain/"
-	var packed := load(directory + asset + ".glb") as PackedScene
+	var path := directory + asset + ".glb"
+	if REALISTIC_PROPS.has(asset):
+		path = "res://assets/polyhaven_corridor/%s/%s.gltf" % [REALISTIC_PROPS[asset], REALISTIC_PROPS[asset]]
+	var packed := load(path) as PackedScene
 	assert(packed != null, "Missing asset: " + asset)
 	var pivot := Node3D.new()
 	add(landscape if nature else furniture, pivot, asset)
@@ -181,8 +193,12 @@ func window_band(center: Vector2, length: float, along_x: bool) -> void:
 func window_wall(x: float, z: float, length: float) -> void:
 	window_band(Vector2(x, z), length, false)
 
+# Clear width of a classroom doorway. The 0.5 m navigation agent radius needs
+# about 1.3 m to bake a route through, so this is wider than a real 1 m door.
+const DOOR_OPENING := 1.3
+
 func door_partition(center: Vector2, length: float, along_x: bool, door_offset: float, number: int) -> void:
-	var opening := 1.9
+	var opening := DOOR_OPENING
 	for side in [-1, 1]:
 		var edge: float = side * length * 0.5
 		var jamb: float = door_offset + side * opening * 0.5
@@ -199,29 +215,91 @@ func build_classroom_door(pos: Vector3, yaw: float, number: int) -> void:
 	doorway.position = pos + Vector3(0, elevation, 0)
 	doorway.rotation.y = yaw
 	doorway.set_meta("room_number", number)
-	# Build in local coordinates; the moving leaf slides into the adjacent wall.
+	# Build in local coordinates. The leaf node sits on the hinge line so the
+	# door script only has to rotate it; its parts extend along local +x.
 	var saved := elevation
 	elevation = 0.0
+	var half := DOOR_OPENING * 0.5
+	var frame_paint := material(Color(0.20, 0.17, 0.15))
+	frame_paint.metallic = 0.45
+	frame_paint.roughness = 0.5
+	var steel := material(Color(0.58, 0.60, 0.62))
+	steel.metallic = 0.9
+	steel.roughness = 0.3
+	var veneer := material(Color(0.40, 0.33, 0.28))
+	veneer.albedo_texture = load("res://assets/polyhaven_school/rough_wood_diff_1k.jpg")
+	veneer.normal_enabled = true
+	veneer.normal_texture = load("res://assets/polyhaven_school/rough_wood_nor_1k.jpg")
+	veneer.normal_scale = 0.25
+	veneer.roughness = 0.6
+	# Object-space projection keeps the grain fixed to the leaf while it swings.
+	veneer.uv1_triplanar = true
+	veneer.uv1_scale = Vector3(0.6, 0.25, 0.6)
+	var clear := material(Color(0.30, 0.36, 0.38, 0.25))
+	clear.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	clear.roughness = 0.05
+	clear.metallic_specular = 0.9
 	for side in [-1, 1]:
-		box(doorway, "DoorFrame", Vector3(side * 0.99, 1.35, 0), Vector3(0.09, 2.7, 0.30), dark_mat, false)
-	box(doorway, "DoorLintel", Vector3(0, 2.68, 0), Vector3(2.08, 0.08, 0.3), dark_mat, false)
-	box(doorway, "SlidingTrack", Vector3(0.95, 2.74, 0), Vector3(4.0, 0.06, 0.34), dark_mat, false)
+		box(doorway, "DoorFrame", Vector3(side * (half + 0.04), 1.35, 0), Vector3(0.08, 2.7, 0.30), frame_paint, false)
+	box(doorway, "DoorLintel", Vector3(0, 2.68, 0), Vector3(DOOR_OPENING + 0.16, 0.08, 0.3), frame_paint, false)
 	var leaf := AnimatableBody3D.new()
+	# Set before entering the tree: a synced AnimatableBody3D only applies a new
+	# transform on the next physics frame, which never runs before the scene is saved.
+	leaf.position.x = -half + 0.03
 	add(doorway, leaf, "Leaf")
 	leaf.collision_layer = 4
 	leaf.collision_mask = 3
-	box(leaf, "DoorWoodPanel", Vector3(0, 0.87, 0), Vector3(1.87, 1.74, 0.14), wood_mat, false)
-	var frosted := material(Color(0.20, 0.28, 0.29))
-	box(leaf, "DoorFrostedGlass", Vector3(0, 2.12, 0), Vector3(1.70, 0.77, 0.10), frosted, false)
+	var width := DOOR_OPENING - 0.06
+	var height := 2.62
+	var thick := 0.05
+	# Flush slab with a narrow vision panel on the handle side, as in a fire-rated
+	# classroom door: the slab is split around the glass so it stays see-through.
+	var glass_left := width - 0.44
+	var glass_right := width - 0.22
+	var glass_bottom := 1.40
+	var glass_top := 2.30
+	var mid_y := (glass_bottom + glass_top) * 0.5
+	var glass_h := glass_top - glass_bottom
+	var floor_gap := 0.01
+	# One mesh for the four parts around the glass, so the object-space grain
+	# runs continuously across the slab instead of restarting on every part.
+	var slab_parts := [
+		[Vector3(width * 0.5, (floor_gap + glass_bottom) * 0.5, 0), Vector3(width, glass_bottom - floor_gap, thick)],
+		[Vector3(width * 0.5, (glass_top + floor_gap + height) * 0.5, 0), Vector3(width, floor_gap + height - glass_top, thick)],
+		[Vector3(glass_left * 0.5, mid_y, 0), Vector3(glass_left, glass_h, thick)],
+		[Vector3((glass_right + width) * 0.5, mid_y, 0), Vector3(width - glass_right, glass_h, thick)],
+	]
+	var builder := SurfaceTool.new()
+	for part in slab_parts:
+		var piece := BoxMesh.new()
+		piece.size = part[1]
+		builder.append_from(piece, 0, Transform3D(Basis(), part[0]))
+	var slab := MeshInstance3D.new()
+	slab.mesh = builder.commit()
+	slab.material_override = veneer
+	add(leaf, slab, "DoorSlab")
+	box(leaf, "DoorVisionGlass", Vector3((glass_left + glass_right) * 0.5, mid_y, 0), Vector3(glass_right - glass_left, glass_h, 0.008), clear, false)
+	var trim := 0.035
+	var trim_metal := material(Color(0.42, 0.43, 0.43))
+	trim_metal.metallic = 0.6
+	trim_metal.roughness = 0.55
+	box(leaf, "DoorVisionTrim", Vector3((glass_left + glass_right) * 0.5, glass_bottom, 0), Vector3(glass_right - glass_left + trim * 2, trim, thick + 0.02), trim_metal, false)
+	box(leaf, "DoorVisionTrim", Vector3((glass_left + glass_right) * 0.5, glass_top, 0), Vector3(glass_right - glass_left + trim * 2, trim, thick + 0.02), trim_metal, false)
+	box(leaf, "DoorVisionTrim", Vector3(glass_left, mid_y, 0), Vector3(trim, glass_h, thick + 0.02), trim_metal, false)
+	box(leaf, "DoorVisionTrim", Vector3(glass_right, mid_y, 0), Vector3(trim, glass_h, thick + 0.02), trim_metal, false)
+	for y in [0.30, 1.35, 2.35]:
+		box(leaf, "DoorHinge", Vector3(-0.012, y, 0), Vector3(0.025, 0.11, thick + 0.012), steel, false)
 	for side in [-1, 1]:
-		box(leaf, "DoorStile", Vector3(side * 0.90, 1.34, 0), Vector3(0.07, 2.68, 0.16), wood_mat, false)
-		box(leaf, "DoorHandle", Vector3(-0.65, 1.1, side * 0.105), Vector3(0.07, 0.28, 0.07), exterior_mat, false)
-	box(leaf, "DoorTopRail", Vector3(0, 2.61, 0), Vector3(1.87, 0.13, 0.16), wood_mat, false)
+		# Lever handle on a round rose, pointing back towards the hinges.
+		var face: float = side * (thick * 0.5)
+		box(leaf, "DoorHandleRose", Vector3(width - 0.10, 1.02, face + side * 0.006), Vector3(0.07, 0.07, 0.012), steel, false)
+		box(leaf, "DoorHandleNeck", Vector3(width - 0.10, 1.02, face + side * 0.03), Vector3(0.022, 0.022, 0.04), steel, false)
+		box(leaf, "DoorHandleLever", Vector3(width - 0.165, 1.02, face + side * 0.055), Vector3(0.15, 0.024, 0.024), steel, false)
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(1.87, 2.68, 0.16)
+	shape.size = Vector3(width, height, thick)
 	collision.shape = shape
-	collision.position.y = 1.34
+	collision.position = Vector3(width * 0.5, height * 0.5 + 0.01, 0)
 	add(leaf, collision, "Collision")
 	var area := Area3D.new()
 	add(doorway, area, "Interaction")
@@ -229,10 +307,11 @@ func build_classroom_door(pos: Vector3, yaw: float, number: int) -> void:
 	area.collision_mask = 0
 	var target := CollisionShape3D.new()
 	var target_shape := BoxShape3D.new()
-	target_shape.size = Vector3(1.9, 2.7, 0.32)
+	target_shape.size = Vector3(DOOR_OPENING, 2.7, 0.32)
 	target.shape = target_shape
 	target.position.y = 1.35
 	add(area, target, "Target")
+	doorway.set_meta("doorway_width", DOOR_OPENING)
 	doorway.set_script(load("res://scripts/classroom_door.gd"))
 	elevation = saved
 
@@ -403,6 +482,8 @@ func register_room(x: float, z: float, width: float, depth: float, number: int, 
 	var door: Node3D = architecture.get_node("ClassroomDoor" + str(number))
 	door.set("room_label", ROOM_TITLES[kind])
 	door.set_meta("room_kind", kind)
+	var into_room: Vector3 = Vector3(x, door.global_position.y, z) - door.global_position
+	door.set_meta("swing_side", 1.0 if into_room.dot(door.global_transform.basis.z) >= 0.0 else -1.0)
 	var starts := [architecture.get_child_count(), furniture.get_child_count(), atmosphere.get_child_count()]
 	furnish_room(x, z, width, depth, number, kind, variant)
 	if turn:
@@ -416,9 +497,9 @@ func register_room(x: float, z: float, width: float, depth: float, number: int, 
 				node.rotation.y += PI
 
 func student_desk(pos: Vector3, yaw := PI, computer := false) -> void:
-	prop("desk", pos, 0.78, yaw)
+	prop("desk", pos, 0.80, yaw)
 	var behind := Vector3(sin(yaw), 0, cos(yaw)) * -0.85
-	prop("chairDesk" if computer else "chair", pos + behind, 0.85, yaw)
+	prop("chairDesk" if computer else "chair", pos + behind, 0.95, yaw)
 	if computer:
 		prop("computerScreen", pos + Vector3(0, 0.78, 0), 0.48, yaw, false)
 		prop("computerKeyboard", pos + Vector3(0, 0.78, 0.28), 0.04, yaw, false)
@@ -446,7 +527,7 @@ func furnish_room(x: float, z: float, width: float, depth: float, number: int, k
 						student_desk(p, PI if col in [1, 2] else (-PI / 2 if col == 0 else PI / 2))
 					else:
 						student_desk(p, PI, kind == "computer")
-			prop("desk", Vector3(x, 0, front + 1.6), 0.85)
+			prop("deskTeacher", Vector3(x, 0, front + 1.6), 0.79)
 			box(architecture, "Blackboard", Vector3(x, 1.9, front + 0.20), Vector3(minf(8, width - 2), 1.6, 0.07), trim_mat, false)
 			sign_text(architecture, "%s / %d" % [ROOM_TITLES[kind], number % 1000], Vector3(x, 1.95, front + 0.25), 0, 26)
 		"library", "archive", "storage":
@@ -491,7 +572,7 @@ func furnish_room(x: float, z: float, width: float, depth: float, number: int, k
 					else:
 						prop("books", p + Vector3(0, 0.78, 0), 0.10, 0, false)
 			prop("bookcaseOpen", Vector3(left + 1.5, 0, front + 1.5), 2.2)
-			prop("desk", Vector3(x, 0, front + 1.5), 0.85)
+			prop("deskTeacher", Vector3(x, 0, front + 1.5), 0.79)
 		"staff", "club":
 			for row in range(2):
 				for side in [-1, 1]:
@@ -513,7 +594,7 @@ func furnish_room(x: float, z: float, width: float, depth: float, number: int, k
 			box(architecture, "RehearsalPlatform", Vector3(x, 0.10, front + 2), Vector3(width - 3, 0.2, 2.5), wood_mat)
 			for i in range(9):
 				var angle := PI * 0.12 + i * PI * 0.76 / 8
-				prop("chair", Vector3(x + cos(angle) * 4, 0, front + 4 + sin(angle) * 5), 0.85, PI)
+				prop("chair", Vector3(x + cos(angle) * 4, 0, front + 4 + sin(angle) * 5), 0.95, PI)
 			prop("bookcaseOpen", Vector3(left + 1.5, 0, z + depth * 0.5 - 2), 2.1)
 	for offset in [-width * 0.25, width * 0.25]:
 		fixture(Vector3(x + offset, 3.48, z), true)
@@ -710,7 +791,7 @@ func build_service_storage() -> void:
 	wall(Vector3(-45, 1.8, -59), Vector3(12, 3.6, 0.25))
 	door_partition(Vector2(-45, -47), 12, true, 0, 990)
 	register_room(-45, -53, 12, 12, 990, "storage", "SERVICE")
-	prop("desk", Vector3(-45, 0, -56), 0.85)
+	prop("deskTeacher", Vector3(-45, 0, -56), 0.79)
 	sign_text(architecture, "NHÀ KHO / THIẾT BỊ TRƯỜNG", Vector3(-45, 3.15, -46.8), 0, 24)
 	box(campus, "StorageRoof", Vector3(-45, 3.95, -53), Vector3(12.5, 0.20, 12.5), dark_mat)
 

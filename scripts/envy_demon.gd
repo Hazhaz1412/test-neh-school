@@ -213,7 +213,7 @@ func _player_exposed() -> bool:
 
 func _can_see_player(use_cone := true) -> bool:
 	var eye := global_position + Vector3.UP * 2.2 * model.scale.y
-	var chest := player.global_position + Vector3.UP * 1.2
+	var chest: Vector3 = player.sight_point()
 	var offset := chest - eye
 	var reach := TORCH_SIGHT_RANGE if player.flashlight.visible else SIGHT_RANGE
 	if offset.length() > reach:

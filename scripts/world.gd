@@ -1,5 +1,7 @@
 extends Node3D
 const VisualUpgrade := preload("res://scripts/visual_upgrade.gd")
+const CityPlan := preload("res://scripts/city_backdrop/city_plan.gd")
+const CityBuilder := preload("res://scripts/city_backdrop/city_builder.gd")
 
 @export_group("Spirit realm · visuals")
 @export_range(0.005, 0.06, 0.001) var spirit_fog_density := 0.014
@@ -92,6 +94,12 @@ var cheat_finish_button: Button
 var death_text: Label
 @onready var player: CharacterBody3D = $Player
 
+func _build_city_backdrop() -> void:
+	var city := Node3D.new()
+	city.name = "CityBackdrop"
+	add_child(city)
+	CityBuilder.new().build(city, CityPlan.new(CityPlan.layout()))
+
 func _ready() -> void:
 	preload("res://scripts/campus_fixes.gd").apply(self)
 	_build_ui()
@@ -100,6 +108,9 @@ func _ready() -> void:
 	realm_scenery = preload("res://scripts/spirit_scenery.gd").new()
 	add_child(realm_scenery)
 	realm_scenery.setup(self)
+	# Built after the realm scenery caches the campus, so the B-key spirit
+	# world never touches the streets.
+	_build_city_backdrop()
 	realm_audio = _loop_audio("SpiritAmbience", "res://assets/audio/spirit_ambience.wav", -17)
 	threat_audio = _loop_audio("ThreatHeartbeat", "res://assets/audio/threat_heartbeat.wav", -80)
 	master_key = preload("res://scripts/master_key.gd").new()
@@ -202,7 +213,7 @@ func _build_ui() -> void:
 	location_label = _label(ui, Vector2(30, 52), 16, Color(0.61, 0.70, 0.71))
 	var controls := _label(ui, Vector2(30, 672), 15, Color(0.65, 0.73, 0.73))
 	controls.add_theme_font_size_override("font_size", 13)
-	controls.text = "WASD đi   SHIFT chạy   CTRL đi nhẹ   E tương tác / nấp / ra   F đèn pin   SPACE nín thở khi nấp   G ném phấn\nN đêm sinh tồn   B thử linh hồn   M sơ đồ   F6 chất lượng   F7 FPS   ESC dừng   R chơi lại"
+	controls.text = "WASD đi   SHIFT chạy   CTRL đi nhẹ   C cúi   SPACE nhảy   E tương tác / nấp / ra   F đèn pin   SPACE nín thở khi nấp   G ném phấn\nN đêm sinh tồn   B thử linh hồn   M sơ đồ   F6 chất lượng   F7 FPS   ESC dừng   R chơi lại"
 	stamina_bar = ProgressBar.new()
 	stamina_bar.position = Vector2(1050, 36)
 	stamina_bar.size = Vector2(195, 8)
@@ -242,7 +253,7 @@ func _build_ui() -> void:
 	help_panel.size = Vector2(500, 340)
 	ui.add_child(help_panel)
 	var help_text := Label.new()
-	help_text.text = "TẠM DỪNG · Esc tiếp tục\n\nWASD đi · Shift chạy · Ctrl đi nhẹ\nE nhặt / mở / nấp · Space nín thở / QTE né\n1–6 / cuộn chuột chọn đồ · Chuột trái dùng\nQ thả đồ · F đèn pin · Giữ/thả G ném phấn\nPhấn tích 1,5 giây: tầm xa ×5 · Pin sạc 50%\nMáy ảnh: 20% pin / ảnh · Ma tan 6 giây\nJ ký ức · M sơ đồ · F6 chất lượng · F7 FPS\nHội thoại: 1–6 chọn câu · Space / Enter hiện hết chữ\nR chơi lại · N mở đầu\n\nKhám phá → chạy trốn → gặp Lan → tìm hiểu An.\n22:30 → 06:00 · Đồng hồ chạy liên tục.
+	help_text.text = "TẠM DỪNG · Esc tiếp tục\n\nWASD đi · Shift chạy · Ctrl đi nhẹ · C cúi · Space nhảy\nE nhặt / mở / nấp · Space nín thở / QTE né\n1–6 / cuộn chuột chọn đồ · Chuột trái dùng\nQ thả đồ · F đèn pin · Giữ/thả G ném phấn\nPhấn tích 1,5 giây: tầm xa ×5 · Pin sạc 50%\nMáy ảnh: 20% pin / ảnh · Ma tan 6 giây\nJ ký ức · M sơ đồ · F6 chất lượng · F7 FPS\nHội thoại: 1–6 chọn câu · Space / Enter hiện hết chữ\nR chơi lại · N mở đầu\n\nKhám phá → chạy trốn → gặp Lan → tìm hiểu An.\n22:30 → 06:00 · Đồng hồ chạy liên tục.
 Hành lang: WASD · Shift chạy / stamina · Space nhảy\nCtrl lấy đà trượt · Chuột quay đầu / giữ chuột phải nhìn sau.\nThoát thân: A D né · Space nhảy / theo nhịp tim · Ctrl cúi\nSân: chạy về đèn còn sáng · Chuột phải soi đèn pin ra sau."
 	help_text.add_theme_font_size_override("font_size", 18)
 	var help_stack := VBoxContainer.new()

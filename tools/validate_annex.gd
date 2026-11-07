@@ -24,9 +24,7 @@ func validate() -> void:
 	school.player.enabled = false
 	school.player.set_physics_process(false)
 	for door in get_nodes_in_group("classroom_doors"):
-		door.is_open = true
-		door.slide = 1.0
-		door.leaf.position.x = door.slide_distance
+		door.snap(true)
 	await physics_frame
 	await physics_frame
 	var rooms: Array = school.get_meta("room_catalog")
