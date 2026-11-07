@@ -8,3 +8,18 @@ build/
 
 # Hub dependencies
 hub/node_modules/
+
+# Blender autosave backups
+*.blend1
+
+# PSX arms pack: the game loads only arms_rig.glb (+ arms_rig_arms_01.png), and
+# tools/blender/make_hold_poses.py rebuilds it from arms_rig.orig.blend. The rest
+# of the download, and the .blend the script writes, stay local.
+assets/psx-first-person-arms-free-game-assets/Old Versions/
+assets/psx-first-person-arms-free-game-assets/arms_rig.fbx*
+assets/psx-first-person-arms-free-game-assets/arms_rig.orig.glb*
+assets/psx-first-person-arms-free-game-assets/arms_rig.blend
+assets/psx-first-person-arms-free-game-assets/arms_rig.blend.import
+assets/psx-first-person-arms-free-game-assets/arms_01.png*
+assets/psx-first-person-arms-free-game-assets/arms_gloves_01.png*
+assets/psx-first-person-arms-free-game-assets/arms_uv.png*
