@@ -82,9 +82,7 @@ func validate() -> void:
 	var doors := get_nodes_in_group("classroom_doors")
 	check(doors.size() == 40, "39 diverse rooms plus a separate warehouse have physical doors")
 	for door in doors:
-		door.is_open = true
-		door.slide = 1.0
-		door.leaf.position.x = door.slide_distance
+		door.snap(true)
 	await physics_frame
 	await physics_frame
 	capsule.radius = 0.29
@@ -160,9 +158,7 @@ func validate_doors() -> void:
 	school.player.camera.rotation = Vector3.ZERO
 	school.player.camera.look_at(Vector3(25, 1.67, 25))
 	school.player.enabled = true
-	door.is_open = false
-	door.slide = 0.0
-	door.leaf.position.x = 0.0
+	door.snap(false)
 	await physics_frame
 	await physics_frame
 	check(school.player.get_door_target() == door, "Aiming at a classroom doorway selects its E interaction")
@@ -171,7 +167,7 @@ func validate_doors() -> void:
 	door.request_toggle()
 	for i in range(40):
 		await physics_frame
-	check(door.is_open and door.slide > 0.99, "Door interaction opens the sliding leaf")
+	check(door.is_open and door.slide > 0.99, "Door interaction swings the leaf open")
 	check(await walk_to(Vector2(27.5, 25)), "Player walks through the opened classroom door")
 	school.player.position = Vector3(25, 0.05, 25)
 	await physics_frame

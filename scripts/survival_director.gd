@@ -114,9 +114,7 @@ func start_run(with_opening := true) -> void:
 	world.master_key.get_node("Interaction").collision_layer = 0
 	for door in world.get_node("Architecture").get_children():
 		if door.has_method("request_toggle"):
-			door.is_open = false
-			door.slide = 0
-			door.leaf.position.x = 0
+			door.snap(false)
 	for item in items:
 		item.reset_item()
 	for child in get_children():

@@ -220,7 +220,7 @@ func _play(name: String) -> void:
 func has_line_of_sight() -> bool:
 	if not active or crowd_controlled() or not is_instance_valid(player) or player.is_hidden() or world.is_soul_sanctuary(player.global_position):
 		return false
-	return sees_point(player.global_position + Vector3(0, 1.2, 0))
+	return sees_point(player.sight_point())
 
 func can_strike_player() -> bool:
 	return has_line_of_sight()

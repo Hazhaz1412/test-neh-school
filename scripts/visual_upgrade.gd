@@ -2,8 +2,11 @@ extends RefCounted
 # Realistic pass over the existing map. Shared materials are edited in place, so the mesh
 # batches and the spirit-world swap stay untouched. Colours are the ones the map builder uses.
 const SURFACES := {
-	"8c8a75": {"set": "worn_plaster_wall", "scale": 0.42, "tint": Color(0.86, 0.84, 0.74)},
-	"21403b": {"set": "painted_concrete_02", "scale": 0.5, "tint": Color(0.30, 0.46, 0.42)},
+	# A school that is lived in, not abandoned: cream limewash inside, the usual
+	# yellow outside, beige ceramic tiles underfoot.
+	"8c8a75": {"set": "painted_plaster_wall", "scale": 0.4, "tint": Color(1.0, 0.89, 0.64)},
+	"b0a687": {"set": "yellow_plaster", "scale": 0.35, "tint": Color(1.0, 0.95, 0.82)},
+	"21403b": {"set": "painted_concrete_02", "scale": 0.5, "tint": Color(0.50, 0.76, 0.66)},
 	"304740": {"set": "painted_concrete_02", "scale": 0.5, "tint": Color(0.34, 0.44, 0.40)},
 	"335738": {"set": "dirty_concrete", "scale": 0.4, "tint": Color(0.48, 0.62, 0.48)},
 	"423021": {"set": "rough_wood", "scale": 0.7, "tint": Color(0.46, 0.34, 0.26)},
@@ -11,6 +14,10 @@ const SURFACES := {
 	"f3cca8": {"set": "rough_wood", "scale": 0.8, "tint": Color(0.58, 0.46, 0.36), "plain": true},
 }
 const TEXTURES := "res://assets/polyhaven_school/%s_%s_1k.jpg"
+# Indoor floor (builder's floor_mat tint): five 40 cm tiles across each 2 m
+# repeat of the texture, which brings its own grout, so the shader's seams go.
+const INDOOR_FLOOR_TINT := "6e7066"
+const INDOOR_FLOOR := {"set": "floor_tiles_08", "scale": 0.5, "tint": Color(0.66, 0.64, 0.61)}
 
 static func apply(world: Node3D) -> void:
 	_tune_environment(world.get_node("Atmosphere/MoonlitEnvironment").environment)
@@ -67,6 +74,14 @@ static func _materials_of(node: GeometryInstance3D) -> Array:
 static func _upgrade(material: Material) -> void:
 	if material is ShaderMaterial:
 		if material.shader != null and material.shader.resource_path.ends_with("ground.gdshader"):
+			var tint: Color = material.get_shader_parameter("tint")
+			if tint.to_html(false) == INDOOR_FLOOR_TINT:
+				material.set_shader_parameter("tint", INDOOR_FLOOR.tint)
+				material.set_shader_parameter("paving", 0.0)
+				material.set_shader_parameter("detail_map", load(TEXTURES % [INDOOR_FLOOR.set, "diff"]))
+				material.set_shader_parameter("detail_normal", load(TEXTURES % [INDOOR_FLOOR.set, "nor"]))
+				material.set_shader_parameter("detail_scale", INDOOR_FLOOR.scale)
+				return
 			material.set_shader_parameter("detail_map", load(TEXTURES % ["dirty_concrete", "diff"]))
 			material.set_shader_parameter("detail_normal", load(TEXTURES % ["dirty_concrete", "nor"]))
 			material.set_shader_parameter("detail_scale", 0.35)

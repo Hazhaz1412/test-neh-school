@@ -1,14 +1,15 @@
 extends Node3D
 signal toggled(opened: bool)
 
-# A physical sliding classroom door. Navigation bakes the doorway itself;
-# pursuers open the leaf when they reach it instead of passing through it.
+# A physical hinged classroom door that swings into the room. Navigation bakes
+# the doorway itself; pursuers open the leaf when they reach it instead of
+# passing through it.
 @export var start_open := false
 @export var room_label := "LỚP HỌC"
-@export var slide_distance := 2.05
-@export var slide_duration := 0.45
+@export var swing_angle := deg_to_rad(100.0)
+@export var slide_duration := 0.6
 var is_open := false
-var slide := 0.0
+var slide := 0.0 # How far open the leaf is, 0 shut to 1 fully swung.
 var proximity_clock := 0.0
 @onready var leaf: AnimatableBody3D = $Leaf
 
@@ -16,15 +17,26 @@ func _ready() -> void:
 	add_to_group("classroom_doors")
 	is_open = start_open and not is_locked()
 	slide = 1.0 if is_open else 0.0
-	leaf.position.x = slide * slide_distance
+	_pose_leaf()
 	proximity_clock = float(int(get_meta("room_number", 0)) % 5) * 0.04
 
+# Put the leaf straight into its open or shut pose, without animating.
+func snap(open: bool) -> void:
+	is_open = open
+	slide = 1.0 if open else 0.0
+	_pose_leaf()
+
+func _pose_leaf() -> void:
+	leaf.rotation.y = -float(get_meta("swing_side", 1.0)) * smoothstep(0.0, 1.0, slide) * swing_angle
+
 func doorway_occupied() -> bool:
+	# Covers the threshold and the quarter circle the leaf sweeps in the room.
+	var width: float = get_meta("doorway_width", 1.3)
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(1.9, 2.7, 0.8)
+	shape.size = Vector3(width, 2.7, width + 0.3)
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
-	query.transform = global_transform.translated_local(Vector3(0, 1.35, 0))
+	query.transform = global_transform.translated_local(Vector3(0, 1.35, float(get_meta("swing_side", 1.0)) * width * 0.5))
 	query.collision_mask = 3
 	query.exclude = [leaf.get_rid()]
 	for hit in get_world_3d().direct_space_state.intersect_shape(query):
@@ -87,4 +99,4 @@ func _physics_process(delta: float) -> void:
 					set_open(true)
 					break
 	slide = move_toward(slide, 1.0 if is_open else 0.0, delta / slide_duration)
-	leaf.position.x = smoothstep(0.0, 1.0, slide) * slide_distance
+	_pose_leaf()

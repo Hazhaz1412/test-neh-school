@@ -13,6 +13,26 @@ const CRANK_PUMP_MAX := 14
 # The price of free light: every squeeze can be heard, so it cannot be spammed beside the demon.
 const CRANK_NOISE := 9.0
 const CRANK_LOW := 20.0
+const GRAVITY := 18.0
+const STAND_HEIGHT := 1.75
+const STAND_EYE := 1.62
+# Crouching (hold C) lowers the body for real: low cover hides the chest the
+# ghosts look for, and the capsule fits under things a standing one cannot.
+const CROUCH_HEIGHT := 1.1
+const CROUCH_EYE := 1.0
+const CROUCH_SPEED := 1.5
+const CROUCH_SIGHT := 0.7
+const STAND_SIGHT := 1.2
+# A low hop (~0.45 m at GRAVITY): clears low clutter but not desks or gates.
+const JUMP_VELOCITY := 4.0
+const JUMP_STAMINA := 12.0
+const LANDING_NOISE := 8.0
+# Head motion at full sprint; walking and crouching scale it down by speed.
+# The head dips on every footfall but sways sideways once per stride (left foot,
+# right foot), rolling slightly with the sway.
+const BOB_HEIGHT := 0.06
+const BOB_SWAY := 0.035
+const BOB_ROLL := 0.02
 signal damaged(amount: float)
 signal died
 var health := 100.0
@@ -20,6 +40,7 @@ var invulnerable_time := 0.0
 var stamina := MAX_STAMINA
 var enabled := true
 var step_time := 0.0
+var bob_amount := 0.0 # 0 standing still .. 1 at full sprint.
 var door_target: Node3D
 var hidden_spot: Node3D
 var saved_flashlight := false
@@ -35,6 +56,8 @@ const CHALK_MAX_RANGE_MULTIPLIER := 5.0
 const ITEM_NAMES := {"torch": "Đèn pin", "crank": "Đèn bấm tay", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "salt_gun": "Súng muối", "medal": "Huy chương mạ"}
 var inventory: Array[String] = ["torch", "camera", "chalk", "chalk", "chalk", ""]
 var selected_slot := 0
+# selected_slot while nothing is in hand (item put away with its number key).
+const EMPTY_HANDS := -1
 var chalk_charging := false
 var chalk_charge_time := 0.0
 var chalk_charge_source := ""
@@ -60,6 +83,10 @@ var breath_exhausted := false
 var sprint_exhausted := false
 var noise_clock := 0.0
 var breathing_clock := 0.0
+var crouching := false
+var crouch_blend := 0.0 # Eases the camera between standing (0) and crouched (1).
+var jump_held := false # Jump on the press only, not while Space stays down after a QTE.
+var airborne_time := 0.0
 @onready var camera: Camera3D = $Camera3D
 @onready var flashlight: SpotLight3D = $Camera3D/Flashlight
 
@@ -77,7 +104,8 @@ func _ready() -> void:
 	add_child(combat)
 
 func selected_item() -> String:
-	return inventory[selected_slot]
+	# inventory[-1] would quietly return the last slot.
+	return "" if selected_slot == EMPTY_HANDS else inventory[selected_slot]
 
 func add_item(kind: String) -> bool:
 	if not ITEM_NAMES.has(kind):
@@ -91,7 +119,7 @@ func add_item(kind: String) -> bool:
 	return true
 
 func select_slot(slot: int) -> void:
-	if slot < 0 or slot >= BAG_SIZE:
+	if slot < EMPTY_HANDS or slot >= BAG_SIZE:
 		return
 	if slot != selected_slot:
 		cancel_chalk_charge()
@@ -99,6 +127,15 @@ func select_slot(slot: int) -> void:
 		saved_flashlight = false
 		crank_on = false
 	selected_slot = slot
+
+# Number keys: pick a slot, or press the held slot's number again to put the
+# item away. Only the keys toggle; select_slot() itself never puts things away,
+# so F on an already-held torch still switches it on.
+func press_slot(slot: int) -> void:
+	if slot == selected_slot and not selected_item().is_empty():
+		select_slot(EMPTY_HANDS)
+	else:
+		select_slot(slot)
 
 func select_item(kind: String) -> bool:
 	var slot := inventory.find(kind)
@@ -207,6 +244,16 @@ func drop_selected_item() -> bool:
 	get_parent().soundscape.cue("paper", -24)
 	return true
 
+# Things E picks up into the hand, as opposed to doors, hiding spots or people:
+# only these play the grab.
+func is_pickup(target: Node3D) -> bool:
+	var script: Script = target.get_script()
+	if script == preload("res://scripts/survival_item.gd"):
+		return target.kind != "gate"
+	if script == preload("res://scripts/night_story_interactable.gd"):
+		return target.kind != "lan"
+	return script in [preload("res://scripts/master_key.gd"), preload("res://scripts/soul_fragment.gd")]
+
 func get_interaction_target() -> Node3D:
 	if get_parent().get("progression") != null and get_parent().progression.controls_player():
 		return null
@@ -257,9 +304,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = clampf(camera.rotation.x - event.relative.y * LOOK_SENSITIVITY, -1.35, 1.35)
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and can_use_item():
 		if event.button_index == MOUSE_BUTTON_LEFT:
-			use_selected_item()
+			if not held_visual.fire_finger_gun():
+				use_selected_item()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			pump_crank()
+			if selected_item().is_empty() and not is_hidden():
+				held_visual.push_both_hands()
+			else:
+				pump_crank()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			cycle_item(-1)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
@@ -269,8 +320,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			cancel_chalk_charge()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 		if can_use_item() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			if event.keycode >= KEY_1 and event.keycode <= KEY_6:
-				select_slot(event.keycode - KEY_1)
+			if event.keycode == KEY_1 and event.ctrl_pressed and not is_hidden():
+				held_visual.toggle_finger_gun()
+			elif event.keycode >= KEY_1 and event.keycode <= KEY_6:
+				press_slot(event.keycode - KEY_1)
 			if event.keycode == KEY_F and not is_hidden():
 				if select_item("torch") or select_item("crank"):
 					use_selected_item()
@@ -287,7 +340,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			var target := get_interaction_target()
 			if target != null:
-				target.interact(self)
+				var pickup := is_pickup(target)
+				if target.interact(self) and pickup:
+					held_visual.grab_with_right_hand()
 
 func _physics_process(delta: float) -> void:
 	tick_chalk_charge(delta)
@@ -296,6 +351,9 @@ func _physics_process(delta: float) -> void:
 		return
 	invulnerable_time = maxf(0.0, invulnerable_time - delta)
 	if get_parent().progression != null and get_parent().progression.controls_player():
+		# Scripted runs drive the camera and expect a standing capsule.
+		if crouching:
+			set_crouching(false, true)
 		get_parent().progression.tick_player(delta)
 		return
 	if seized:
@@ -320,33 +378,71 @@ func _physics_process(delta: float) -> void:
 		float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 	var moving := direction.length() > 0.0
 	var quiet := Input.is_physical_key_pressed(KEY_CTRL)
+	var wants_crouch := Input.is_physical_key_pressed(KEY_C)
+	if wants_crouch != crouching and is_on_floor():
+		set_crouching(wants_crouch)
 	if stamina <= 1:
 		sprint_exhausted = true
 	if stamina > 22:
 		sprint_exhausted = false
-	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not sprint_exhausted
+	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not crouching and not sprint_exhausted
 	stamina = clampf(stamina + (-23.0 * combat.sprint_multiplier() * stamina_care if running else 15.0 * (1 - fear * 0.005)) * delta, 0.0, MAX_STAMINA)
 	var target := transform.basis * Vector3(direction.x, 0, direction.y).normalized()
-	var speed := 1.35 if quiet else (RUN_SPEED if running else WALK_SPEED)
+	var speed := CROUCH_SPEED if crouching else (1.35 if quiet else (RUN_SPEED if running else WALK_SPEED))
 	speed *= test_speed_multiplier()
 	velocity.x = move_toward(velocity.x, target.x * speed, delta * 18.0)
 	velocity.z = move_toward(velocity.z, target.z * speed, delta * 18.0)
 	if not is_on_floor():
-		velocity.y -= 18.0 * delta
+		velocity.y -= GRAVITY * delta
 	else:
 		velocity.y = 0.0
+	var jump_pressed := Input.is_physical_key_pressed(KEY_SPACE)
+	if jump_pressed and not jump_held and is_on_floor() and not crouching and stamina >= JUMP_STAMINA:
+		velocity.y = JUMP_VELOCITY
+		stamina -= JUMP_STAMINA
+	jump_held = jump_pressed
 	move_and_slide()
+	if is_on_floor():
+		# A real landing (not a stair step) is heard like a short sprint.
+		if airborne_time > 0.2:
+			get_parent().emit_noise(global_position, LANDING_NOISE, "steps")
+			get_parent().soundscape.at("footstep", global_position, -20)
+		airborne_time = 0.0
+	else:
+		airborne_time += delta
 	noise_clock -= delta
 	if moving and noise_clock <= 0:
 		noise_clock = 0.28 if running else 0.5
-		get_parent().emit_noise(global_position, movement_noise(running, quiet), "steps")
+		get_parent().emit_noise(global_position, movement_noise(running, quiet or crouching), "steps")
 		if is_on_floor():
-			get_parent().soundscape.at("footstep", global_position, -30 if quiet else (-18 if running else -25))
+			get_parent().soundscape.at("footstep", global_position, -30 if quiet or crouching else (-18 if running else -25))
 	step_time += delta * (10.0 if running else 6.0) if moving else 0.0
-	camera.position.y = 1.62 + sin(step_time) * (0.035 if moving else 0.0)
+	crouch_blend = move_toward(crouch_blend, 1.0 if crouching else 0.0, delta * 6.0)
+	# Follow actual ground speed so the bob fades in and out instead of snapping,
+	# and stops in the air or when pressed against a wall.
+	var bob_target := clampf(Vector2(velocity.x, velocity.z).length() / RUN_SPEED, 0.0, 1.0) if is_on_floor() else 0.0
+	bob_amount = move_toward(bob_amount, bob_target, delta * 4.0)
+	camera.position.y = lerpf(STAND_EYE, CROUCH_EYE, crouch_blend) - absf(sin(step_time)) * BOB_HEIGHT * bob_amount
 	startle = maxf(0, startle - delta * 1.7)
-	camera.position.x = sin(startle * 51) * startle * 0.015
+	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount
+	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount
 	camera.fov = lerpf(camera.fov, (79.0 if running else 73.0) + startle * 4 + (3.0 if combat.adrenaline_remaining > 0 else 0.0), delta * 5.0)
+
+# Crouch or stand. Standing up needs headroom unless `force` (scripted moves).
+func set_crouching(value: bool, force := false) -> bool:
+	if not value and not force and not can_fit(global_position, STAND_HEIGHT):
+		return false
+	crouching = value
+	var height := CROUCH_HEIGHT if value else STAND_HEIGHT
+	$Collision.shape.height = height
+	$Collision.position.y = height * 0.5 + 0.025
+	if force:
+		crouch_blend = 1.0 if value else 0.0
+	return true
+
+# Where a ghost looks to see the player: the chest, lower while crouched.
+func sight_point() -> Vector3:
+	return global_position + Vector3.UP * (CROUCH_SIGHT if crouching else STAND_SIGHT)
 
 func is_hidden() -> bool:
 	return is_instance_valid(hidden_spot)
@@ -456,8 +552,10 @@ func reset_survival() -> void:
 	camera.position = Vector3(0, 1.62, 0)
 	camera.fov = 73
 	startle = 0
-	$Collision.shape.height = 1.75
-	$Collision.position.y = 0.9
+	set_crouching(false, true)
+	jump_held = false
+	airborne_time = 0.0
+	bob_amount = 0.0
 	velocity = Vector3.ZERO
 	recover()
 	stamina = MAX_STAMINA
@@ -494,6 +592,10 @@ func can_fit(feet: Vector3, height := 1.75) -> bool:
 func begin_hide(spot: Node3D) -> void:
 	cancel_chalk_charge()
 	hidden_spot = spot
+	# The spot sets its own capsule and eye height; leave the hiding place standing.
+	crouching = false
+	crouch_blend = 0.0
+	bob_amount = 0.0
 	saved_flashlight = flashlight.visible
 	flashlight.hide()
 	global_position = spot.hide_position()
