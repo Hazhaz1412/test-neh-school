@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 # Turns the plan into a street: asphalt, tube houses, wires, river and salt fields.
 const Batch := preload("res://scripts/town/mesh_batch.gd")

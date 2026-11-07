@@ -22,10 +22,6 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 GameShell="*res://scripts/game_shell.gd"
 
-[gui]
-
-theme/custom="res://assets/fonts/night_theme.tres"
-
 [display]
 
 window/size/viewport_width=1280
@@ -37,6 +33,10 @@ window/stretch/mode="canvas_items"
 [dotnet]
 
 project/assembly_name="NEH School • Đêm 01"
+
+[gui]
+
+theme/custom="res://assets/fonts/night_theme.tres"
 
 [rendering]
 

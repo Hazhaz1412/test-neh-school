@@ -28,7 +28,7 @@ var click_sound: AudioStreamPlayer
 func _ready() -> void:
 	sky = preload("res://scripts/town/town_sky.gd").new()
 	add_child(sky)
-	plan = Plan.new()
+	plan = Plan.new($Layout.definitions())
 	builder = Builder.new()
 	builder.build(self, plan)
 	var layer := CanvasLayer.new()

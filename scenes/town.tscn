@@ -1,6 +1,315 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/town/town_world.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/town/town_layout.gd" id="4_layout"]
+[ext_resource type="Script" path="res://scripts/town/town_road.gd" id="2_ms2es"]
+[ext_resource type="Script" path="res://scripts/town/town_place.gd" id="3_eruj1"]
 
-[node name="Town" type="Node3D"]
+[sub_resource type="Curve3D" id="Curve3D_1jyyf"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -282, 0, 8, 0, 0, 0, 0, 0, 0, -200, 0, -2, 0, 0, 0, 0, 0, 0, -120, 0, 6, 0, 0, 0, 0, 0, 0, -40, 0, -2, 0, 0, 0, 0, 0, 0, 30, 0, 2, 0, 0, 0, 0, 0, 0, 70, 0, -2),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0)
+}
+point_count = 6
+
+[sub_resource type="Curve3D" id="Curve3D_t6cq8"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 70, 0, -2, 0, 0, 0, 0, 0, 0, 100, 0, -2, 0, 0, 0, 0, 0, 0, 130, 0, -2),
+"tilts": PackedFloat32Array(0, 0, 0)
+}
+point_count = 3
+
+[sub_resource type="Curve3D" id="Curve3D_cq4yp"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 130, 0, -2, 0, 0, 0, 0, 0, 0, 170, 0, 6, 0, 0, 0, 0, 0, 0, 214, 0, 24, 0, 0, 0, 0, 0, 0, 262, 0, 26),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_yn4qk"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -86, 0, -156, 0, 0, 0, 0, 0, 0, -78, 0, -60, 0, 0, 0, 0, 0, 0, -82, 0, 4, 0, 0, 0, 0, 0, 0, -90, 0, 70, 0, 0, 0, 0, 0, 0, -80, 0, 156),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_v3ani"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 58, 0, -156, 0, 0, 0, 0, 0, 0, 66, 0, -80, 0, 0, 0, 0, 0, 0, 62, 0, -2, 0, 0, 0, 0, 0, 0, 68, 0, 80, 0, 0, 0, 0, 0, 0, 58, 0, 156),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_5q1rr"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -226, 0, -92, 0, 0, 0, 0, 0, 0, -150, 0, -98, 0, 0, 0, 0, 0, 0, -79, 0, -92, 0, 0, 0, 0, 0, 0, 0, 0, -102, 0, 0, 0, 0, 0, 0, 66, 0, -94),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_po04c"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -232, 0, 86, 0, 0, 0, 0, 0, 0, -150, 0, 92, 0, 0, 0, 0, 0, 0, -90, 0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 94, 0, 0, 0, 0, 0, 0, 67, 0, 88),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_u4arb"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -236, 0, -156, 0, 0, 0, 0, 0, 0, -226, 0, -92, 0, 0, 0, 0, 0, 0, -204, 0, -2, 0, 0, 0, 0, 0, 0, -232, 0, 86, 0, 0, 0, 0, 0, 0, -224, 0, 156),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+}
+point_count = 5
+
+[sub_resource type="Curve3D" id="Curve3D_icc4n"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 22, 0, 1, 0, 0, 0, 0, 0, 0, 24, 0, -36, 0, 0, 0, 0, 0, 0, 8, 0, -58, 0, 0, 0, 0, 0, 0, 12, 0, -100),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_b0eaf"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -30, 0, -2, 0, 0, 0, 0, 0, 0, -33, 0, 40, 0, 0, 0, 0, 0, 0, -18, 0, 60, 0, 0, 0, 0, 0, 0, -20, 0, 92),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_uutfq"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -19, 0, 60, 0, 0, 0, 0, 0, 0, 20, 0, 56, 0, 0, 0, 0, 0, 0, 30, 0, 40, 0, 0, 0, 0, 0, 0, 64, 0, 40),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_b00ts"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -79, 0, -46, 0, 0, 0, 0, 0, 0, -40, 0, -50, 0, 0, 0, 0, 0, 0, -24, 0, -38, 0, 0, 0, 0, 0, 0, 23, 0, -36),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_i0mj0"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -150, 0, -98, 0, 0, 0, 0, 0, 0, -152, 0, -52, 0, 0, 0, 0, 0, 0, -138, 0, -30, 0, 0, 0, 0, 0, 0, -142, 0, 4),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_ie20d"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -150, 0, 92, 0, 0, 0, 0, 0, 0, -146, 0, 44, 0, 0, 0, 0, 0, 0, -132, 0, 24, 0, 0, 0, 0, 0, 0, -136, 0, 5),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[node name="Town" type="Node3D" unique_id=749341969]
 script = ExtResource("1")
+
+[node name="Layout" type="Node3D" parent="." unique_id=441384135]
+script = ExtResource("4_layout")
+
+[node name="Roads" type="Node3D" parent="Layout" unique_id=1373862306]
+
+[node name="Đường Cổ Đằng" type="Path3D" parent="Layout/Roads" unique_id=1984040513]
+curve = SubResource("Curve3D_1jyyf")
+script = ExtResource("2_ms2es")
+kind = "main"
+width = 11.0
+walk = 4.0
+
+[node name="Cầu Mây" type="Path3D" parent="Layout/Roads" unique_id=1551453129]
+curve = SubResource("Curve3D_t6cq8")
+script = ExtResource("2_ms2es")
+kind = "bridge"
+width = 9.0
+walk = 1.5
+
+[node name="Đường Đồng Muối" type="Path3D" parent="Layout/Roads" unique_id=592025370]
+curve = SubResource("Curve3D_cq4yp")
+script = ExtResource("2_ms2es")
+kind = "country"
+width = 7.5
+walk = 0.0
+
+[node name="Phố Chợ" type="Path3D" parent="Layout/Roads" unique_id=80596171]
+curve = SubResource("Curve3D_yn4qk")
+script = ExtResource("2_ms2es")
+width = 8.0
+walk = 3.0
+
+[node name="Đường Bến Trầu" type="Path3D" parent="Layout/Roads" unique_id=1120382185]
+curve = SubResource("Curve3D_v3ani")
+script = ExtResource("2_ms2es")
+walk = 3.0
+
+[node name="Phố Lò Than" type="Path3D" parent="Layout/Roads" unique_id=891884879]
+curve = SubResource("Curve3D_5q1rr")
+script = ExtResource("2_ms2es")
+width = 6.5
+
+[node name="Phố Hàng Cau" type="Path3D" parent="Layout/Roads" unique_id=1297690441]
+curve = SubResource("Curve3D_po04c")
+script = ExtResource("2_ms2es")
+width = 6.5
+
+[node name="Đường Gò Sậy" type="Path3D" parent="Layout/Roads" unique_id=146855012]
+curve = SubResource("Curve3D_u4arb")
+script = ExtResource("2_ms2es")
+walk = 2.5
+
+[node name="Hẻm 12" type="Path3D" parent="Layout/Roads" unique_id=357691335]
+curve = SubResource("Curve3D_icc4n")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.2
+walk = 0.0
+
+[node name="Hẻm 27" type="Path3D" parent="Layout/Roads" unique_id=1494768567]
+curve = SubResource("Curve3D_b0eaf")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.2
+walk = 0.0
+
+[node name="Hẻm 31" type="Path3D" parent="Layout/Roads" unique_id=1022968384]
+curve = SubResource("Curve3D_uutfq")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.0
+walk = 0.0
+
+[node name="Hẻm 8" type="Path3D" parent="Layout/Roads" unique_id=1612835828]
+curve = SubResource("Curve3D_b00ts")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.0
+walk = 0.0
+
+[node name="Hẻm 5" type="Path3D" parent="Layout/Roads" unique_id=88262908]
+curve = SubResource("Curve3D_i0mj0")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.0
+walk = 0.0
+
+[node name="Hẻm 40" type="Path3D" parent="Layout/Roads" unique_id=675505292]
+curve = SubResource("Curve3D_ie20d")
+script = ExtResource("2_ms2es")
+kind = "alley"
+width = 3.0
+walk = 0.0
+
+[node name="Places" type="Node3D" parent="Layout" unique_id=1601432917]
+
+[node name="Nhà Peter" type="Marker3D" parent="Layout/Places" unique_id=1509120737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 66)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "home"
+label = "Nhà Peter"
+road = "Hẻm 31"
+width = 4.2
+depth = 11.0
+floors = 3
+style = "home"
+tint = Color(0.7, 0.82, 0.72, 1)
+
+[node name="Tạp Hóa Bà Sáu" type="Marker3D" parent="Layout/Places" unique_id=408036004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 26)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "shop"
+label = "Tạp Hóa Bà Sáu"
+road = "Hẻm 27"
+tint = Color(0.94, 0.86, 0.62, 1)
+use_sign = true
+
+[node name="Bưu Điện Cổ Đằng" type="Marker3D" parent="Layout/Places" unique_id=339172857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -160, 0, -18)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "post"
+label = "Bưu Điện Cổ Đằng"
+road = "Đường Cổ Đằng"
+width = 16.0
+depth = 14.0
+style = "civic"
+tint = Color(0.93, 0.78, 0.4, 1)
+use_sign = true
+sign_color = Color(0.1, 0.28, 0.55, 1)
+
+[node name="Phở Tâm Trạng" type="Marker3D" parent="Layout/Places" unique_id=1768324139]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 34)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "pho"
+label = "Phở Tâm Trạng"
+road = "Phố Chợ"
+width = 7.0
+depth = 12.0
+floors = 3
+tint = Color(0.92, 0.92, 0.86, 1)
+use_sign = true
+sign_color = Color(0.82, 0.32, 0.08, 1)
+
+[node name="Cà Phê Bến Sông" type="Marker3D" parent="Layout/Places" unique_id=146688261]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, -46)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "cafe"
+label = "Cà Phê Bến Sông"
+road = "Đường Bến Trầu"
+width = 8.0
+depth = 11.0
+tint = Color(0.74, 0.86, 0.9, 1)
+use_sign = true
+sign_color = Color(0.12, 0.34, 0.3, 1)
+
+[node name="Trà Đá Bác Lực" type="Marker3D" parent="Layout/Places" unique_id=70884295]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 10)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "stall"
+label = "Trà Đá Bác Lực"
+road = "Đường Đồng Muối"
+depth = 4.5
+floors = 1
+style = "stall"
+
+[node name="curio" type="Marker3D" parent="Layout/Places" unique_id=1404448713]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -127, 0, -28)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "curio"
+road = "Hẻm 5"
+depth = 9.0
+style = "curio"
+use_tint = false
+hide_on_map = true
+
+[node name="Góc Cờ" type="Marker3D" parent="Layout/Places" unique_id=1874735582]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 26)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "chess"
+label = "Góc Cờ"
+road = "Đường Bến Trầu"
+depth = 4.5
+floors = 1
+style = "stall"
+
+[node name="Chợ Bến Trầu" type="Marker3D" parent="Layout/Places" unique_id=1264611545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, 0, 48)
+gizmo_extents = 4.0
+script = ExtResource("3_eruj1")
+id = "market"
+label = "Chợ Bến Trầu"
+road = "Phố Chợ"
+width = 44.0
+depth = 30.0
+floors = 1
+style = "market"
+tint = Color(0.82, 0.8, 0.72, 1)
+
+[node name="Decor" type="Node3D" parent="." unique_id=786468952]

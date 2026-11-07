@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 # Collects geometry by map chunk and material, so a whole street is a handful of draw calls.
 const CHUNK := 72.0

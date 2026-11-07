@@ -53,7 +53,9 @@ Người dùng yêu cầu không bắt đi bộ nhàm chán nhưng cũng không 
 
 | File | Việc |
 |---|---|
-| `scripts/town/town_plan.gd` | Bản đồ dạng dữ liệu: đường, địa điểm, lô nhà, độ cao mặt đất |
+| `scripts/town/town_layout.gd` | Đọc đường, địa điểm từ scene, dựng bản xem trước trong editor |
+| `scripts/town/town_road.gd`, `town_place.gd` | Node một con đường, một địa điểm |
+| `scripts/town/town_plan.gd` | Từ dữ liệu trong scene tính ra đường, lô nhà, độ cao mặt đất |
 | `scripts/town/town_builder.gd` | Sinh mesh và collider từ bản đồ |
 | `scripts/town/mesh_batch.gd` | Gộp hình theo ô 72 m và vật liệu để giảm draw call |
 | `scripts/town/town_player.gd` | Đi bộ, lái xe, camera |
@@ -64,7 +66,7 @@ Người dùng yêu cầu không bắt đi bộ nhàm chán nhưng cũng không 
 | `scripts/town/town_sky.gd` | Bốn buổi trong ngày |
 | `scripts/town/town_world.gd` | Ghép tất cả |
 
-Thêm đường hay địa điểm: sửa `ROADS` và `PLACES` trong `town_plan.gd`, mọi thứ tự sinh lại, gồm cả bản đồ M. Giao thông viết theo tên đường trong `LOOPS` của `town_traffic.gd`.
+Sửa map ngay trong editor: mở `scenes/town.tscn`, kéo điểm của đường trong `Layout/Roads` hoặc kéo marker trong `Layout/Places`, map tự dựng lại sau khi thả tay. Chọn node `Layout` để có nút Dựng lại map, Thêm đường, Thêm địa điểm. Vật trang trí đặt tay thì thả vào node `Decor`. Mọi thứ tự sinh lại, gồm cả bản đồ M. Giao thông viết theo tên đường trong `LOOPS` của `town_traffic.gd`.
 
 Độ cao tính bằng công thức, không qua vật lý. Vật lý chỉ lo tường, nên xe không vấp lề đường.
 

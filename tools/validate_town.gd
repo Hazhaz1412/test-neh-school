@@ -23,7 +23,7 @@ func run() -> void:
 		if plan.in_corridor(lot.centre, 0.0):
 			blocked += 1
 	check(blocked == 0, "no house sits on a road (%d)" % blocked)
-	for place in plan.PLACES:
+	for place in plan.places:
 		check(not plan.place_lot(place.id).is_empty(), "place exists: " + place.id)
 	var player: CharacterBody3D = town.player
 	check(player.can_mount(), "scooter is within reach at the door")

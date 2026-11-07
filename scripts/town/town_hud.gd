@@ -177,7 +177,7 @@ func _draw_map() -> void:
 			continue
 		var middle: Vector2 = road.path[road.path.size() / 6]
 		draw_string(font, to_map(middle, centre) + Vector2(6, -9), road.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.26, 0.24, 0.20))
-	for place in plan.PLACES:
+	for place in plan.places:
 		if place.get("hidden", false):
 			continue
 		var at: Vector2 = plan.place_lot(place.id).front

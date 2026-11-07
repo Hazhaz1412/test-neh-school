@@ -171,7 +171,7 @@ func run() -> void:
 		if entry.label == "Vào tiệm":
 			door = entry
 	check(not door.is_empty(), "the shop can be entered")
-	check(not town.plan.PLACES.filter(func(p): return p.id == "curio")[0].is_empty(), "the shop is on the plan")
+	check(not town.plan.places.filter(func(p): return p.id == "curio")[0].is_empty(), "the shop is on the plan")
 	var feet: Vector3 = door.position + Vector3.UP * 0.2
 	var near: Dictionary = town.plan.nearest(Vector2(feet.x, feet.z))
 	var hit: Dictionary = town.get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(town.plan.roads[near.road].path[near.at].x, 1, town.plan.roads[near.road].path[near.at].y), feet + Vector3.UP * 0.8))

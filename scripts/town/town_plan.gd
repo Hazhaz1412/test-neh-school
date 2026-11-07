@@ -1,5 +1,7 @@
+@tool
 extends RefCounted
-# The neighbourhood as data; meshes, traffic and the map screen are all generated from this.
+# The neighbourhood as data, read from the Layout node of town.tscn; meshes, traffic and the map
+# screen are all generated from this.
 # Metres, X east, Z south. West of the river is the dense quarter, east is the salt fields.
 const STEP := 2.0
 const CELL := 12.0
@@ -9,45 +11,19 @@ const BRIDGE_RISE := 3.0
 const FIELD_LEVEL := -0.22
 const KERB := 0.14
 const FLOOR := 3.4
-const ROADS := [
-	{"name": "Đường Cổ Đằng", "kind": "main", "width": 11.0, "walk": 4.0, "points": [Vector2(-282, 8), Vector2(-200, -2), Vector2(-120, 6), Vector2(-40, -2), Vector2(30, 2), Vector2(70, -2)]},
-	{"name": "Cầu Mây", "kind": "bridge", "width": 9.0, "walk": 1.5, "points": [Vector2(70, -2), Vector2(100, -2), Vector2(130, -2)]},
-	{"name": "Đường Đồng Muối", "kind": "country", "width": 7.5, "walk": 0.0, "points": [Vector2(130, -2), Vector2(170, 6), Vector2(214, 24), Vector2(262, 26)]},
-	{"name": "Phố Chợ", "kind": "street", "width": 8.0, "walk": 3.0, "points": [Vector2(-86, -156), Vector2(-78, -60), Vector2(-82, 4), Vector2(-90, 70), Vector2(-80, 156)]},
-	{"name": "Đường Bến Trầu", "kind": "street", "width": 7.0, "walk": 3.0, "points": [Vector2(58, -156), Vector2(66, -80), Vector2(62, -2), Vector2(68, 80), Vector2(58, 156)]},
-	{"name": "Phố Lò Than", "kind": "street", "width": 6.5, "walk": 2.0, "points": [Vector2(-226, -92), Vector2(-150, -98), Vector2(-79, -92), Vector2(0, -102), Vector2(66, -94)]},
-	{"name": "Phố Hàng Cau", "kind": "street", "width": 6.5, "walk": 2.0, "points": [Vector2(-232, 86), Vector2(-150, 92), Vector2(-90, 86), Vector2(0, 94), Vector2(67, 88)]},
-	{"name": "Đường Gò Sậy", "kind": "street", "width": 7.0, "walk": 2.5, "points": [Vector2(-236, -156), Vector2(-226, -92), Vector2(-204, -2), Vector2(-232, 86), Vector2(-224, 156)]},
-	{"name": "Hẻm 12", "kind": "alley", "width": 3.2, "walk": 0.0, "points": [Vector2(22, 1), Vector2(24, -36), Vector2(8, -58), Vector2(12, -100)]},
-	{"name": "Hẻm 27", "kind": "alley", "width": 3.2, "walk": 0.0, "points": [Vector2(-30, -2), Vector2(-33, 40), Vector2(-18, 60), Vector2(-20, 92)]},
-	{"name": "Hẻm 31", "kind": "alley", "width": 3.0, "walk": 0.0, "points": [Vector2(-19, 60), Vector2(20, 56), Vector2(30, 40), Vector2(64, 40)]},
-	{"name": "Hẻm 8", "kind": "alley", "width": 3.0, "walk": 0.0, "points": [Vector2(-79, -46), Vector2(-40, -50), Vector2(-24, -38), Vector2(23, -36)]},
-	{"name": "Hẻm 5", "kind": "alley", "width": 3.0, "walk": 0.0, "points": [Vector2(-150, -98), Vector2(-152, -52), Vector2(-138, -30), Vector2(-142, 4)]},
-	{"name": "Hẻm 40", "kind": "alley", "width": 3.0, "walk": 0.0, "points": [Vector2(-150, 92), Vector2(-146, 44), Vector2(-132, 24), Vector2(-136, 5)]},
-]
-# Peter's day: the places of the map, ordered from his door outwards.
-const PLACES := [
-	{"id": "home", "label": "Nhà Peter", "road": "Hẻm 31", "on": Vector2(14, 66), "width": 4.2, "depth": 11.0, "floors": 3, "style": "home", "tint": Color(0.70, 0.82, 0.72)},
-	{"id": "shop", "label": "Tạp Hóa Bà Sáu", "road": "Hẻm 27", "on": Vector2(-40, 26), "width": 6.0, "depth": 10.0, "floors": 2, "style": "open", "tint": Color(0.94, 0.86, 0.62), "sign": Color(0.73, 0.14, 0.12)},
-	{"id": "post", "label": "Bưu Điện Cổ Đằng", "road": "Đường Cổ Đằng", "on": Vector2(-160, -18), "width": 16.0, "depth": 14.0, "floors": 2, "style": "civic", "tint": Color(0.93, 0.78, 0.40), "sign": Color(0.10, 0.28, 0.55)},
-	{"id": "pho", "label": "Phở Tâm Trạng", "road": "Phố Chợ", "on": Vector2(-70, 34), "width": 7.0, "depth": 12.0, "floors": 3, "style": "open", "tint": Color(0.92, 0.92, 0.86), "sign": Color(0.82, 0.32, 0.08)},
-	{"id": "cafe", "label": "Cà Phê Bến Sông", "road": "Đường Bến Trầu", "on": Vector2(50, -46), "width": 8.0, "depth": 11.0, "floors": 2, "style": "open", "tint": Color(0.74, 0.86, 0.90), "sign": Color(0.12, 0.34, 0.30)},
-	{"id": "stall", "label": "Trà Đá Bác Lực", "road": "Đường Đồng Muối", "on": Vector2(200, 10), "width": 6.0, "depth": 4.5, "floors": 1, "style": "stall", "tint": Color(0.8, 0.8, 0.7)},
-	{"id": "curio", "label": "", "road": "Hẻm 5", "on": Vector2(-127, -28), "width": 6.0, "depth": 9.0, "floors": 2, "style": "curio", "hidden": true},
-	{"id": "chess", "label": "Góc Cờ", "road": "Đường Bến Trầu", "on": Vector2(52, 26), "width": 6.0, "depth": 4.5, "floors": 1, "style": "stall", "tint": Color(0.8, 0.8, 0.7)},
-	{"id": "market", "label": "Chợ Bến Trầu", "road": "Phố Chợ", "on": Vector2(-120, 48), "width": 44.0, "depth": 30.0, "floors": 1, "style": "market", "tint": Color(0.82, 0.80, 0.72)},
-]
 const SHOPS := ["Cơm Bình Dân", "Bún Riêu Cô Ba", "Sửa Xe Hoàng", "Tiệm Tóc Thu Hà", "Điện Thoại Minh Phát", "Photocopy Hùng", "Thuốc Tây Đức Tâm", "Bánh Mì Bảy Hổ", "Vá Xe 24h", "Hủ Tiếu Năm Lửa", "Nhà Sách Tuổi Xanh", "Trà Đá Chị Tư", "Gas Phú Lộc", "Áo Quần Thúy", "Ốc Cô Hai", "Sim Thẻ Nam Anh", "Karaoke Hồng Ân", "Giặt Ủi Sao Mai", "Nha Khoa Nụ Cười", "Vàng Bạc Kim Thành", "Bia Hơi Bạn Hiền", "Khóa Thợ Lành", "Kính Mắt Sáng", "Đồ Khô Hải Lâm", "Nước Mía Sầu Riêng", "Tiệm May Thanh", "Xôi Bà Lành", "Sơn Nhà Đại Lợi", "Cháo Lòng Cổ Đằng", "Chè Bến Trầu"]
 var roads: Array = []
+var places: Array = []
 var lots: Array = []
 var grid := {}
 var lot_grid := {}
 var rng := RandomNumberGenerator.new()
 
-func _init() -> void:
+func _init(layout: Dictionary) -> void:
 	rng.seed = 7171
-	for index in range(ROADS.size()):
-		roads.append(_sample(ROADS[index], index))
+	places = layout.places
+	for index in range(layout.roads.size()):
+		roads.append(_sample(layout.roads[index], index))
 	_place_lots()
 
 func road_named(title: String) -> Dictionary:
@@ -146,8 +122,8 @@ func river_west(z: float) -> float:
 	return best + 6.5
 
 func _place_lots() -> void:
-	for place in PLACES:
-		var road := road_named(place.road)
+	for place in places:
+		var road: Dictionary = road_named(place.road) if place.road != "" else roads[nearest_road(place.on)]
 		var index := _closest_index(road, place.on)
 		var side := signf((place.on - road.path[index]).dot(_normal(road, index)))
 		var fit := _lot_on(road, index, side, place.width, place.depth)
@@ -158,6 +134,16 @@ func _place_lots() -> void:
 			continue
 		for side in [-1.0, 1.0]:
 			_fill_side(road, side)
+
+func nearest_road(p: Vector2) -> int:
+	var best := 0
+	var gap := INF
+	for road in roads:
+		var here: float = road.path[_closest_index(road, p)].distance_squared_to(p)
+		if here < gap:
+			gap = here
+			best = road.index
+	return best
 
 func _closest_index(road: Dictionary, p: Vector2) -> int:
 	var best := 0
