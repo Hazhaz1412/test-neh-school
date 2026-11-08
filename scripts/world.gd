@@ -158,6 +158,14 @@ func _ready() -> void:
 	arg_bridge.name = "ArgBridge"
 	arg_bridge.world = self
 	add_child(arg_bridge)
+	# Added before compact_hud so the inventory and gauges draw on top of the frame.
+	var viewfinder := preload("res://scripts/camera_viewfinder.gd").new()
+	viewfinder.name = "CameraViewfinder"
+	viewfinder.world = self
+	viewfinder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	viewfinder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	viewfinder.hide()
+	get_node("HUD").get_child(0).add_child(viewfinder)
 	var compact := preload("res://scripts/compact_hud.gd").new()
 	compact.world = self
 	compact.mouse_filter = Control.MOUSE_FILTER_IGNORE
