@@ -172,7 +172,7 @@ func begin_midnight() -> void:
 	# The corridor owns its pursuers; campus enemies resume only after Lan.
 	world.set_spirit_world(false, true)
 	# The prologue runs into the service tunnels of the real school; only later nights use the realm.
-	if world.progression.briefing_complete:
+	if world.progression.briefing_complete and not world.guard_night:
 		world.set_spirit_world(true)
 	opening.remove_companions()
 	if not world.progression.briefing_complete:
@@ -251,13 +251,13 @@ func _physics_process(delta: float) -> void:
 	bell.stream_paused = not world.simulation_active()
 	midnight_bell.stream_paused = not world.simulation_active()
 	breathing_audio.stream_paused = not world.simulation_active()
-	if not world.spirit_enabled:
+	if not world.night_hunt():
 		breathing_audio.stop()
 	if not world.simulation_active():
 		return
 	warning_time = maxf(0, warning_time - delta)
 	advance_clock(delta)
-	if finished or not world.spirit_enabled or active and phase != Phase.NIGHT:
+	if finished or not world.night_hunt() or active and phase != Phase.NIGHT:
 		return
 	if active and not world.progression.tutorial_active():
 		hunt_remaining = maxf(0, hunt_remaining - delta)

@@ -1,5 +1,7 @@
 # Đêm 1: Ba manh mối và hành lang linh hồn
 
+> **Cập nhật 2026-11-08 (lần 4) · Đêm 1 không còn thế giới linh hồn:** vào đêm 1 qua cổng trường thì trường vẫn như đêm 0 (`world.guard_night`). Phím B bị tắt, không có ma bắt nạt hay cảnh hù. Kẻ săn vẫn là AI của quỷ Ghen Tị (`envy_director.gd` + `envy_demon.gd`), nhưng mặc thân bác bảo vệ (`guard_hunter_model.gd`): model Rocketbox, mũ, đèn pin có ánh sáng thật, tiếng giày CC0, tiếng chìa khóa và còi. Các hệ thống của đêm săn (tiếng ồn, phấn, hoảng loạn, chuông) kiểm tra `world.night_hunt()` thay vì `spirit_enabled`. Sân thượng không còn là chỗ an toàn ở đêm này. Kiểm tra: `tools/validate_night_one.gd`, `tools/validate_envy_smart.gd`; ảnh: `tools/capture_night_one.gd`.
+
 > **Cập nhật 2026-11-08 (lần 3):**
 > - **Hành lang sang khu B:** rộng 6 m, hai bên có trụ tường cách nhau 7 m và hai tủ hồ sơ (`CONNECTOR_PIERS` trong `tools/build_map.gd`), nên nép sau trụ là bác ngoái lại cũng không thấy. Z / X để nghiêng đầu lấp ló (`player.gd`, `_tick_lean`); lúc nghiêng, điểm bác cần thấy là cái đầu.
 > - **Navmesh:** bán kính tác nhân giảm từ 0,5 xuống 0,25 m. Godot làm tròn bán kính lên theo ô 0,25 m, nên 0,5 m bịt kín mọi cửa lớp rộng 1,3 m.

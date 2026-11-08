@@ -56,6 +56,8 @@ func run() -> void:
 	root.add_child(school)
 	current_scene = school
 	for i in range(20): await physics_frame
+	# The night navmesh is swapped in at load; queries before its first sync come back empty.
+	await until(func(): return NavigationServer3D.map_get_iteration_id(school.get_world_3d().navigation_map) > 1, 10.0)
 	school.survival.start_run(false)
 	school.progression.briefing_complete = true
 	school.set_spirit_world(true, true)

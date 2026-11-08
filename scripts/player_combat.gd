@@ -132,7 +132,7 @@ func _fail_qte() -> void:
 func _physics_process(delta: float) -> void:
 	if world.get("survival") == null:
 		return
-	if not world.spirit_enabled or player.health <= 0 or world.survival.finished:
+	if not world.night_hunt() or player.health <= 0 or world.survival.finished:
 		reset()
 		return
 	heartbeat.stream_paused = not world.simulation_active()

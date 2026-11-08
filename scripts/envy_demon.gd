@@ -37,8 +37,9 @@ const LOOK_SECONDS := 1.5
 const STRIKE_REACH := 1.9
 const GRAB_SECONDS := 1.3
 const GRAB_ARMED_SECONDS := 2.6
-const LIFT := 0.75
-const HOLD_REACH := 1.0
+# The guard grabs the student by the collar at his own height, not up to a mouth.
+const LIFT := 0.0
+const HOLD_REACH := 0.75
 const STAGGER_SECONDS := 3.0
 const ADMIRE_SECONDS := 4.0
 const LUNGE_SPEED := 6.5
@@ -46,12 +47,14 @@ const LOW_EYE := 1.3
 const BLIND_SECONDS := 10.0
 const THROW_REACH := 3.5
 const ESCAPE_GRACE := 2.0
-const MOUTH_PITCH := 0.45
+const MOUTH_PITCH := 0.12
 const FORGET_SECONDS := 45.0
-const STRIDE := 1.25
+const STRIDE := 0.78
+const RUN_STRIDE := 1.55
+const EYE := 1.6
 const STOOP := 0.64
 const SHAKE_RANGE := 24.0
-const STEP_LOUD := 7.0
+const STEP_LOUD := 0.0
 const WALLS_DB := 9.0
 const FLOOR_DB := 8.0
 var world: Node3D
@@ -116,13 +119,14 @@ func _ready() -> void:
 	agent.target_desired_distance = 0.8
 	agent.path_height_offset = 0.25
 	add_child(agent)
-	model = preload("res://scripts/envy_demon_model.gd").new()
+	model = preload("res://scripts/guard_hunter_model.gd").new()
 	model.rotation.y = PI
 	add_child(model)
-	step_sound = _voice("res://assets/audio/envy_step.wav", STEP_LOUD, 46.0, 6.0)
-	clink_sound = _voice("res://assets/audio/envy_clink.wav", -10.0, 22.0, 5.0)
+	step_sound = _voice("res://assets/audio/footstep.wav", STEP_LOUD, 46.0, 6.0)
+	step_sound.stream = preload("res://scripts/security_guard.gd").shoe_steps()
+	clink_sound = _voice("res://assets/audio/guard_keys.wav", -12.0, 22.0, 5.0)
 	rattle_sound = _voice("res://assets/audio/envy_rattle.wav", -3.0, 26.0, 6.0)
-	roar_sound = _voice("res://assets/audio/ghost_snarl.wav", 2.0, 45.0, 10.0)
+	roar_sound = _voice("res://assets/audio/guard_whistle.wav", 0.0, 60.0, 12.0)
 	shot_sound = _voice("res://assets/audio/door_bang.wav", 6.0, 40.0, 8.0)
 	var layer := CanvasLayer.new()
 	layer.layer = 41
@@ -212,7 +216,7 @@ func _player_exposed() -> bool:
 	return not player.is_hidden() and not world.is_soul_sanctuary(player.global_position)
 
 func _can_see_player(use_cone := true) -> bool:
-	var eye := global_position + Vector3.UP * 2.2 * model.scale.y
+	var eye := global_position + Vector3.UP * EYE
 	var chest: Vector3 = player.sight_point()
 	var offset := chest - eye
 	var reach := TORCH_SIGHT_RANGE if player.flashlight.visible else SIGHT_RANGE
@@ -248,6 +252,7 @@ func _sense(delta: float) -> void:
 			chase_time = 0.0
 			certain = false
 			roar_sound.play()
+			world.notify("ĐỨNG LẠI! · Bác bảo vệ thấy bạn rồi")
 	elif not certain and _glimpses_hider():
 		notice += 0.15
 		if notice >= NOTICE_SECONDS:
@@ -557,7 +562,7 @@ func _decide() -> void:
 		return
 	player.inventory[player.inventory.find(prize)] = ""
 	stolen.append(prize)
-	world.notify("Nó giật mất %s rồi mải mê ngắm · Chạy đi!" % player.ITEM_NAMES[prize])
+	world.notify("Bác bảo vệ giật mất %s rồi mải xem · Chạy đi!" % player.ITEM_NAMES[prize])
 	_release(0.0)
 	state = State.ADMIRE
 	wait = ADMIRE_SECONDS
@@ -588,7 +593,7 @@ func fire_salt() -> void:
 	player.stamina = player.MAX_STAMINA
 	player.combat.adrenaline_remaining = player.combat.ADRENALINE_SECONDS
 	player.combat.heartbeat.play()
-	world.notify("Nó rú lên và ném bạn đi · Chạy mau!")
+	world.notify("Bác bảo vệ kêu lên rồi buông bạn ra · Chạy mau!")
 	state = State.STAGGER
 	wait = STAGGER_SECONDS
 	_forget()
@@ -657,11 +662,10 @@ func _step(moved: float) -> void:
 	stride_left -= moved
 	if stride_left > 0.0:
 		return
-	stride_left = STRIDE
-	step_sound.pitch_scale = randf_range(0.92, 1.05)
+	stride_left = RUN_STRIDE if Vector2(velocity.x, velocity.z).length() > 4.0 else STRIDE
 	step_sound.volume_db = STEP_LOUD - _muffled()
 	step_sound.play()
-	if randf() < 0.5:
+	if randf() < 0.3:
 		clink_sound.pitch_scale = randf_range(0.9, 1.2)
 		clink_sound.play()
 	shake = (1.0 - clampf(global_position.distance_to(player.global_position) / SHAKE_RANGE, 0.0, 1.0)) * (0.35 if _muffled() > 0.0 else 1.0)
@@ -694,10 +698,6 @@ func _open_doors(delta: float) -> void:
 				door.toggled.emit(true)
 				world.soundscape.at("door", door.global_position, -6)
 
-# At full height it clears the corridor; under a lintel it has to fold itself down.
-func _stoop(delta: float) -> void:
-	var from := global_position + Vector3.UP * 1.9
-	var ray := PhysicsRayQueryParameters3D.create(from, from + Vector3.UP * 1.6 - global_basis.z * 1.1, 1)
-	ray.exclude = [get_rid()]
-	var low: bool = not get_world_3d().direct_space_state.intersect_ray(ray).is_empty()
-	model.scale = Vector3.ONE * lerpf(model.scale.y, STOOP if low else 1.0, 1.0 - exp(-7.0 * delta))
+func _stoop(_delta: float) -> void:
+	# The guard is a man of 1.7 m: door frames never make him fold down.
+	model.scale = Vector3.ONE

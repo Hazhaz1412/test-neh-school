@@ -530,7 +530,7 @@ func cancel_chalk_charge() -> void:
 func begin_chalk_charge(source: String) -> bool:
 	if get_parent().progression != null and get_parent().progression.tutorial_active():
 		return false
-	if chalk_charging or selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().spirit_enabled:
+	if chalk_charging or selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().night_hunt():
 		return false
 	chalk_charging = true
 	chalk_charge_source = source
@@ -540,7 +540,7 @@ func begin_chalk_charge(source: String) -> bool:
 func tick_chalk_charge(delta: float) -> void:
 	if not chalk_charging:
 		return
-	if selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().spirit_enabled:
+	if selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().night_hunt():
 		cancel_chalk_charge()
 		return
 	chalk_charge_time = minf(CHALK_CHARGE_SECONDS, chalk_charge_time + delta)
@@ -559,7 +559,7 @@ func _notification(what: int) -> void:
 func throw_chalk(charge := 0.0) -> bool:
 	if get_parent().progression != null and get_parent().progression.tutorial_active():
 		return false
-	if chalk <= 0 or is_hidden() or not get_parent().spirit_enabled or not can_use_item():
+	if chalk <= 0 or is_hidden() or not get_parent().night_hunt() or not can_use_item():
 		return false
 	var decoy: CharacterBody3D = preload("res://scripts/chalk_decoy.gd").new()
 	decoy.world = get_parent()
