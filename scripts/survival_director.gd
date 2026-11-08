@@ -179,6 +179,10 @@ func begin_midnight() -> void:
 		world.progression.begin_first_chase()
 	midnight_started.emit()
 
+# With An gone from the rooftop there is nobody to free: reaching dawn alive is the night.
+func rescue_needed() -> bool:
+	return world.soul_quest != null and world.soul_quest.soul != null
+
 func mark_soul_rescued() -> bool:
 	if not active or phase != Phase.NIGHT or finished or soul_rescued or world.soul_quest == null or not world.soul_quest.ready_for_rescue():
 		return false
@@ -204,12 +208,13 @@ func _finish_dawn() -> void:
 		world.progression.close()
 	phase = Phase.DAWN
 	finished = true
-	won = soul_rescued and world.player.health > 0
+	won = (soul_rescued or not rescue_needed()) and world.player.health > 0
 	world.set_spirit_world(false, true)
 	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 1.0)
 	world.player.enabled = false
 	world.player.velocity = Vector3.ZERO
-	end_text.text = ("06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if won else "06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu.") + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
+	var survived := "06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if rescue_needed() else "06:00 · HOÀN THÀNH ĐÊM 1\nBạn đã trụ được tới sáng."
+	end_text.text = (survived if won else ("06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu." if rescue_needed() else "06:00 · ĐÊM 1 THẤT BẠI")) + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
 	end_panel.show()
@@ -220,7 +225,7 @@ func _finish_dawn() -> void:
 	dawn_reached.emit(soul_rescued)
 
 func win() -> void:
-	if active and phase == Phase.NIGHT and clock_reached_dawn() and soul_rescued and world.simulation_active():
+	if active and phase == Phase.NIGHT and clock_reached_dawn() and (soul_rescued or not rescue_needed()) and world.simulation_active():
 		_finish_dawn()
 
 func hearing_multiplier() -> float:

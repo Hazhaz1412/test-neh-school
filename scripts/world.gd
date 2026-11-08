@@ -425,7 +425,7 @@ func _update_light_budget() -> void:
 func _begin_corridor() -> void:
 	survival.start_run(false)
 	survival.begin_midnight()
-	set_spirit_world(true, true)
+	set_spirit_world(false, true)
 	progression.begin_first_chase()
 
 func _begin_night_one() -> void:
@@ -443,8 +443,6 @@ func simulation_active() -> bool:
 	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)
 
 func is_soul_sanctuary(feet: Vector3) -> bool:
-	if progression != null and progression.runner.room_hidden and progression.runner.in_refuge(feet):
-		return true
 	# The three wings of A's roof; do not include the open courtyard below.
 	return feet.y >= 11.35 and absf(feet.x) <= 38.5 and feet.z >= -12.5 and feet.z <= 56.2 and (feet.z <= 9.2 or absf(feet.x) >= 21.7)
 

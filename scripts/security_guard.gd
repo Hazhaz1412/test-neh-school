@@ -7,7 +7,11 @@ extends Node3D
 # - hearing: the noise each footstep makes (running loud, walking, crouching barely),
 #   muffled by every floor in between.
 # What he notices fills `awareness`. A sound turns him towards it; at 1.0 he has seen enough.
+# After the photo he hunts: he walks a patrol over floors 2 and 3 on the navmesh, and a noise
+# makes him go and look where it came from before he carries on.
 signal caught
+# Instead of `caught`, when catch_on_sight is off: he has seen the player and gives chase.
+signal spotted
 signal task_done(tag: String)
 
 const WALK := 2.1
@@ -28,7 +32,14 @@ const FLOOR_MUFFLE := 0.3
 const HEAR_GAIN := 0.5
 const DECAY := 0.12
 const TURN_RATE := 5.0
-const STRIDE := 0.7
+# Metres per footfall: a brisk walk, and the long strides of an old man running flat out.
+const STRIDE := 0.78
+const RUN_STRIDE := 1.55
+const HUNT_WALK := 2.4
+const HUNT_RUSH := 3.2
+# Navmesh points float this far above the floor.
+const NAV_LIFT := 0.6
+const INVESTIGATE_REACH := 32.0
 var world: Node3D
 var story: Node3D
 var model: Node3D
@@ -47,6 +58,23 @@ var stride := 0.0
 var sweep := 0.0
 var yaw_goal := 0.0
 var concealed: Callable = func() -> bool: return false
+var patrol: Array = []
+var patrol_index := 0
+var hunting := false
+var catch_on_sight := true
+# While he is running someone down, a noise does not turn him aside.
+var deaf := false
+
+# Recorded hard-soled steps on stone (assets/audio/guard_steps, CC0), never the same twice running.
+static func shoe_steps() -> AudioStreamRandomizer:
+	var steps := AudioStreamRandomizer.new()
+	steps.random_pitch = 1.06
+	steps.random_volume_offset_db = 1.5
+	steps.playback_mode = AudioStreamRandomizer.PLAYBACK_RANDOM_NO_REPEATS
+	for side in ["L", "R"]:
+		for i in range(1, 4):
+			steps.add_stream(-1, load("res://assets/audio/guard_steps/stone_%s%d.ogg" % [side, i]))
+	return steps
 
 static func torch_mesh() -> Node3D:
 	var body := MeshInstance3D.new()
@@ -138,6 +166,7 @@ func setup(school: Node3D, progression: Node3D) -> void:
 	torch.position = Vector3(0.22, 1.38, -0.42)
 	add_child(torch)
 	step_sound = _audio("res://assets/audio/footstep.wav", 6, 34, -6)
+	step_sound.stream = shoe_steps()
 	keys = _audio("res://assets/audio/guard_keys.wav", 4, 26, -12, true)
 	whistle = _audio("res://assets/audio/guard_whistle.wav", 20, 90, 0)
 	stop()
@@ -155,6 +184,11 @@ func _audio(path: String, unit: float, reach: float, volume: float, loop := fals
 func stop() -> void:
 	tasks.clear()
 	task = {}
+	patrol = []
+	patrol_index = 0
+	hunting = false
+	catch_on_sight = true
+	deaf = false
 	sensing = false
 	awareness = 0.0
 	sees_player = false
@@ -189,6 +223,10 @@ static func walk(points: Array, speed := WALK) -> Dictionary:
 static func sprint(points: Array, speed := RUN) -> Dictionary:
 	return {"do": "walk", "path": points, "i": 0, "speed": speed, "anim": "sprint"}
 
+# Walk to a point by the navmesh; the route is worked out when the job starts.
+static func goto(at: Vector3, speed := WALK, running := false) -> Dictionary:
+	return {"do": "goto", "to": at, "speed": speed, "anim": "sprint" if running else "walk"}
+
 static func wait(seconds: float, anim := "idle", sweeping := false) -> Dictionary:
 	return {"do": "wait", "seconds": seconds, "anim": anim, "sweep": sweeping}
 
@@ -214,14 +252,47 @@ static func work() -> Dictionary:
 static func look_back(from: Vector3, toward: Vector3, seconds := 2.6) -> Array[Dictionary]:
 	return [{"do": "face", "at": toward}, wait(seconds, "look_around", true), {"do": "face", "at": from}]
 
+# A navmesh route, put back down on the floor so his feet are not in the air.
+func route_to(to: Vector3) -> Array:
+	var map := get_world_3d().navigation_map
+	var from := NavigationServer3D.map_get_closest_point(map, global_position + Vector3.UP * 0.3)
+	var goal := NavigationServer3D.map_get_closest_point(map, to + Vector3.UP * 0.3)
+	var points: Array = []
+	for point in NavigationServer3D.map_get_path(map, from, goal, true):
+		points.append(_ground(point))
+	if points.is_empty() or Vector2(points[-1].x - to.x, points[-1].z - to.z).length() < 1.0:
+		points.append(to)
+	return points
+
+func _ground(point: Vector3) -> Vector3:
+	var query := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 0.2, point - Vector3.UP * (NAV_LIFT + 0.8), 1)
+	query.exclude = [world.player.get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.position if not hit.is_empty() else point - Vector3.UP * 0.4
+
+static func path_length(points: Array, from: Vector3) -> float:
+	var length := 0.0
+	var at := from
+	for point in points:
+		length += at.distance_to(point)
+		at = point
+	return length
+
 func _next() -> void:
 	clock = 0.0
+	if tasks.is_empty() and not patrol.is_empty():
+		var stop: Dictionary = patrol[patrol_index % patrol.size()]
+		patrol_index += 1
+		tasks.append(goto(stop.at, HUNT_WALK))
+		tasks.append(wait(stop.look, "look_around", true))
 	if tasks.is_empty():
 		task = {}
 		model.animation.play("idle")
 		keys.stop()
 		return
 	task = tasks.pop_front()
+	if task.do == "goto":
+		task = {"do": "walk", "path": route_to(task.to), "i": 0, "speed": task.speed, "anim": task.anim}
 	match task.do:
 		"walk":
 			var running: bool = task.get("anim", "walk") == "sprint"
@@ -266,7 +337,24 @@ func investigate(at: Vector3, line := "Hửm...?") -> void:
 		# Absorbed in the papers; he only half turns.
 		yaw_goal = rotation.y
 		return
-	if not task.is_empty(): tasks.push_front(task)
+	if hunting:
+		# He goes to look. The patrol stop he was making for comes after.
+		tasks.clear()
+		tasks.append({"do": "face", "at": at})
+		tasks.append(wait(0.8, "listen"))
+		if absf(at.y - global_position.y) < 2.0:
+			var route := route_to(at)
+			if path_length(route, global_position) < INVESTIGATE_REACH:
+				tasks.append({"do": "walk", "path": route, "i": 0, "speed": HUNT_RUSH, "anim": "walk"})
+				tasks.append(wait(2.6, "look_around", true))
+		if not patrol.is_empty(): patrol_index = maxi(0, patrol_index - 1)
+		story.subtitle("Bác bảo vệ", line if line != "Hửm...?" else ["Ai đó?!", "Tiếng gì thế?", "Ra đây!"][randi() % 3], 1.8)
+		_next()
+		return
+	if not task.is_empty():
+		# A wait he was in the middle of carries on where it was, not from the start.
+		if task.do == "wait": task.seconds = maxf(0.2, float(task.seconds) - clock)
+		tasks.push_front(task)
 	tasks.push_front(wait(2.4, "listen", true))
 	tasks.push_front({"do": "face", "at": at})
 	story.subtitle("Bác bảo vệ", line, 1.8)
@@ -280,7 +368,7 @@ func hear(at: Vector3, radius: float, source: String) -> void:
 	if distance > reach: return
 	var gain := (1.0 - distance / reach) * HEAR_GAIN * (1.6 if source == "glass" else 1.0)
 	awareness = minf(1.0, awareness + gain)
-	if heard_clock <= 0.0:
+	if heard_clock <= 0.0 and not deaf:
 		heard_clock = 3.0
 		investigate(at)
 	_check_caught()
@@ -306,6 +394,9 @@ func can_see_player() -> bool:
 	return world.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 func _check_caught() -> void:
+	if sensing and awareness >= 1.0 and not catch_on_sight:
+		spotted.emit()
+		return
 	if sensing and awareness >= 1.0:
 		sensing = false
 		tasks.clear()
@@ -369,9 +460,9 @@ func _tick_walk(delta: float) -> void:
 	stride -= float(task.speed) * delta
 	if stride <= 0.0:
 		var running: bool = task.get("anim", "walk") == "sprint"
-		stride = STRIDE * (1.75 if running else 1.0)
-		step_sound.volume_db = -1.0 if running else -6.0
-		step_sound.pitch_scale = randf_range(0.82, 0.92)
+		stride = RUN_STRIDE if running else STRIDE
+		step_sound.volume_db = -3.0 if running else -10.0
+		step_sound.pitch_scale = 0.92 if running else 0.88
 		step_sound.play()
 	if int(task.i) >= path.size(): _next()
 

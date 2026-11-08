@@ -1,12 +1,12 @@
 extends Node3D
-# The floor gives way twice into a storm-drain slide under the school. The keys do nothing; the
+# Where the tunnel floor gives way, a storm-drain slide down to the lower level. The keys do nothing; the
 # rider drifts towards wherever the camera leans. Rusted rebar and live cables torn out of the
 # tunnel lining close all but one lane, right out to the wall, so hugging a side is never safe.
 const RADIUS := 2.4
 const RING_STEP := 3.0
 const RING_SIDES := 28
-const SPEED := 14.5
-const SPEED_GAIN := 5.0
+const SPEED := 11.5
+const SPEED_GAIN := 3.0
 const SPEED_HURT := 7.0
 const HURT_SECONDS := 0.8
 const HIT_DAMAGE := 10.0
@@ -17,24 +17,30 @@ const LEAN_DECAY := 0.25
 const PITCH_LIMIT := 0.6
 const LANES := [-1.7, 0.0, 1.7]
 const LANE_HALF := 0.85
-const HAND_SEEN := 40.0
-const HAND_RISEN := 22.0
+# Rods start to grow this far ahead and are full length by the second distance: well over two
+# seconds of warning at sliding speed.
+const HAND_SEEN := 62.0
+const HAND_RISEN := 36.0
 const RODS_PER_LANE := 6
 const ROD_LENGTH := 1.75
 # A gate that changes its mind: what it closes swaps this far ahead of the rider.
-const SWITCH_LEAD := 11.0
+const SWITCH_LEAD := 17.0
 const BEHIND := 9.0
 const EXIT_GAP := 12.0
 const GAP_PER_HIT := 3.0
 const EXIT_GAP_MIN := 4.0
 const HOLE_REACH := 2.0
+const LAMP_AHEAD := [9.0, 26.0, 44.0]
+# Cold light through a crack in the lining marks the open lane of each gate.
+const GAP_LIGHT := Color(0.62, 0.85, 1.0)
 # Gates are generated: one open lane each, closer together the further down, and every few
-# a switch. The second slide is longer, faster and tighter. "spacing" runs from first to last.
+# a switch. The second slide is longer, faster and tighter. "spacing" runs from first to last;
+# even the tightest leaves about a second and a half between gates.
 const RUNS := [
-	{"start": 384.0, "exit": 408.0, "length": 200.0, "origin": Vector3(0, -60, 0), "swarms": [[78.0, 4], [150.0, 5]],
-		"first": 26.0, "spacing": [14.0, 10.0], "switch_every": 4, "seed": 3841},
-	{"start": 636.0, "exit": 656.0, "length": 270.0, "origin": Vector3(0, -170, 0), "swarms": [[62.0, 5], [130.0, 6], [204.0, 7]],
-		"first": 22.0, "spacing": [11.0, 8.5], "switch_every": 3, "seed": 6362},
+	{"length": 200.0, "origin": Vector3(0, -60, 0), "swarms": [[78.0, 3], [150.0, 4]],
+		"first": 30.0, "spacing": [25.0, 20.0], "switch_every": 3, "seed": 3841},
+	{"length": 270.0, "origin": Vector3(0, -170, 0), "swarms": [[62.0, 4], [130.0, 5], [204.0, 5]],
+		"first": 28.0, "spacing": [23.0, 19.5], "switch_every": 3, "seed": 6362},
 ]
 static var rod_mesh: CylinderMesh
 static var rust: StandardMaterial3D
@@ -67,10 +73,11 @@ func setup(runner: Node3D) -> void:
 	slide_sound.pitch_scale = 0.55
 	slide_sound.volume_db = -10
 	add_child(slide_sound)
-	for i in range(2):
+	# Lamps that ride ahead of the slider: warm enough that rust and copper read against the wall.
+	for i in range(LAMP_AHEAD.size()):
 		var lamp := OmniLight3D.new()
-		lamp.light_color = Color(1.0, 0.16, 0.08)
-		lamp.omni_range = 18
+		lamp.light_color = Color(1.0, 0.36, 0.24)
+		lamp.omni_range = 22
 		lamp.hide()
 		add_child(lamp)
 		lamps.append(lamp)
@@ -130,7 +137,8 @@ func _build_tube(tube: Node3D, index: int) -> void:
 				maker.add_vertex(point)
 	var shell := MeshInstance3D.new()
 	shell.mesh = maker.commit()
-	var wall: StandardMaterial3D = run.material(Color(0.5, 0.16, 0.13) if index == 0 else Color(0.34, 0.2, 0.3))
+	# Dull, dark lining so the rods and the gap light stand out from it.
+	var wall: StandardMaterial3D = run.material(Color(0.46, 0.38, 0.34) if index == 0 else Color(0.4, 0.36, 0.38))
 	wall.albedo_texture = load("res://assets/polyhaven_horror/rubble_diff_1k.jpg")
 	wall.uv1_triplanar = true
 	wall.uv1_world_triplanar = true
@@ -194,8 +202,8 @@ static func _materials() -> void:
 	rust.metallic = 0.5
 	rust.roughness = 0.6
 	rust.emission_enabled = true
-	rust.emission = Color(0.35, 0.12, 0.04)
-	rust.emission_energy_multiplier = 0.8
+	rust.emission = Color(0.85, 0.36, 0.1)
+	rust.emission_energy_multiplier = 0.55
 	rust.uv1_scale = Vector3(0.2, 2.0, 0.2)
 	copper = StandardMaterial3D.new()
 	copper.albedo_color = Color(0.9, 0.45, 0.2)
@@ -273,7 +281,65 @@ func _build_gate(tube: Node3D, index: int, plan: Dictionary) -> Dictionary:
 	flash.light_energy = 0.0
 	flash.position = hang
 	tube.add_child(flash)
-	return {"at": along, "closed": plan.closed, "then": plan.then, "switched": false, "sets": sets, "done": false, "spark": spark, "cable": cable, "flash": flash}
+	var gap := _gap_marker(tube)
+	return {"at": along, "closed": plan.closed, "then": plan.then, "switched": false, "sets": sets, "done": false, "spark": spark, "cable": cable, "flash": flash,
+		"gap": gap, "place": place}
+
+static var gap_paint: StandardMaterial3D
+static var gap_haze: StandardMaterial3D
+
+# Cold light falling through a crack onto the floor of the open lane: a glowing strip, a shaft
+# of light standing on it and a lamp, so the way through reads from far up the tube.
+func _gap_marker(tube: Node3D) -> Node3D:
+	if gap_paint == null:
+		gap_paint = StandardMaterial3D.new()
+		gap_paint.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		gap_paint.albedo_color = GAP_LIGHT
+		gap_paint.emission_enabled = true
+		gap_paint.emission = GAP_LIGHT
+		gap_paint.emission_energy_multiplier = 4.0
+		gap_haze = StandardMaterial3D.new()
+		gap_haze.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		gap_haze.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		gap_haze.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		gap_haze.cull_mode = BaseMaterial3D.CULL_DISABLED
+		gap_haze.albedo_color = Color(GAP_LIGHT, 0.17)
+	var marker := Node3D.new()
+	marker.hide()
+	tube.add_child(marker)
+	var shaft := MeshInstance3D.new()
+	var column := CylinderMesh.new()
+	column.top_radius = 0.22
+	column.bottom_radius = 0.5
+	column.height = 2.4
+	column.cap_top = false
+	column.cap_bottom = false
+	shaft.mesh = column
+	shaft.material_override = gap_haze
+	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	shaft.position = Vector3(0, 1.2, 0)
+	marker.add_child(shaft)
+	var strip := MeshInstance3D.new()
+	var bar := BoxMesh.new()
+	bar.size = Vector3(0.9, 0.08, 4.5)
+	strip.mesh = bar
+	strip.material_override = gap_paint
+	marker.add_child(strip)
+	var glow := OmniLight3D.new()
+	glow.light_color = GAP_LIGHT
+	glow.light_energy = 4.0
+	glow.omni_range = 6.0
+	glow.position = Vector3(0, 1.1, 0)
+	marker.add_child(glow)
+	return marker
+
+func _place_gap(gate: Dictionary, lane: int) -> void:
+	var place: Transform3D = gate.place
+	var floor_point := surface_point(place, LANES[lane], 0.04)
+	var inward := (place.origin - floor_point).normalized()
+	var forward := place.basis.z
+	var side := inward.cross(forward).normalized()
+	gate.gap.transform = Transform3D(Basis(side, inward, side.cross(inward)), floor_point)
 
 func _lane_of(at_arc: float) -> int:
 	if at_arc < -LANE_HALF: return 0
@@ -297,14 +363,9 @@ func reset() -> void:
 			gate.spark.emitting = false
 			gate.cable.hide()
 			gate.flash.light_energy = 0.0
+			gate.gap.hide()
 			for key in gate.sets:
 				for rod in gate.sets[key]: rod.node.hide()
-
-func opening_at(meters: float) -> int:
-	for index in range(RUNS.size()):
-		if not used.has(index) and meters >= RUNS[index].start - HOLE_REACH:
-			return index
-	return -1
 
 func enter(index: int) -> void:
 	var p: CharacterBody3D = run.world.player
@@ -380,6 +441,9 @@ func _tick_gates(before: float) -> void:
 					var quiver: float = sin(run.clock * 23.0 + rod.phase) * 0.02
 					rod.node.transform = Transform3D(rod.turn * Basis(Vector3.RIGHT, quiver) * Basis.from_scale(Vector3(1.0, maxf(grow, 0.02) * rod.length, 1.0)), rod.root + rod.turn.y * maxf(grow, 0.02) * rod.length * 0.5)
 		gate.cable.visible = near and not gate.switched
+		var open_now: Array = [0, 1, 2].filter(func(lane): return lane not in (gate.then if gate.switched else gate.closed))
+		gate.gap.visible = near and lead > -1.0
+		if gate.gap.visible: _place_gap(gate, open_now[0])
 		gate.spark.emitting = near and not gate.switched and lead > -2.0
 		# A dull glow off the live cable picks out every gate, and the arcing flares it white.
 		var arc_flash := 1.0 if fmod(run.clock * 7.0 + gate.at, 1.0) < 0.18 else 0.0
@@ -418,16 +482,16 @@ func _place() -> void:
 	p.rotation = Vector3(0, atan2(-heading.x, -heading.z) - lean, 0)
 	p.camera.rotation = Vector3(pitch + asin(heading.y), 0, arc / RADIUS * 0.8)
 	for i in range(lamps.size()):
-		var ahead := frame(current, metres + [10.0, 28.0][i])
+		var ahead := frame(current, metres + LAMP_AHEAD[i])
 		lamps[i].position = ahead.origin + ahead.basis.y * 1.2
-		lamps[i].light_energy = 3.6 + sin(run.clock * 13.0 + i) * 0.5
+		lamps[i].light_energy = 4.6 + sin(run.clock * 13.0 + i) * 0.4
 	var behind: Vector3 = run.to_global(frame(current, maxf(0.0, metres - BEHIND)).origin)
 	run.chase_steps.global_position = behind
 	run.snarls.global_position = behind
 
+# Out at the bottom; the tunnel decides where that is.
 func leave() -> void:
-	var p: CharacterBody3D = run.world.player
-	var outing: Dictionary = RUNS[current]
+	var index := current
 	active = false
 	tubes[current].hide()
 	for lamp in lamps:
@@ -435,21 +499,4 @@ func leave() -> void:
 	spiders.clear()
 	slide_sound.stop()
 	hint.text = ""
-	var landing: Transform3D = run.route_frame(outing.exit)
-	var along: float = outing.start
-	while along < outing.exit:
-		run.travel_distance += 2.0
-		run.trail.append({"distance": run.travel_distance, "position": run.route_frame(along).origin + Vector3.UP * 0.05})
-		along += 2.0
-	run.ghost_distance = run.travel_distance - maxf(EXIT_GAP_MIN, EXIT_GAP - hits * GAP_PER_HIT)
-	p.global_position = run.ORIGIN + landing.origin + Vector3.UP * 1.1
-	p.rotation = Vector3(0, landing.basis.get_euler().y, 0)
-	p.camera.rotation = Vector3.ZERO
-	p.camera.position = Vector3(0, 1.62, 0)
-	p.get_node("Collision").shape.height = 1.75
-	p.get_node("Collision").position.y = 0.9
-	p.velocity = -landing.basis.z * run.RUN_SPEED
-	run.previous_feet = p.position
-	run.distance = outing.exit
-	run.scares.flash.color = Color(0, 0, 0, 1)
-	run.scares.impact(p.global_position, "topple")
+	run.chute_landed(index)

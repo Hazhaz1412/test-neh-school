@@ -106,6 +106,15 @@ Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được gh
 
 `corridor_chase.wav`, `strange_knock.wav`, `door_jumpscare.wav`, `gate_static.wav` là âm/nhạc nguyên bản tổng hợp bằng `tools/build_story_audio.py` (sin, bass, percussion và noise seed cố định). Nhạc chạy loop, không dùng bản ghi nhạc bên ngoài. Tiếng cười dùng asset `teasing_giggle.ogg` có nguồn/giấy phép trong `assets/audio/teasing_giggle-source.json`; tiếng chân/gầm dùng các WAV tổng hợp đã có.
 
+## Âm nước và tiếng giày bác bảo vệ (tải 2026-11-08)
+
+- `assets/audio/water/ocean_splash.ogg`: [Ocean splash](https://opengameart.org/content/ocean-splash), CC0.
+- `assets/audio/water/water_splash_01.ogg`, `water_splash_04.ogg`: [6 short water splashes](https://opengameart.org/content/6-short-water-splashes), qubodup cắt từ pdsounds.org, public domain/CC0; đổi FLAC sang Ogg.
+- `assets/audio/water/bubbles_*.ogg`: [Bubble Sound Effects](https://opengameart.org/content/bubble-sound-effects) của Brian MacIntosh, CC0; đổi WAV sang Ogg.
+- `assets/audio/water/underwater_pad.ogg`: [Underwater Ambient Pad](https://opengameart.org/content/underwater-ambient-pad) của isaiah658, CC0.
+- `assets/audio/guard_steps/stone_*.ogg`: bước chân trên nền đá trong [Fantozzi's Footsteps](https://opengameart.org/content/fantozzis-footsteps-grasssand-stone), CC0 (gốc từ freesound.org).
+- URL tải và SHA-256 của file gốc lẫn file trong dự án: `assets/audio/water/sources.json`, `assets/audio/guard_steps/sources.json`.
+
 `eerie_lullaby.wav`, `ghost_shriek.wav`, `door_bang.wav`, `heartbeat_single.wav` là âm nguyên bản tổng hợp bằng `tools/build_night1_audio.py` (seed cố định), không dùng bản ghi ngoài.
 
 ## Nội thất hành lang — cập nhật 2026-10-11

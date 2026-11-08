@@ -65,7 +65,7 @@ func toggle() -> void:
 	world.player.recover()
 	world.death_panel.hide()
 	prepare_exploration()
-	world.notify("TEST · Bất tử / nhanh ×3 / đủ ký ức · An chờ trên sân thượng")
+	world.notify("TEST · Bất tử / nhanh ×3 / đủ ký ức")
 
 func prepare_exploration() -> void:
 	if not enabled or not world.soul_quest.night_active():
@@ -79,9 +79,10 @@ func prepare_exploration() -> void:
 	# Keep An's real dialogue available when the cheat chord is enabled.
 	quest.accepted.clear()
 	world.survival.soul_rescued = false
-	quest.soul.released = false
-	quest.soul.show()
-	quest.soul.get_node("Interaction").collision_layer = 16
+	if quest.soul != null:
+		quest.soul.released = false
+		quest.soul.show()
+		quest.soul.get_node("Interaction").collision_layer = 16
 
 func complete_objectives() -> void:
 	prepare_exploration()
@@ -91,10 +92,13 @@ func complete_objectives() -> void:
 	for i in range(world.soul_quest.memories.size()):
 		world.soul_quest.accepted[i] = true
 	world.survival.soul_rescued = true
-	world.soul_quest.soul.released = true
+	if world.soul_quest.soul != null: world.soul_quest.soul.released = true
 
 func prepare_ai_test() -> void:
 	if not enabled or world.survival.finished:
+		return
+	if world.soul_quest.soul == null:
+		world.notify("TEST AI · An không còn trong trường")
 		return
 	world.paused_by_user = false
 	world.map_panel.hide()

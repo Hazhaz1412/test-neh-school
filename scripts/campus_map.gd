@@ -65,7 +65,7 @@ func _draw() -> void:
 	caption("NỐI TÂY", point(-52, -19), 11)
 	caption("NỐI ĐÔNG", point(42, -19), 11)
 	var quest: Node3D = player.get_parent().soul_quest
-	if quest != null and progression.briefing_complete and not player.get_parent().survival.soul_rescued:
+	if quest != null and quest.soul != null and progression.briefing_complete and not player.get_parent().survival.soul_rescued:
 		var soul_point := point(quest.soul.position.x, quest.soul.position.z)
 		draw_circle(soul_point, 4, Color(0.52, 0.82, 0.91))
 		caption("AN · SÂN THƯỢNG", soul_point + Vector2(-18, -23), 11)

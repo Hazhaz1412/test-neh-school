@@ -1,155 +1,113 @@
 extends Node3D
 
-# Part 3 of Night 1: a four-part flight from the top floor to the main gate.
-# Every segment feeds one value, the pursuer's gap in metres. Rubber-banding in
-# _update_pursuer keeps it close whatever the player does, and being caught only
-# restarts the current segment. attempts/report are the data for that tuning.
-enum Segment { NONE, CORRIDOR, STAIRS, GATE }
+# The end of the guard's chase. The player has sneaked out of the building into the yard. Near
+# the main gate the guard shouts down from a third-floor window and pins them in his torch beam:
+# "stand still". The gate is chained, so the way on is the technical room in the gate booth, with
+# the service stairs down to the tunnels. Against one clock, while he comes down the stairs and
+# runs across the yard: take the screwdriver from the toolbox, back out the four screws of the
+# door's lock plate (door_breaker.gd), then kick the door in. Run out of time and he has the
+# player; that restarts this part only, with a few seconds more each time.
+enum Segment { NONE, CALL, BREAK_IN }
+const Guard := preload("res://scripts/security_guard.gd")
 const F1 := 0.05
-const F2 := 3.95
 const F3 := 7.85
-const CORRIDOR_RAIL: Array[Vector3] = [Vector3(-23.5,F3,47.5),Vector3(-23.5,F3,8.4),Vector3(-22.6,F3,7.5),Vector3(-1.2,F3,7.5)]
-const ROOM_EXIT: Array[Vector3] = [Vector3(-25.4,F3,49),Vector3(-24.0,F3,48.7)]
-const GHOST_START: Array[Vector3] = [Vector3(-23.5,F3,53.5),Vector3(-23.5,F3,47.5)]
-const STAIR_RAIL: Array[Vector3] = [Vector3(-1.2,F3,7.5),Vector3(-.2,F3,6.5),Vector3(-.2,F3,-1.9),Vector3(-1.2,F3,-3),Vector3(-3.6,F3,-3),Vector3(-4.8,F3,-2),
-	Vector3(-4.8,F2,6),Vector3(-4.8,F2,6.8),Vector3(-3.8,F2,7.5),Vector3(-1.2,F2,7.5),Vector3(-.2,F2,6.5),Vector3(-.2,F2,-1.9),Vector3(-1.2,F2,-3),Vector3(-3.6,F2,-3),Vector3(-4.8,F2,-2),
-	Vector3(-4.8,F1,6),Vector3(-4.8,F1,6.8),Vector3(-3.8,F1,7.5),Vector3(-.8,F1,7.5),Vector3(0,F1,8.3),Vector3(0,F1,10)]
-# Out of the stairwell, round the fountain and straight at the main gate.
-const GATE_ROUTE: Array[Vector3] = [Vector3(5.7,F1,16),Vector3(5.7,F1,46),Vector3(1.5,F1,62)]
-const GATE_STOP := Vector3(0,F1,76.2)
-# The gate is chained. The guard's booth beside it has the service stairs down to the tunnels.
-const BOOTH := Vector3(6.8,F1,74.5)
-const BOOTH_DOOR := Vector3(5.45,F1,74.5)
-const RATTLE_SECONDS := 1.3
-const DOOR_PULLS := 8
-const START_GAP := 6.5
-const GATE_START_GAP := 8.0
-const GAP_HIGH := 7.5
-const GAP_LOW := 3.0
-const CATCH_UP := 1.4
-const EASE_OFF := 1.1
-const CORRIDOR_SPEED := 5.6
-const STRAFE_SPEED := 3.6
-const HALF_WIDTH := 1.1
-const PLAYER_RADIUS := 0.27
-const SIDE_HALF := 0.75
-const SIDE_CENTER := 0.6
-const MIN_SPACING := 6.6
-const MIN_REACTION := 0.9
-const SLIDE_SECONDS := 0.75
-const CLEAR_JUMP := 0.45
-const HIT_PENALTY := 3.2
-const LAUNCH_LEAD := 13.0
-const LAUNCH_SECONDS := 0.45
-const STAIR_SPEED := 4.4
-const BEAT_START := 0.66
-const BEAT_FASTEST := 0.52
-const BEAT_WINDOW := 0.15
-const GRACE_BEATS := 3
-const MISS_PENALTY := 1.5
-const GATE_SPEED := 6.1
-const GATE_DRAIN := 0.62
-const HINTS := {Segment.CORRIDOR:"A / D né  ·  SPACE nhảy  ·  CTRL cúi",Segment.STAIRS:"SPACE đúng nhịp tim",Segment.GATE:"Cổng khóa xích!  ·  Nhấn E liên tục để giật cửa hầm"}
+const GATE_STOP := Vector3(0, F1, 76.2)
+# The guard booth inside the gate. Its back half is the head of the service stairs; the steel
+# door on the yard side is the technical room's.
+const BOOTH := Vector3(6.8, F1, 74.5)
+const BOOTH_DOOR := Vector3(5.45, F1, 74.5)
+const DOOR_STAND := Vector3(4.65, F1, 74.5)
+const TOOLBOX := Vector3(5.05, F1, 72.75)
+const RETRY_SPOT := Vector3(2.0, F1, 68.5)
+# Where he leans out: the third-floor window of block A's hall, facing the yard.
+const WINDOW_Z := 8.45
+const WINDOW_HALF := 16.0
+const CALL_SECONDS := 4.8
+const TIME_LIMIT := 24.0
+const TIME_PER_RETRY := 4.0
+const TIME_BONUS_MAX := 8.0
+# He keeps his torch on the player from the window until he needs STAIRS_SECONDS to get down,
+# and comes out of the main entrance when YARD_SECONDS are left.
+const STAIRS_SECONDS := 5.0
+const YARD_SECONDS := 10.0
+const YARD_ROUTE: Array[Vector3] = [Vector3(0, F1, 9.6), Vector3(5.7, F1, 16), Vector3(5.7, F1, 46), Vector3(2.6, F1, 62), DOOR_STAND + Vector3(-0.9, 0, -0.6)]
+const HINT := "Cổng bị xích! · Lấy tua vít trong thùng đồ nghề cạnh phòng kỹ thuật rồi phá cửa"
+
+class Prop extends Node3D:
+	var escape: Node3D
+	var kind := ""
+	func interaction_text() -> String:
+		if kind == "toolbox": return "E · Lấy tua vít"
+		return "E · Tháo ổ khóa" if escape.has_tool else "E · Cửa khóa bằng ổ bắt vít · Cần tua vít"
+	func interact(actor: CharacterBody3D) -> bool:
+		if actor != escape.world.player or actor.get_interaction_target() != self: return false
+		return escape.take_tool() if kind == "toolbox" else escape.use_door()
+
 var story: Node3D
 var world: Node3D
+var guard: Node3D
 var active := false
 var segment := Segment.NONE
-var attempts := {}
-var report := {}
-var assist := 0
+var step := ""
+var attempts := 0
 var clock := 0.0
-var gap := START_GAP
-var travel := 0.0
-var trail: Array[Dictionary] = []
-var last_feet := Vector3.ZERO
-var checkpoint := {}
+var time_limit := TIME_LIMIT
+var time_left := TIME_LIMIT
 var fade_clock := 0.0
 var restarted := false
-var held_keys := {}
-var looking_back := false
-var look_yaw := 0.0
-var rail: Array[Vector3] = []
-var rail_lengths := PackedFloat32Array()
-var rail_s := 0.0
-var lead_length := 0.0
-var speed := 0.0
-var lateral := 0.0
-var jump_height := 0.0
-var jump_velocity := 0.0
-var slide_remaining := 0.0
-var slide_cooldown := 0.0
-var stumble := 0.0
-var hazards: Array[Dictionary] = []
-var pool := {}
-var beat_clock := 0.0
-var last_beat := 0.0
-var next_beat := 0.0
-var beat_interval := BEAT_START
-var beats_heard := 0
-var beat_answered := true
-var next_answered := false
-var breath := 100.0
-var approaching := false
-var rattle := 0.0
-var pulls := 0
-var hint_time := 0.0
-var ghost: Node3D
+var has_tool := false
+var guard_phase := ""
+var said_second := false
+var report := {}
 var music: AudioStreamPlayer
 var breathing: AudioStreamPlayer
-var steps: AudioStreamPlayer3D
+var kick_sound: AudioStreamPlayer
+var tick_sound: AudioStreamPlayer
+var shout: AudioStreamPlayer3D
 var hint: Label
+var timer_panel: Control
+var timer_label: Label
+var timer_bar: ProgressBar
+var breaker: Control
 var booth: Node3D
 var booth_door: Node3D
+var door_block: StaticBody3D
+var lock_plate: Node3D
+var plate_screws: Array[Node3D] = []
+var toolbox: Prop
+var screwdriver: Node3D
+var door_prop: Prop
+var beam: SpotLight3D
+var beam_glare: MeshInstance3D
+var beat_clock := 0.0
 
 func setup(owner_story: Node3D) -> void:
 	story = owner_story
 	world = story.world
 	name = "SchoolEscape"
-	ghost = preload("res://scripts/chase_apparition.gd").new()
-	add_child(ghost)
 	music = AudioStreamPlayer.new()
 	music.stream = story.loop_wav("res://assets/audio/corridor_chase.wav")
 	add_child(music)
 	breathing = AudioStreamPlayer.new()
 	breathing.stream = story.loop_wav("res://assets/audio/player_breath.wav")
 	add_child(breathing)
-	steps = AudioStreamPlayer3D.new()
-	steps.stream = story.loop_wav("res://assets/audio/ghost_step.wav")
-	steps.unit_size = 10
-	steps.max_distance = 40
-	add_child(steps)
-	_build_pool()
+	kick_sound = AudioStreamPlayer.new()
+	kick_sound.stream = load("res://assets/audio/door_bang.wav")
+	add_child(kick_sound)
+	tick_sound = AudioStreamPlayer.new()
+	tick_sound.stream = load("res://assets/audio/lock.wav")
+	add_child(tick_sound)
+	shout = AudioStreamPlayer3D.new()
+	shout.stream = load("res://assets/audio/guard_whistle.wav")
+	shout.unit_size = 30
+	shout.max_distance = 140
+	add_child(shout)
 	_build_booth()
-	var layer := CanvasLayer.new()
-	layer.layer = 21
-	add_child(layer)
-	hint = Label.new()
-	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	hint.offset_left = -420
-	hint.offset_right = 420
-	hint.offset_top = -128
-	hint.offset_bottom = -92
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size",19)
-	hint.add_theme_color_override("font_color",Color(.92,.84,.68))
-	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(hint)
+	_build_beam()
+	_build_ui()
 	reset()
 
-func _build_pool() -> void:
-	var runner: Node3D = story.runner
-	var plan := {"side":["desk",Vector3(1.5,.85,.8),4],"low":["bench",Vector3(2.9,.55,.6),3],"high":["bookcaseClosedWide",Vector3(2.9,1.7,.7),3]}
-	for kind in plan:
-		pool[kind] = []
-		for i in range(plan[kind][2]):
-			var holder := Node3D.new()
-			add_child(holder)
-			runner.prop(holder,plan[kind][0],Vector3.ZERO,plan[kind][1])
-			holder.hide()
-			pool[kind].append(holder)
-
-# A small concrete guard booth inside the gate. Its back half is the head of the service
-# stairs; the steel door on the courtyard side is what the player wrenches open.
+# A small concrete guard booth inside the gate.
 func _build_booth() -> void:
 	booth = Node3D.new()
 	booth.name = "GuardBooth"
@@ -179,7 +137,7 @@ func _build_booth() -> void:
 		shape.shape = bounds
 		wall.add_child(shape)
 	booth_door = Node3D.new()
-	booth_door.name = "BasementDoor"
+	booth_door.name = "TechnicalRoomDoor"
 	booth_door.position = Vector3(-1.2,0,.3)
 	booth.add_child(booth_door)
 	var leaf := MeshInstance3D.new()
@@ -189,10 +147,42 @@ func _build_booth() -> void:
 	leaf.material_override = steel
 	leaf.position = Vector3(0,1.05,-.3)
 	booth_door.add_child(leaf)
+	door_block = StaticBody3D.new()
+	door_block.position = leaf.position
+	booth_door.add_child(door_block)
+	var block_shape := CollisionShape3D.new()
+	var slab := BoxShape3D.new()
+	slab.size = Vector3(.1,2.1,.62)
+	block_shape.shape = slab
+	door_block.add_child(block_shape)
+	# The lock plate the player unscrews: on the yard face, beside the handle.
+	lock_plate = Node3D.new()
+	lock_plate.position = Vector3(-.04,1.05,-.48)
+	booth_door.add_child(lock_plate)
+	var brushed := StandardMaterial3D.new()
+	brushed.albedo_color = Color(.55,.56,.55)
+	brushed.metallic = .8
+	brushed.roughness = .35
+	_box(lock_plate, Vector3.ZERO, Vector3(.012,.2,.2), brushed)
+	_box(lock_plate, Vector3(-.03,0,.04), Vector3(.05,.03,.1), brushed)
+	for corner in [Vector2(-1,-1), Vector2(1,-1), Vector2(-1,1), Vector2(1,1)]:
+		var head := MeshInstance3D.new()
+		var disc := CylinderMesh.new()
+		disc.top_radius = .011
+		disc.bottom_radius = .011
+		disc.height = .008
+		head.mesh = disc
+		head.material_override = brushed
+		head.rotation.z = PI/2
+		head.position = Vector3(-.008, corner.y*.075, corner.x*.075)
+		lock_plate.add_child(head)
+		plate_screws.append(head)
+	door_prop = _prop("door", Vector3(-1.34,1.05,0), Vector3(.25,1.9,.75))
+	booth.add_child(door_prop)
 	var sign := Label3D.new()
-	sign.text = "HẦM KỸ THUẬT\nCẤM VÀO"
+	sign.text = "PHÒNG KỸ THUẬT\nCẤM VÀO"
 	sign.font_size = 34
-	sign.pixel_size = .006
+	sign.pixel_size = .0032
 	sign.modulate = Color(.9,.75,.3)
 	sign.position = Vector3(-1.32,2.35,0)
 	sign.rotation.y = -PI/2
@@ -203,530 +193,425 @@ func _build_booth() -> void:
 	lamp.omni_range = 3.5
 	lamp.position = Vector3(-1.6,2.3,0)
 	booth.add_child(lamp)
+	# The toolbox against the booth wall, the screwdriver lying on top where the torch catches it.
+	toolbox = _prop("toolbox", TOOLBOX - BOOTH + Vector3(0,.2,0), Vector3(.6,.5,.4))
+	booth.add_child(toolbox)
+	var red := StandardMaterial3D.new()
+	red.albedo_color = Color(.62,.1,.07)
+	red.roughness = .5
+	red.metallic = .3
+	_box(toolbox, Vector3(0,-.07,0), Vector3(.5,.26,.24), red)
+	_box(toolbox, Vector3(0,.09,0), Vector3(.18,.03,.03), steel)
+	screwdriver = Node3D.new()
+	screwdriver.position = Vector3(.02,.085,.0)
+	screwdriver.rotation.y = .5
+	toolbox.add_child(screwdriver)
+	var grip := StandardMaterial3D.new()
+	grip.albedo_color = Color(.95,.72,.1)
+	grip.emission_enabled = true
+	grip.emission = Color(.95,.6,.05)
+	grip.emission_energy_multiplier = .6
+	_box(screwdriver, Vector3(-.07,0,0), Vector3(.1,.03,.03), grip)
+	var shaft := StandardMaterial3D.new()
+	shaft.albedo_color = Color(.85,.86,.88)
+	shaft.metallic = 1
+	shaft.roughness = .2
+	_box(screwdriver, Vector3(.05,0,0), Vector3(.14,.008,.008), shaft)
+	var glint := OmniLight3D.new()
+	glint.light_color = Color(1,.85,.55)
+	glint.light_energy = .35
+	glint.omni_range = 1.4
+	glint.position = Vector3(0,.25,0)
+	screwdriver.add_child(glint)
+
+func _box(parent: Node3D, at: Vector3, dimensions: Vector3, mat: Material) -> MeshInstance3D:
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = dimensions
+	mesh.mesh = box
+	mesh.material_override = mat
+	mesh.position = at
+	parent.add_child(mesh)
+	return mesh
+
+func _prop(kind: String, at: Vector3, extent: Vector3) -> Prop:
+	var item := Prop.new()
+	item.escape = self
+	item.kind = kind
+	item.position = at
+	var area := Area3D.new()
+	area.name = "Interaction"
+	area.collision_layer = 0
+	area.collision_mask = 0
+	var collider := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = extent
+	collider.shape = shape
+	area.add_child(collider)
+	item.add_child(area)
+	return item
+
+# His torch from the window: a long narrow beam on the player, and a glare where it starts.
+func _build_beam() -> void:
+	beam = SpotLight3D.new()
+	beam.light_color = Color(1.0, 0.93, 0.78)
+	beam.light_energy = 2.6
+	beam.spot_range = 120.0
+	beam.spot_angle = 3.2
+	beam.spot_attenuation = 0.0
+	beam.shadow_enabled = false
+	add_child(beam)
+	# Seen from the yard the torch is a glaring point in the dark window.
+	beam_glare = MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.3, 1.3)
+	beam_glare.mesh = quad
+	var glow := GradientTexture2D.new()
+	glow.fill = GradientTexture2D.FILL_RADIAL
+	glow.fill_from = Vector2(0.5, 0.5)
+	glow.fill_to = Vector2(0.5, 0.0)
+	glow.gradient = Gradient.new()
+	glow.gradient.set_color(0, Color(1, 0.97, 0.88, 1))
+	glow.gradient.set_color(1, Color(1, 0.85, 0.6, 0))
+	glow.gradient.add_point(0.18, Color(1, 0.93, 0.78, 0.75))
+	var haze := StandardMaterial3D.new()
+	haze.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	haze.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	haze.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	haze.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	haze.albedo_texture = glow
+	beam_glare.material_override = haze
+	beam_glare.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(beam_glare)
+
+func _build_ui() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 21
+	add_child(layer)
+	hint = Label.new()
+	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	hint.offset_left = -460
+	hint.offset_right = 460
+	hint.offset_top = -128
+	hint.offset_bottom = -92
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size",19)
+	hint.add_theme_color_override("font_color",Color(.92,.84,.68))
+	hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	hint.add_theme_constant_override("outline_size", 5)
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(hint)
+	timer_panel = VBoxContainer.new()
+	timer_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	timer_panel.offset_left = -220
+	timer_panel.offset_right = 220
+	timer_panel.offset_top = 18
+	timer_panel.offset_bottom = 110
+	timer_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(timer_panel)
+	var caption := Label.new()
+	caption.text = "BÁC BẢO VỆ ĐANG XUỐNG"
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 14)
+	caption.add_theme_color_override("font_color", Color(0.95, 0.85, 0.7, 0.9))
+	caption.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	caption.add_theme_constant_override("outline_size", 4)
+	timer_panel.add_child(caption)
+	timer_label = Label.new()
+	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_label.add_theme_font_override("font", preload("res://scripts/horror_type.gd").TITLE)
+	timer_label.add_theme_font_size_override("font_size", 44)
+	timer_label.add_theme_color_override("font_outline_color", Color(0.1, 0, 0))
+	timer_label.add_theme_constant_override("outline_size", 9)
+	timer_panel.add_child(timer_label)
+	timer_bar = ProgressBar.new()
+	timer_bar.show_percentage = false
+	timer_bar.max_value = 1.0
+	timer_bar.custom_minimum_size = Vector2(440, 9)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color(0.95, 0.55, 0.2)
+	var back := StyleBoxFlat.new()
+	back.bg_color = Color(0, 0, 0, 0.55)
+	timer_bar.add_theme_stylebox_override("fill", fill)
+	timer_bar.add_theme_stylebox_override("background", back)
+	timer_panel.add_child(timer_bar)
+	breaker = preload("res://scripts/door_breaker.gd").new()
+	layer.add_child(breaker)
+	breaker.ticked.connect(func(_i):
+		tick_sound.pitch_scale = randf_range(1.6, 1.9)
+		tick_sound.volume_db = -20
+		tick_sound.play())
+	breaker.screw_out.connect(_on_screw_out)
+	breaker.screws_done.connect(_on_screws_done)
+	breaker.kicked.connect(_on_kick)
+	breaker.burst_open.connect(_finish)
 
 func reset() -> void:
 	active = false
 	segment = Segment.NONE
-	attempts.clear()
+	step = ""
+	attempts = 0
 	report.clear()
-	assist = 0
 	fade_clock = 0
-	held_keys.clear()
-	looking_back = false
-	trail.clear()
-	travel = 0
-	hint_time = 0
+	clock = 0
+	time_limit = TIME_LIMIT
+	time_left = TIME_LIMIT
+	has_tool = false
+	guard_phase = ""
 	hint.hide()
-	ghost.vanish()
-	_clear_hazards()
-	rattle = 0
-	pulls = 0
-	booth_door.rotation.y = 0
-	for audio in [music,breathing,steps]: audio.stop()
+	timer_panel.hide()
+	breaker.close()
+	_reset_props()
+	_beam_off()
+	for audio in [music,breathing]: audio.stop()
 
+func _reset_props() -> void:
+	booth_door.rotation.y = 0
+	door_block.get_child(0).disabled = false
+	lock_plate.show()
+	for head in plate_screws: head.show()
+	screwdriver.show()
+	_set_live(false)
+
+func _set_live(value: bool) -> void:
+	for item in [toolbox, door_prop]:
+		item.get_node("Interaction").collision_layer = 16 if value else 0
+
+func _beam_off() -> void:
+	beam.hide()
+	beam_glare.hide()
+
+func locks_player() -> bool:
+	return active and (segment == Segment.CALL or step in ["screws", "kick", "open"] or fade_clock > 0)
+
+# The player came out into the yard near the gate.
 func start() -> void:
 	var p: CharacterBody3D = world.player
 	reset()
 	active = true
-	p.flashlight.show()
+	guard = story.guard_part.guard
 	p.velocity = Vector3.ZERO
-	p.camera.rotation = Vector3(p.camera.rotation.x,0,0)
-	p.camera.fov = 80
-	music.play()
-	breathing.play()
-	steps.play()
 	story.fear.clear()
-	# The guard sets off from wherever he stood when the flash went off.
-	var from: Vector3 = story.guard_position() if story.has_method("guard_position") else GHOST_START[0]
-	var feet := Vector3(p.global_position.x,from.y,p.global_position.z)
-	trail.append({"distance":0.0,"position":from})
-	travel = from.distance_to(feet)
-	trail.append({"distance":travel,"position":feet})
-	last_feet = feet
-	ghost.appear(from,p.global_position)
-	begin_segment(Segment.CORRIDOR)
+	music.volume_db = -20
+	music.play()
+	breathing.volume_db = -20
+	breathing.play()
+	_begin_call()
 
-func begin_segment(next: int) -> void:
-	var p: CharacterBody3D = world.player
-	var retrying: bool = next == segment
-	segment = next
-	attempts[segment] = int(attempts.get(segment,0))+1 if retrying else int(attempts.get(segment,0))
-	assist = mini(2,int(attempts[segment]))
-	if not report.has(segment): report[segment] = {"mistakes":0,"lowest_gap":99.0,"seconds":0.0}
-	if retrying:
-		travel = checkpoint.travel
-		trail.resize(checkpoint.trail_size)
-		last_feet = checkpoint.feet
-		p.battery = checkpoint.battery
-	else:
-		checkpoint = {"travel":travel,"trail_size":trail.size(),"feet":last_feet,"battery":p.battery}
-	gap = GATE_START_GAP if segment == Segment.GATE else (minf(START_GAP,travel) if segment == Segment.CORRIDOR and not retrying else START_GAP)
+func _window_spot() -> Vector3:
+	return Vector3(clampf(world.player.global_position.x, -WINDOW_HALF, WINDOW_HALF), F3, WINDOW_Z)
+
+func _place_at_window() -> void:
+	var at := _window_spot()
+	guard.stop()
+	guard.place(at, Vector3(world.player.global_position.x, F3, world.player.global_position.z))
+	guard.run([Guard.wait(60.0, "idle")])
+	guard_phase = "window"
+	beam.show()
+	beam_glare.show()
+
+func _begin_call() -> void:
+	segment = Segment.CALL
+	step = ""
 	clock = 0
-	speed = 0
-	lateral = 0
-	jump_height = 0
-	jump_velocity = 0
-	slide_remaining = 0
-	stumble = 0
-	look_yaw = 0
-	approaching = false
-	rattle = 0
-	pulls = 0
-	_clear_hazards()
-	story.fear.ring = -1
-	story.fear.darkness = 0
-	if int(attempts[segment]) == 0:
-		hint.text = HINTS[segment]
-		hint_time = 3.5
-	match segment:
-		Segment.CORRIDOR:
-			# The very first run leaves the room; a retry resumes in the hall.
-			var line: Array[Vector3] = []
-			if not retrying:
-				line.append(p.global_position)
-				line.append_array(ROOM_EXIT)
-			line.append_array(CORRIDOR_RAIL)
-			_set_rail(line)
-			lead_length = 0.0 if retrying else rail_lengths[3]
-			hazards = generate_pattern(randi(),assist,lead_length+5.0,rail_lengths[-1]-3.0)
-			_assign_props()
-			music.volume_db = -13
-		Segment.STAIRS:
-			var line: Array[Vector3] = []
-			line.assign(STAIR_RAIL)
-			_set_rail(line)
-			beat_clock = 0
-			last_beat = -10
-			next_beat = 0.5
-			beat_interval = BEAT_START
-			beats_heard = 0
-			beat_answered = true
-			next_answered = false
-			breath = 100
-			music.volume_db = -36
-		Segment.GATE:
-			music.volume_db = -16
-			var line: Array[Vector3] = [p.global_position]
-			if not retrying: line.append_array(GATE_ROUTE)
-			line.append(GATE_STOP)
-			_set_rail(line)
-			beat_clock = 0
-			booth_door.rotation.y = 0
-			approaching = true
+	said_second = false
+	_place_at_window()
+	shout.global_position = guard.global_position + Vector3.UP * 1.6
+	shout.play()
+	story.subtitle("Bác bảo vệ", "Đứng yên đó!", 2.2)
+	world.player.startle = 0.8
 
-func _set_rail(points: Array[Vector3]) -> void:
-	rail = points
-	lead_length = 0
-	rail_lengths = PackedFloat32Array([0.0])
-	for i in range(1,rail.size()): rail_lengths.append(rail_lengths[-1]+rail[i-1].distance_to(rail[i]))
-	rail_s = 0
+func _begin_break_in(retry: bool) -> void:
+	segment = Segment.BREAK_IN
+	step = "tool"
+	clock = 0
+	has_tool = false
+	time_limit = TIME_LIMIT + minf(TIME_BONUS_MAX, TIME_PER_RETRY * attempts)
+	time_left = time_limit
+	breaker.close()
+	_reset_props()
+	_set_live(true)
+	if retry:
+		_place_at_window()
+		story.subtitle("Bác bảo vệ", "Còn định chạy à?! Đứng yên đó!", 2.0)
+	timer_panel.show()
+	hint.text = HINT
+	hint.show()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not report.has(attempts): report[attempts] = {"tool": -1.0, "screws": -1.0, "open": -1.0}
 
-func _rail_position(s: float) -> Vector3:
-	for i in range(1,rail.size()):
-		if s <= rail_lengths[i]:
-			return rail[i-1].lerp(rail[i],(s-rail_lengths[i-1])/maxf(.001,rail_lengths[i]-rail_lengths[i-1]))
-	return rail[-1]
+func take_tool() -> bool:
+	if segment != Segment.BREAK_IN or step != "tool" or fade_clock > 0: return false
+	has_tool = true
+	screwdriver.hide()
+	world.soundscape.cue("pickup", -12)
+	report[attempts].tool = time_limit - time_left
+	return use_door()
 
-func _rail_direction(s: float) -> Vector3:
-	var ahead: Vector3 = _rail_position(s+.5)-_rail_position(s-.5)
-	ahead.y = 0
-	return ahead.normalized() if ahead.length_squared()>.0001 else Vector3.FORWARD
-
-# --- Corridor: a pattern of thrown furniture that is proven clearable ---
-
-static func free_lateral(hazard: Dictionary) -> Vector2:
-	if hazard.kind != "side": return Vector2(-HALF_WIDTH,HALF_WIDTH)
-	if hazard.center > 0: return Vector2(-HALF_WIDTH,hazard.center-SIDE_HALF-PLAYER_RADIUS)
-	return Vector2(hazard.center+SIDE_HALF+PLAYER_RADIUS,HALF_WIDTH)
-
-static func pattern_clearable(pattern: Array[Dictionary], from_s: float) -> bool:
-	var reach := Vector2.ZERO
-	var at := from_s
-	for hazard in pattern:
-		var seconds: float = (hazard.s-at)/CORRIDOR_SPEED
-		if seconds < MIN_REACTION: return false
-		var free := free_lateral(hazard)
-		reach = Vector2(maxf(reach.x-STRAFE_SPEED*seconds,free.x),minf(reach.y+STRAFE_SPEED*seconds,free.y))
-		if reach.x > reach.y: return false
-		at = hazard.s
-	return true
-
-func _near_corner(s: float) -> bool:
-	for i in range(1,rail.size()-1):
-		if absf(rail_lengths[i]-s) < 3.5: return true
-	return false
-
-func generate_pattern(seed_value: int, assist_level: int, from_s: float, to_s: float) -> Array[Dictionary]:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	var pattern: Array[Dictionary] = []
-	var at := from_s
-	while at < to_s:
-		if not _near_corner(at):
-			var options := ["side","side","low","high"]
-			for i in range(options.size()-1,0,-1):
-				var other := rng.randi_range(0,i)
-				var held: String = options[i]
-				options[i] = options[other]
-				options[other] = held
-			for kind in options:
-				if pattern.size() >= 2 and pattern[-1].kind == kind and pattern[-2].kind == kind: continue
-				var candidate := {"kind":kind,"s":at,"center":0.0}
-				if kind == "side": candidate.center = SIDE_CENTER*(1 if rng.randf()<.5 else -1)
-				var trial: Array[Dictionary] = pattern.duplicate()
-				trial.append(candidate)
-				if pattern_clearable(trial,from_s-MIN_SPACING):
-					pattern.append(candidate)
-					break
-		at += MIN_SPACING*(1+.25*assist_level)+rng.randf_range(0,2.2)
-	return pattern
-
-func _assign_props() -> void:
-	var used := {"side":0,"low":0,"high":0}
-	for hazard in hazards:
-		hazard.node = pool[hazard.kind][used[hazard.kind]%pool[hazard.kind].size()]
-		used[hazard.kind] += 1
-		hazard.launched = false
-		hazard.resolved = false
-		hazard.flight = 0.0
-		hazard.rest = Vector3.ZERO
-		hazard.from = Vector3.ZERO
-
-func _clear_hazards() -> void:
-	hazards.clear()
-	for kind in pool:
-		for holder in pool[kind]: holder.hide()
-
-func _tick_hazards(delta: float) -> void:
-	for hazard in hazards:
-		var lead: float = hazard.s-rail_s
-		if not hazard.launched and lead < LAUNCH_LEAD:
-			hazard.launched = true
-			var direction := _rail_direction(hazard.s)
-			var right := direction.cross(Vector3.UP)
-			hazard.rest = _rail_position(hazard.s)+right*float(hazard.center)+Vector3.UP*(1.02 if hazard.kind=="high" else 0.0)
-			hazard.from = hazard.rest+direction*6+Vector3.UP*1.3+right*(-.7 if hazard.center>0 else .7)
-			hazard.node.rotation.y = atan2(-direction.x,-direction.z)
-			hazard.node.show()
-		if hazard.launched and hazard.flight < 1:
-			hazard.flight = minf(1,hazard.flight+delta/LAUNCH_SECONDS)
-			var eased := smoothstep(0.0,1.0,float(hazard.flight))
-			hazard.node.global_position = hazard.from.lerp(hazard.rest,eased)+Vector3.UP*sin(eased*PI)*.5
-			hazard.node.rotation.x = (1-eased)*2.4
-			if hazard.flight >= 1: world.soundscape.at("chair_impact",hazard.rest,-13)
-		if not hazard.resolved and lead < .3:
-			hazard.resolved = true
-			var hit := false
-			match hazard.kind:
-				"side":
-					var free := free_lateral(hazard)
-					hit = lateral < free.x or lateral > free.y
-				"low": hit = jump_height < CLEAR_JUMP
-				"high": hit = slide_remaining <= 0
-			if hit: _hazard_hit(hazard)
-		elif hazard.resolved and lead < -5: hazard.node.hide()
-
-func _hazard_hit(hazard: Dictionary) -> void:
-	hazard.node.hide()
-	stumble = .5
-	world.soundscape.cue("chair_impact",-9)
-	_mistake(HIT_PENALTY)
-
-func _mistake(penalty: float) -> void:
-	gap -= penalty*(1-.18*assist)
-	report[segment].mistakes += 1
-	world.player.startle = .8
-	world.hit_flash = maxf(world.hit_flash,.3)
-
-func _tick_corridor(delta: float) -> void:
+func use_door() -> bool:
+	if segment != Segment.BREAK_IN or step != "tool" or fade_clock > 0: return false
+	if not has_tool:
+		world.notify("Ổ khóa bắt bốn con vít · Cần tua vít")
+		return false
+	step = "screws"
+	_set_live(false)
+	hint.hide()
 	var p: CharacterBody3D = world.player
-	speed = move_toward(speed,CORRIDOR_SPEED*(.35 if stumble>0 else 1.0),delta*14)
-	rail_s += speed*delta
-	slide_remaining = maxf(0,slide_remaining-delta)
-	slide_cooldown = maxf(0,slide_cooldown-delta)
-	lateral = clampf(lateral+(float(held(KEY_D))-float(held(KEY_A)))*STRAFE_SPEED*delta,-HALF_WIDTH,HALF_WIDTH)
-	if jump_height > 0 or jump_velocity > 0:
-		jump_velocity -= 22*delta
-		jump_height += jump_velocity*delta
-		if jump_height <= 0:
-			jump_height = 0
-			jump_velocity = 0
-	_tick_hazards(delta)
-	_place_on_rail(delta,lateral)
-	p.camera.position.y = .62 if slide_remaining>0 else 1.62+sin(clock*16)*.03
-	if rail_s >= rail_lengths[-1]: begin_segment(Segment.STAIRS)
-
-func _place_on_rail(delta: float, offset: float) -> void:
-	var p: CharacterBody3D = world.player
-	var feet := _rail_position(rail_s)
-	var direction := _rail_direction(rail_s)
-	# Inside the room the player is on their way out; the pursuer stays in the hall.
-	var in_room := rail_s < lead_length
-	p.global_position = feet+direction.cross(Vector3.UP)*(0.0 if in_room else offset)+Vector3.UP*jump_height
 	p.velocity = Vector3.ZERO
-	p.rotation.y = lerp_angle(p.rotation.y,atan2(-direction.x,-direction.z)+look_yaw,clampf(delta*9,0,1))
-	_record_trail(feet)
-
-func jump() -> bool:
-	if segment != Segment.CORRIDOR or jump_height > 0 or jump_velocity > 0 or slide_remaining > 0: return false
-	jump_velocity = 6.4
-	jump_height = .001
+	p.global_position = DOOR_STAND
+	p.rotation.y = -PI / 2
+	p.camera.rotation = Vector3(-0.05, 0, 0)
+	breaker.begin()
 	return true
 
-func duck() -> bool:
-	if segment != Segment.CORRIDOR or slide_remaining > 0 or slide_cooldown > 0 or jump_height > 0: return false
-	slide_remaining = SLIDE_SECONDS
-	slide_cooldown = SLIDE_SECONDS+.1
-	world.soundscape.cue("paper",-18)
-	return true
+func _on_screw_out(index: int) -> void:
+	plate_screws[index].hide()
+	tick_sound.pitch_scale = 1.0
+	tick_sound.volume_db = -10
+	tick_sound.play()
 
-# --- Stairs: the jumpscare's heartbeat becomes the input ---
+func _on_screws_done() -> void:
+	step = "kick"
+	lock_plate.hide()
+	report[attempts].screws = time_limit - time_left
+	world.soundscape.at("chair_impact", BOOTH_DOOR + Vector3(-.3, .2, 0), -10)
 
-func press_beat() -> void:
-	var window := BEAT_WINDOW+.05*assist
-	if not beat_answered and beat_clock-last_beat <= window:
-		beat_answered = true
-		breath = minf(100,breath+7)
-	elif next_beat-beat_clock <= window and not next_answered:
-		next_answered = true
-		breath = minf(100,breath+7)
-	else: _lose_footing()
-
-func _lose_footing() -> void:
-	if beats_heard <= GRACE_BEATS: return
-	breath = maxf(0,breath-16)
-	stumble = .45
-	world.soundscape.cue("chair_impact",-20)
-	_mistake(MISS_PENALTY)
-
-func _tick_stairs(delta: float) -> void:
-	var p: CharacterBody3D = world.player
-	beat_clock += delta
-	if beat_clock >= next_beat:
-		story.fear.beat(-1)
-		beats_heard += 1
-		last_beat = next_beat
-		beat_answered = next_answered
-		next_answered = false
-		next_beat += beat_interval
-		beat_interval = maxf(BEAT_FASTEST,beat_interval-.006)
-	if not beat_answered and beat_clock-last_beat > BEAT_WINDOW+.05*assist:
-		beat_answered = true
-		_lose_footing()
-	story.fear.ring = clampf((next_beat-beat_clock)/beat_interval,0,1)
-	speed = move_toward(speed,STAIR_SPEED*(.3 if stumble>0 else 1.0),delta*12)
-	rail_s += speed*delta
-	# The further down, and the worse the breathing, the darker it gets.
-	var descent: float = rail_s/rail_lengths[-1]
-	story.fear.darkness = clampf(.25+descent*.25+(1-breath/100)*.45,0,.92)
-	_place_on_rail(delta,0)
-	p.camera.position.y = 1.62+sin(clock*12)*.04-stumble*.5
-	if rail_s >= rail_lengths[-1]: begin_segment(Segment.GATE)
-
-# --- Gate: chained shut, so wrench open the basement door in the guard's booth ---
-
-func _tick_gate(delta: float) -> void:
-	var p: CharacterBody3D = world.player
-	if approaching:
-		speed = move_toward(speed,GATE_SPEED,delta*14)
-		rail_s += speed*delta
-		_place_on_rail(delta,0)
-		if rail_s >= rail_lengths[-1]:
-			approaching = false
-			rattle = RATTLE_SECONDS
-			p.rotation.y = PI
-			p.camera.rotation = Vector3(.05,0,0)
-			looking_back = false
-			look_yaw = 0
-			world.soundscape.cue("lock",-4)
-			world.soundscape.at("door_bang",GATE_STOP+Vector3(0,1.2,1.6),-6)
-		return
-	if rattle > 0:
-		# Both hands on the chain: it holds. Then the eye goes to the booth door.
-		rattle -= delta
-		p.camera.position.x = sin(clock*38)*.03
-		p.rotation.y = lerp_angle(p.rotation.y,PI if rattle > .5 else atan2(-(BOOTH_DOOR.x-p.global_position.x),-(BOOTH_DOOR.z-p.global_position.z)),clampf(delta*6,0,1))
-		if rattle <= 0:
-			p.camera.position.x = 0
-			var line: Array[Vector3] = [p.global_position,BOOTH_DOOR+Vector3(-.75,0,0)]
-			_set_rail(line)
-			speed = 3.0
-		return
-	if rail_s < rail_lengths[-1]:
-		speed = move_toward(speed,4.5,delta*10)
-		rail_s += speed*delta
-		_place_on_rail(delta,0)
-		if rail_s >= rail_lengths[-1]: p.rotation.y = -PI/2
-	gap -= GATE_DRAIN*(1-.18*assist)*delta
-	booth_door.rotation.y = move_toward(booth_door.rotation.y,0.0,delta*.6)
-	story.fear.darkness = clampf(.72-gap/GATE_START_GAP*.6,.1,.8)
-	beat_clock -= delta
-	if beat_clock <= 0:
-		var calm := clampf(gap/GATE_START_GAP,0,1)
-		story.fear.beat(lerpf(-2,-14,calm))
-		beat_clock = lerpf(.42,1.1,calm)
-
-# E at the jammed door: each pull wrenches it a little further, the last one tears it open.
-func pull_door() -> bool:
-	if segment != Segment.GATE or approaching or rattle > 0 or rail_s < rail_lengths[-1] - .05: return false
-	pulls += 1
-	booth_door.rotation.y = -float(pulls)/DOOR_PULLS*.35
-	world.soundscape.at("door",BOOTH_DOOR+Vector3.UP,-10)
-	world.player.camera.position.x = .03 if pulls % 2 == 0 else -.03
-	if pulls >= DOOR_PULLS: _finish()
-	return true
+func _on_kick(power: float) -> void:
+	kick_sound.pitch_scale = randf_range(0.85, 1.1)
+	kick_sound.volume_db = -6
+	kick_sound.play()
+	booth_door.rotation.y = -0.03 - power * 0.12
+	world.player.startle = maxf(world.player.startle, 0.35)
+	world.player.camera.position.z = -0.12
 
 func _finish() -> void:
 	var p: CharacterBody3D = world.player
+	report[attempts].open = time_limit - time_left
 	active = false
 	segment = Segment.NONE
-	for audio in [music,breathing,steps]: audio.stop()
-	ghost.vanish()
+	step = ""
+	for audio in [music,breathing]: audio.stop()
+	guard.stop()
+	_beam_off()
+	breaker.close()
 	hint.hide()
+	timer_panel.hide()
+	_set_live(false)
 	story.fear.clear()
 	booth_door.rotation.y = -1.6
+	door_block.get_child(0).disabled = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	world.soundscape.at("door_bang",BOOTH_DOOR+Vector3.UP,-4)
+	world.soundscape.at("door_bang", BOOTH_DOOR + Vector3.UP, -2)
 	p.camera.rotation = Vector3.ZERO
-	p.camera.position.x = 0
-	story.runner.restore_pose()
+	p.camera.position = Vector3(0, 1.62, 0)
+	story.subtitle("Bác bảo vệ", "Đứng lại!", 1.4)
 	story.enter_basement()
 
-# --- Shared pursuer ---
-
-func _record_trail(feet: Vector3) -> void:
-	travel += feet.distance_to(last_feet)
-	last_feet = feet
-	if trail.is_empty() or feet.distance_to(trail[-1].position) >= .3:
-		trail.append({"distance":travel,"position":feet})
-
-func trail_position(meters: float) -> Vector3:
-	if trail.is_empty(): return last_feet
-	if meters <= float(trail[0].distance): return trail[0].position
-	var low := 0
-	var high := trail.size()-1
-	while low+1 < high:
-		var middle := (low+high)/2
-		if float(trail[middle].distance) <= meters: low = middle
-		else: high = middle
-	var weight := clampf((meters-float(trail[low].distance))/maxf(.001,float(trail[high].distance)-float(trail[low].distance)),0,1)
-	return (trail[low].position as Vector3).lerp(trail[high].position,weight)
-
-func _update_pursuer(delta: float) -> void:
-	var p: CharacterBody3D = world.player
-	# Rubber-banding: a clean run never shakes the ghost off, and a bad run is
-	# not punished at once. Only mistakes in quick succession close the gap.
-	if segment != Segment.GATE:
-		if gap > GAP_HIGH: gap -= CATCH_UP*delta
-		elif gap < GAP_LOW: gap += EASE_OFF*delta
-	report[segment].lowest_gap = minf(report[segment].lowest_gap,gap)
-	report[segment].seconds += delta
-	if gap <= 0:
-		_caught()
-		return
-	var at := trail_position(travel-gap)
-	ghost.global_position = at
-	ghost.show()
-	var flat := Vector3(p.global_position.x,at.y,p.global_position.z)
-	if at.distance_squared_to(flat) > .01: ghost.look_at(flat)
-	var danger := clampf(1-gap/10,0,1)
-	ghost.animate(delta,danger)
-	steps.global_position = at+Vector3.UP
-	steps.volume_db = lerpf(-14,-3,danger)
-	steps.pitch_scale = 1.2+danger*.5
-	breathing.volume_db = lerpf(-22,-10,danger)
-
 func _caught() -> void:
-	fade_clock = .8
+	fade_clock = 0.9
 	restarted = false
+	step = "caught"
+	breaker.close()
+	_set_live(false)
+	hint.hide()
 	world.player.startle = 1
-	world.hit_flash = .7
-	story.fear.ring = -1
-	world.soundscape.cue("hurt",-8)
-	story.subtitle("Bác bảo vệ","Bắt được rồi nhé!",1.4)
-	if ghost.visible: ghost.global_position = trail_position(travel-.4)
+	world.hit_flash = 0.6
+	guard.whistle_now()
+	story.subtitle("Bác bảo vệ", "Bắt được rồi nhé!", 1.4)
 
-func _tick_fade(delta: float) -> void:
-	fade_clock = maxf(0,fade_clock-delta)
-	story.fear.fade = clampf(1-absf(fade_clock-.4)/.4,0,1)
-	if fade_clock < .4 and not restarted:
-		restarted = true
-		_restart_position()
-		begin_segment(segment)
-	if fade_clock <= 0: story.fear.fade = 0
+# --- Clock and the guard coming ---
 
-func _restart_position() -> void:
-	var p: CharacterBody3D = world.player
+func _physics_process(delta: float) -> void:
+	if not active or not world.simulation_active(): return
+	breaker.tick(delta)
+	clock += delta
+	if fade_clock > 0:
+		fade_clock = maxf(0, fade_clock - delta)
+		story.fear.fade = clampf(1 - absf(fade_clock - .45) / .45, 0, 1)
+		if fade_clock < .45 and not restarted:
+			restarted = true
+			attempts += 1
+			var p: CharacterBody3D = world.player
+			p.global_position = RETRY_SPOT
+			p.rotation.y = atan2(-(BOOTH_DOOR.x - RETRY_SPOT.x), -(BOOTH_DOOR.z - RETRY_SPOT.z))
+			p.camera.rotation = Vector3.ZERO
+			p.camera.position = Vector3(0, 1.62, 0)
+			_begin_break_in(true)
+		if fade_clock <= 0: story.fear.fade = 0
+		return
 	match segment:
-		Segment.CORRIDOR: p.global_position = CORRIDOR_RAIL[0]
-		Segment.STAIRS: p.global_position = STAIR_RAIL[0]
-		Segment.GATE: p.global_position = Vector3(1.5,F1,66)
-	p.camera.position = Vector3(0,1.62,0)
+		Segment.CALL:
+			if clock >= 2.3 and not said_second:
+				said_second = true
+				story.subtitle("Bác bảo vệ", "Đứng yên đó cho tao! Tao xuống ngay đây!", 2.4)
+			if clock >= CALL_SECONDS: _begin_break_in(false)
+		Segment.BREAK_IN:
+			if step == "open": return
+			time_left = maxf(0.0, time_left - delta)
+			_tick_guard()
+			timer_label.text = "%.1f" % time_left
+			timer_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25) if time_left < 6.0 else Color(1.0, 0.86, 0.62))
+			timer_bar.value = time_left / time_limit
+			var calm := clampf(time_left / time_limit, 0, 1)
+			breathing.volume_db = lerpf(-8, -20, calm)
+			beat_clock -= delta
+			if beat_clock <= 0:
+				story.fear.beat(lerpf(-3, -16, calm))
+				beat_clock = lerpf(.4, 1.1, calm)
+			if time_left <= 0.0: _caught()
+	if guard_phase == "window": _aim_beam()
+
+func _tick_guard() -> void:
+	if guard_phase == "window" and time_left <= YARD_SECONDS + STAIRS_SECONDS:
+		# Gone from the window: on the stairs now.
+		guard_phase = "stairs"
+		guard.stop()
+		_beam_off()
+	elif guard_phase == "stairs" and time_left <= YARD_SECONDS:
+		guard_phase = "yard"
+		var route: Array = YARD_ROUTE.duplicate()
+		guard.place(route[0], route[1])
+		guard.run([Guard.sprint(route.slice(1), Guard.path_length(route.slice(1), route[0]) / maxf(0.5, time_left))])
+		story.subtitle("Bác bảo vệ", "Đứng lại đó!", 1.6)
+
+func _aim_beam() -> void:
+	var p: CharacterBody3D = world.player
+	var from: Vector3 = guard.global_position + Vector3(0.25, 1.45, 0.35)
+	var target: Vector3 = p.global_position + Vector3.UP * 1.1
+	beam.global_position = from
+	if from.distance_squared_to(target) > 1.0: beam.look_at(target)
+	beam_glare.global_position = from + (target - from).normalized() * 0.3
+	guard.yaw_goal = atan2(-(target.x - guard.global_position.x), -(target.z - guard.global_position.z))
+
+# --- Player pose while locked ---
 
 func tick(delta: float) -> void:
-	if not active or not world.simulation_active(): return
 	var p: CharacterBody3D = world.player
-	p.startle = maxf(0,p.startle-delta*1.6)
-	p.camera.position.x = sin(p.startle*51)*p.startle*.02
-	stumble = maxf(0,stumble-delta)
-	hint_time = maxf(0,hint_time-delta)
-	hint.visible = hint_time > 0
-	if fade_clock > 0:
-		_tick_fade(delta)
-		return
-	clock += delta
-	match segment:
-		Segment.CORRIDOR: _tick_corridor(delta)
-		Segment.STAIRS: _tick_stairs(delta)
-		Segment.GATE: _tick_gate(delta)
-	if active: _update_pursuer(delta)
-
-func held(code: int) -> bool:
-	return held_keys.get(code,Input.is_physical_key_pressed(code))
-
-func look(relative: Vector2) -> void:
-	var p: CharacterBody3D = world.player
-	look_yaw = clampf(look_yaw-relative.x*p.LOOK_SENSITIVITY,-1.2,1.2)
-	p.camera.rotation.x = clampf(p.camera.rotation.x-relative.y*p.LOOK_SENSITIVITY,-1.1,1.1)
-
-func _input(event: InputEvent) -> void:
-	if not active: return
-	if event is InputEventKey and not event.pressed:
-		var released: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
-		held_keys[released] = false
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and not event.pressed:
-		looking_back = false
-		world.player.camera.rotation.y = 0
-	if not world.simulation_active() or fade_clock > 0: return
-	if event is InputEventKey:
-		var code: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
-		if code == KEY_E and event.pressed and not event.echo and segment == Segment.GATE:
-			pull_door()
-			get_viewport().set_input_as_handled()
-			return
-		if code in [KEY_A,KEY_D,KEY_SPACE,KEY_CTRL]:
-			held_keys[code] = event.pressed
-			if event.pressed and not event.echo:
-				if code == KEY_SPACE:
-					if segment == Segment.STAIRS: press_beat()
-					else: jump()
-				if code == KEY_CTRL: duck()
-			get_viewport().set_input_as_handled()
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		looking_back = true
-		world.player.camera.rotation.y = PI
-		get_viewport().set_input_as_handled()
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		look(event.relative)
-		get_viewport().set_input_as_handled()
+	p.velocity = Vector3.ZERO
+	p.startle = maxf(0, p.startle - delta * 1.6)
+	p.camera.position.x = sin(p.startle * 51) * p.startle * .03
+	p.camera.position.z = move_toward(p.camera.position.z, 0.0, delta * 1.2)
+	if segment == Segment.CALL:
+		# Turned round by the shout, looking up at the torch in the window.
+		var look: Vector3 = guard.global_position + Vector3.UP * 1.5 - p.camera.global_position
+		var yaw := atan2(-look.x, -look.z)
+		p.rotation.y = lerp_angle(p.rotation.y, yaw, clampf(delta * 3.0, 0, 1))
+		var pitch := atan2(look.y, Vector2(look.x, look.z).length())
+		p.camera.rotation.x = lerp_angle(p.camera.rotation.x, pitch, clampf(delta * 3.0, 0, 1))
+	elif step in ["screws", "kick"]:
+		p.global_position = DOOR_STAND
+		p.rotation.y = lerp_angle(p.rotation.y, -PI / 2, clampf(delta * 8.0, 0, 1))
+		p.camera.rotation.x = lerp_angle(p.camera.rotation.x, -0.12 if step == "screws" else -0.05, clampf(delta * 6.0, 0, 1))
 
 func _process(_delta: float) -> void:
 	var paused: bool = not world.simulation_active()
-	for audio in [music,breathing,steps]: audio.stream_paused = paused
-	if paused and ghost.visible: ghost.model.animation.speed_scale = 0
+	for audio in [music,breathing]: audio.stream_paused = paused
+	# Back from the pause menu the mouse comes back captured; the screws need a free cursor.
+	if active and step == "screws" and not paused and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
 
 func _exit_tree() -> void:
-	for audio in [music,breathing,steps]:
+	for audio in [music,breathing]:
 		if audio != null:
 			audio.stream_paused = false
 			audio.stop()

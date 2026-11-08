@@ -39,11 +39,8 @@ func setup(school: Node3D) -> void:
 		fragment.name = "Memory_" + memories[i].id
 		add_child(fragment)
 		fragments.append(fragment)
-	soul = preload("res://scripts/student_soul.gd").new()
-	soul.quest = self
-	soul.position = SOUL_POSITION
-	soul.name = "An"
-	add_child(soul)
+	# An's ghost no longer waits on the rooftop: the story has no ghosts. `soul` stays null and
+	# every use of it checks for that; the clues and the journal are unchanged.
 	_build_ui()
 	request = HTTPRequest.new()
 	request.timeout = 90
@@ -68,14 +65,14 @@ func collect(index: int, actor: CharacterBody3D) -> bool:
 	world.soundscape.cue("memory")
 	world.notify(memories[index].title + " · J")
 	if found.size() == memories.size():
-		world.notify("Đủ manh mối · Tìm An trên sân thượng khu A")
+		world.notify("Đủ manh mối · J")
 	return true
 
 func fragment_available(index: int) -> bool:
 	return index >= 0 and index < memories.size() and memories[index].get("source", "") != "opening" and (world.progression == null or world.progression.briefing_complete)
 
 func safe_to_talk() -> bool:
-	if not night_active() or world.player.is_hidden() or world.player.global_position.distance_to(soul.global_position) > 2.8:
+	if soul == null or not night_active() or world.player.is_hidden() or world.player.global_position.distance_to(soul.global_position) > 2.8:
 		return false
 	if world.is_soul_sanctuary(world.player.global_position):
 		return true
@@ -87,7 +84,7 @@ func safe_to_talk() -> bool:
 	return true
 
 func begin_comfort(actor: CharacterBody3D) -> bool:
-	if dialog.visible or actor != world.player or actor.get_interaction_target() != soul or not safe_to_talk():
+	if soul == null or dialog.visible or actor != world.player or actor.get_interaction_target() != soul or not safe_to_talk():
 		world.notify("Chưa an toàn")
 		return false
 	if world.progression != null and not world.progression.ready_for_rescue():
@@ -272,7 +269,7 @@ func _received(result: int, status: int, _headers: PackedStringArray, body: Pack
 func _finish_conversation() -> void:
 	if not dialog.visible or pending or not ready_for_rescue(): return
 	if world.survival.mark_soul_rescued():
-		soul.released = true
+		if soul != null: soul.released = true
 		close()
 		world.soundscape.cue("rescue", -13)
 		world.notify("An đã được giải thoát · Sống sót tới 06:00")
@@ -310,7 +307,7 @@ func reset() -> void:
 	accepted.clear()
 	for fragment in fragments:
 		fragment.reset_fragment()
-	soul.released = false
+	if soul != null: soul.released = false
 
 func toggle_journal() -> void:
 	if dialog.visible:

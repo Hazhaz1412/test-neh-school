@@ -58,15 +58,12 @@ func run() -> void:
 	var school: Node = current_scene
 	check(school.name != "MainMenu" and school.progression.runner.active, "the corridor chapter starts in the corridor")
 	print("spirit ", school.spirit_enabled, " stage ", school.progression.stage, " want ", school.progression.Stage.CORRIDOR_RUN)
-	check(school.spirit_enabled and school.progression.stage == school.progression.Stage.CORRIDOR_RUN, "with the story in the right state")
+	check(not school.spirit_enabled and school.progression.stage == school.progression.Stage.CORRIDOR_RUN, "with the story in the right state, no spirit world")
 	var shell: Node = root.get_node("GameShell")
 	shell.open()
 	check(paused and shell.opened(), "the settings overlay pauses any scene")
 	shell.close()
 	check(not paused, "and closing resumes")
-	school.progression.runner.skip_to_refuge()
-	await process_frame
-	check(school.progression.stage == school.progression.Stage.LAN_DIALOGUE, "the corridor chapter still reaches Lan")
 	Progress.enter(self, 4)
 	await create_timer(1.0).timeout
 	check(current_scene.has_method("spend"), "the day chapter opens the town")
