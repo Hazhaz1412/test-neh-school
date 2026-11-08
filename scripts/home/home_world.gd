@@ -2,6 +2,7 @@ extends Node3D
 # Peter's house: living room, kitchen, dining table and bathroom below, bedroom above.
 # The first quiet place in the game, and where the phone and the web come alive.
 const Builder := preload("res://scripts/town/town_builder.gd")
+const Door := preload("res://scripts/home/home_door.gd")
 const WIDTH := 6.4
 const DEPTH := 13.0
 const STOREY := 2.9
@@ -11,6 +12,9 @@ const STAIR_LEFT := 5.2
 const STAIR_FOOT := 12.4
 const STAIR_TOP := 7.9
 const WARM := Color(0.93, 0.92, 0.88)
+# The front door, in the street-side wall beside the living room window.
+const FRONT_DOOR := [3.7, 4.65]
+const DOOR_HEIGHT := 2.1
 var builder: RefCounted
 var batch: RefCounted
 var solids: StaticBody3D
@@ -28,6 +32,10 @@ var interactions: Array = []
 var current := {}
 var thought_time := 0.0
 var card: Label
+var front_door: Node3D
+var front_touch: Dictionary
+# Set by the story when Peter is meant to leave; until then the front door stays shut.
+var exit_action: Callable
 
 func _ready() -> void:
 	sky = preload("res://scripts/town/town_sky.gd").new()
@@ -50,6 +58,7 @@ func _ready() -> void:
 	solids = StaticBody3D.new()
 	add_child(solids)
 	_build_shell()
+	_build_doors()
 	_build_stairs()
 	_furnish()
 	var meshes := Node3D.new()
@@ -127,13 +136,13 @@ func _build_shell() -> void:
 	batch.box("paint", Transform3D.IDENTITY, Vector3(STAIR_LEFT * 0.5, STOREY - 0.13, DEPTH * 0.5), Vector3(STAIR_LEFT, 0.02, DEPTH), Color(0.95, 0.94, 0.91), false)
 	batch.box("paint", Transform3D.IDENTITY, Vector3((STAIR_LEFT + WIDTH) * 0.5, STOREY - 0.13, STAIR_TOP * 0.5), Vector3(WIDTH - STAIR_LEFT, 0.02, STAIR_TOP), Color(0.95, 0.94, 0.91), false)
 	# The bedroom is its own room; the landing and stairs stay outside it.
-	_wall(Vector2(0, 6.8), Vector2(WIDTH, 6.8), STOREY, "paint", Color(0.86, 0.90, 0.88), [[3.6, 4.5, 0.0, 2.1]])
+	_wall(Vector2(0, 6.8), Vector2(WIDTH, 6.8), STOREY, "paint", Color(0.86, 0.90, 0.88), [[3.6, 4.5, 0.0, DOOR_HEIGHT]])
 	for run in [[Vector2(0.08, 0.1), Vector2(0.08, DEPTH - 0.1)], [Vector2(WIDTH - 0.08, 0.1), Vector2(WIDTH - 0.08, DEPTH - 0.1)]]:
 		for storey in [0.0, STOREY]:
 			var mid: Vector2 = (run[0] + run[1]) * 0.5
 			batch.box("paint", Transform3D.IDENTITY, Vector3(mid.x, storey + 0.05, mid.y), Vector3(0.03, 0.1, DEPTH), Color(0.42, 0.31, 0.22))
 	for storey in [0.0, STOREY]:
-		var south := [[1.2, 3.0, 0.9, 2.2]] if storey == 0.0 else [[1.4, 4.2, 0.85, 2.3]]
+		var south := [[1.2, 3.0, 0.9, 2.2], [FRONT_DOOR[0], FRONT_DOOR[1], 0.0, DOOR_HEIGHT + 0.05]] if storey == 0.0 else [[1.4, 4.2, 0.85, 2.3]]
 		_wall(Vector2(0, DEPTH), Vector2(WIDTH, DEPTH), storey, "paint", WARM, south)
 		_wall(Vector2(0, 0), Vector2(WIDTH, 0), storey, "paint", WARM, [[3.6, 5.2, 1.1, 2.2]] if storey == 0.0 else [[2.0, 4.0, 1.0, 2.2]])
 		_wall(Vector2(0, 0), Vector2(0, DEPTH), storey, "paint", WARM)
@@ -143,11 +152,41 @@ func _build_shell() -> void:
 	_pane(Vector3(4.4, 1.65, 0.0), 1.6, 1.1, true)
 	_pane(Vector3(3.0, STOREY + 1.6, 0.0), 2.0, 1.2, true)
 	# Bathroom partition with its doorway.
-	_wall(Vector2(0, 3.2), Vector2(2.4, 3.2), 0.0, "paint", Color(0.80, 0.88, 0.90), [[1.3, 2.15, 0.0, 2.1]])
+	_wall(Vector2(0, 3.2), Vector2(2.4, 3.2), 0.0, "paint", Color(0.80, 0.88, 0.90), [[1.3, 2.15, 0.0, DOOR_HEIGHT]])
 	_wall(Vector2(2.4, 0), Vector2(2.4, 3.2), 0.0, "paint", Color(0.80, 0.88, 0.90))
-	batch.box("paint", Transform3D.IDENTITY, Vector3(1.73, 1.05, 3.2), Vector3(0.84, 2.1, 0.05), Color(0.40, 0.28, 0.20))
 	_rail(Vector3(STAIR_LEFT, STOREY, STAIR_TOP), Vector3(STAIR_LEFT, STOREY, STAIR_FOOT + 0.25))
 	_rail(Vector3(STAIR_LEFT, STOREY, STAIR_FOOT + 0.25), Vector3(WIDTH, STOREY, STAIR_FOOT + 0.25))
+
+# Real doors in the three openings. All swing into the room they close off.
+func _build_doors() -> void:
+	var inward := Vector3(0, 0, -1)
+	front_door = Door.fit(Vector3(FRONT_DOOR[1], 0, DEPTH), Vector3(FRONT_DOOR[0], 0, DEPTH), DOOR_HEIGHT + 0.05, WALL, inward)
+	add_child(front_door)
+	front_touch = {"position": front_door.touch_point(), "label": "Cửa chính", "action": _front_door}
+	interactions.append(front_touch)
+	var bathroom := Door.fit(Vector3(2.15, 0, 3.2), Vector3(1.3, 0, 3.2), DOOR_HEIGHT, WALL, inward)
+	add_child(bathroom)
+	_door_touch(bathroom, "cửa phòng tắm")
+	# The bedroom door is left open: coming home at night, Peter walks straight in.
+	var bedroom := Door.fit(Vector3(4.5, STOREY, 6.8), Vector3(3.6, STOREY, 6.8), DOOR_HEIGHT, WALL, inward, true)
+	add_child(bedroom)
+	_door_touch(bedroom, "cửa phòng ngủ")
+
+func _door_touch(door: Node3D, door_name: String) -> void:
+	var entry := {"position": door.touch_point(), "label": ("Đóng " if door.is_open else "Mở ") + door_name, "action": door.toggle}
+	door.toggled.connect(func(open: bool): entry.label = ("Đóng " if open else "Mở ") + door_name)
+	interactions.append(entry)
+
+func _front_door() -> void:
+	if not exit_action.is_valid():
+		think("Tối rồi. Mai hẵng ra ngoài." if story.prologue else "Chưa có lý do ra ngoài lúc này.")
+		return
+	front_door.set_open(true)
+	exit_action.call()
+
+func set_exit(action: Callable) -> void:
+	exit_action = action
+	front_touch.label = "Ra khỏi nhà"
 
 func _rail(from: Vector3, to: Vector3) -> void:
 	var middle := (from + to) * 0.5

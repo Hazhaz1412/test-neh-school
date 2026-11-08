@@ -31,27 +31,19 @@ func run() -> void:
 	await shot("consent")
 	story.panel.queue_free()
 	story.panel = null
-	home.goal.text = "Mở điện thoại · Tab"
-	home.phone.add_thread("lan", "Lan", "Vừa truy cập", Color(0.55, 0.38, 0.62), "L")
-	home.phone.receive("lan", story.LAN_TALK[0].say[0])
+	home.goal.text = "Bảy Rô vừa nhắn · Mở điện thoại"
+	home.phone.add_thread("bayro", "Bảy Rô", "Vừa truy cập", Color(0.93, 0.70, 0.16), "B")
+	home.phone.receive("bayro", story.BAYRO_FIRST[true])
 	await shot("banner")
 	home.phone.toggle()
 	await wait(4.0)
 	home.phone.show_list()
 	await shot("phone-list")
-	home.phone.open_thread("lan")
-	for beat in range(3):
-		for line in story.LAN_TALK[beat].say:
-			home.phone.receive("lan", line)
-		if beat < 2:
-			home.phone.send_mine("lan", story.LAN_TALK[beat].ask[0])
-	home.phone.offer_replies(story.LAN_TALK[2].ask)
+	home.phone.open_thread("bayro")
+	for line in story.BAYRO_TALK:
+		home.phone.receive("bayro", line)
+	home.phone.offer_replies(story.BAYRO_ASK)
 	await shot("phone-chat")
 	home.phone.clear_replies()
-	home.phone.add_thread("unknown", " ", " ", Color(0.70, 0.72, 0.74), "")
-	home.phone.open_thread("unknown")
-	for size in story.GARBLED:
-		home.phone.receive("unknown", "x".repeat(size), true)
-	await shot("phone-stranger")
 	home.phone.toggle()
 	quit()

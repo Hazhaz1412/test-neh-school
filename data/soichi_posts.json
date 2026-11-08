@@ -1,0 +1,172 @@
+{
+  "posts": [
+    {
+      "id": "nam-2009",
+      "handle": "thuongthuong.neh",
+      "name": "Thương",
+      "time": "3 giờ",
+      "text": "Có ai biết vụ năm 2009 ở NEH không? Mẹ mình kể hồi đó có một bạn lớp 10A6 tự nhiên nghỉ học, trường nói là chuyển trường mà không ai biết chuyển đi đâu. Hỏi thêm thì mẹ đổi chủ đề.",
+      "likes": 1240,
+      "replies": [
+        {
+          "handle": "anhkhoa_",
+          "name": "Anh Khoa",
+          "time": "2 giờ",
+          "text": "Hỏi chi chuyện đó, nhà trường mà biết là bị mời lên phòng đó."
+        },
+        {
+          "handle": "bay.ro",
+          "name": "Bảy Rô",
+          "time": "2 giờ",
+          "text": "Nếu muốn biết sự thật hãy ib tôi",
+          "contact": "bayro"
+        },
+        {
+          "handle": "linhcute.11a3",
+          "name": "Linh",
+          "time": "1 giờ",
+          "text": "Ông này lần nào cũng vô comment vậy, mà chưa thấy ai dám ib."
+        },
+        {
+          "handle": "thuongthuong.neh",
+          "name": "Thương",
+          "time": "40 phút",
+          "text": "Ủa chú là ai vậy?"
+        }
+      ]
+    },
+    {
+      "id": "giac-mo",
+      "handle": "dem.khong.ngu",
+      "name": "mất ngủ",
+      "time": "5 giờ",
+      "text": "Có ai từng mơ thấy mình đi trong trường NEH ban đêm không. Mình mơ ba lần rồi. Lần nào cũng có một phòng sáng đèn ở tầng trệt, trong phòng chỉ có một con gấu bông, rồi cuối hành lang có tiếng gõ đều đều như ai đang đếm.",
+      "likes": 873,
+      "replies": [
+        {
+          "handle": "minhthu.2k9",
+          "name": "Minh Thư",
+          "time": "4 giờ",
+          "text": "Đọc tới con gấu bông là nổi da gà. Phòng 103 hả?"
+        },
+        {
+          "handle": "dem.khong.ngu",
+          "name": "mất ngủ",
+          "time": "4 giờ",
+          "text": "Sao bạn biết số phòng?"
+        },
+        {
+          "handle": "minhthu.2k9",
+          "name": "Minh Thư",
+          "time": "3 giờ",
+          "text": "Thôi mình không nói nữa."
+        }
+      ]
+    },
+    {
+      "id": "camera",
+      "handle": "hocsinhngoan",
+      "name": "học sinh ngoan",
+      "time": "Hôm qua",
+      "text": "Trường mới gắn thêm hai chục cái camera, chỗ nào cũng có. Trừ nhà vệ sinh tầng ba với hành lang sau dãy B. Ai hiểu thì hiểu.",
+      "likes": 2310,
+      "replies": [
+        {
+          "handle": "bao.ngoc.12a1",
+          "name": "Bảo Ngọc",
+          "time": "Hôm qua",
+          "text": "Năm nào cũng có đứa ra đó rồi về áo rách."
+        },
+        {
+          "handle": "hocsinhngoan",
+          "name": "học sinh ngoan",
+          "time": "Hôm qua",
+          "text": "Nói nhỏ thôi."
+        }
+      ]
+    },
+    {
+      "id": "day-thung",
+      "handle": "khongten.0909",
+      "name": "không tên",
+      "time": "6 giờ",
+      "text": "Ai biết chỗ nào bán dây thừng loại chắc với đồ mở khóa không. Cần gấp, đừng hỏi để làm gì.",
+      "likes": 37,
+      "replies": [
+        {
+          "handle": "huy.dotnet",
+          "name": "Huy",
+          "time": "5 giờ",
+          "text": "Nghe là thấy không ổn rồi."
+        },
+        {
+          "handle": "muoi.gio",
+          "name": "Mười Gió",
+          "time": "5 giờ",
+          "text": "Cái gì cũng có. Ib.",
+          "contact": "muoigio"
+        },
+        {
+          "handle": "khongten.0909",
+          "name": "không tên",
+          "time": "4 giờ",
+          "text": "Đã ib."
+        }
+      ]
+    },
+    {
+      "id": "thu-nhan",
+      "handle": "an.danh.0311",
+      "name": "ẩn danh",
+      "time": "2 ngày",
+      "text": "Năm lớp 10 mình đứng nhìn tụi nó lấy đồ của một bạn mà không làm gì. Tụi nó cầm gậy, cười như đang chơi. Mười mấy năm rồi mình vẫn còn mơ thấy cái hành lang đó.",
+      "likes": 4520,
+      "replies": [
+        {
+          "handle": "nguoiquadi",
+          "name": "người qua đường",
+          "time": "2 ngày",
+          "text": "Bạn đó giờ sao rồi?"
+        },
+        {
+          "handle": "an.danh.0311",
+          "name": "ẩn danh",
+          "time": "2 ngày",
+          "text": "Mình không biết. Không ai biết."
+        }
+      ]
+    },
+    {
+      "id": "thong-bao",
+      "handle": "tram.anh.neh",
+      "name": "Trâm Anh",
+      "time": "3 ngày",
+      "text": "Trường lại đăng \"môi trường học đường an toàn, thân thiện\" lần thứ ba trong tháng. Càng đăng mình càng thấy lạ.",
+      "likes": 690,
+      "replies": [
+        {
+          "handle": "ba.khoi.10a1",
+          "name": "Ba Khôi",
+          "time": "3 ngày",
+          "text": "Phụ huynh hỏi thì được trả lời đúng một câu: mâu thuẫn bạn bè, đã nhắc nhở."
+        }
+      ]
+    },
+    {
+      "id": "an-vat",
+      "handle": "anvat.bentrau",
+      "name": "Ăn Vặt Bến Trầu",
+      "time": "4 ngày",
+      "text": "Xe bánh tráng nướng đầu hẻm 27 mở lại rồi nha mọi người, vẫn giá cũ. Tối nay có thêm trứng cút.",
+      "likes": 155,
+      "replies": [
+        {
+          "handle": "duy2k4",
+          "name": "Duy",
+          "time": "4 ngày",
+          "text": "Cuối cùng cũng mở."
+        }
+      ]
+    }
+  ]
+}

@@ -1,42 +1,62 @@
 extends Control
-# In-game phone running "Nối", a fictional messenger. It uses the conventions every chat app
-# shares and none of a real app's name, logo or colours.
-const SCREEN := Vector2(392, 780)
-const INK := Color(0.09, 0.11, 0.13)
-const PAPER := Color(0.93, 0.95, 0.95)
-const BRAND := Color(0.11, 0.62, 0.66)
-const MINE := Color(0.72, 0.92, 0.90)
-const THEIRS := Color(1, 1, 1)
-const NIGHT := Color(0.07, 0.08, 0.10)
-const GLYPHS := "ⱠꝒʭɮꞀƕȹʬȸꜩƢƾʨʫȣɤ▓▒░╬╪┼∷⁂"
+# Peter's phone: a modern full-screen phone with a home screen of apps. Only two open: Fake (the
+# social feed) and Tili (chat). Everything else is set dressing and only wiggles when tapped.
+# The look follows today's phones without any real brand's name, logo or artwork.
+const Kit := preload("res://scripts/home/phone/phone_kit.gd")
+const Fake := preload("res://scripts/home/phone/phone_fake.gd")
+const Tili := preload("res://scripts/home/phone/phone_tili.gd")
+const SCREEN := Vector2(400, 860)
+const FRAME := 7
+const SCREEN_RADIUS := 54
+const WALL_TOP := Color(0.09, 0.11, 0.26)
+const WALL_BOTTOM := Color(0.38, 0.17, 0.36)
+const GRID_APPS := [["calendar", "Lịch"], ["photos", "Ảnh"], ["camera", "Camera"], ["clock", "Đồng hồ"],
+	["weather", "Thời tiết"], ["maps", "Bản đồ"], ["notes", "Ghi chú"], ["settings", "Cài đặt"]]
+const DOCK_APPS := ["phone", "tili", "fake", "music"]
+const ICON := 62
+const NOTICE_SECONDS := 6.0
 signal reply_chosen(index: int)
 signal thread_opened(id: String)
 signal feed_read
-var threads := {}
-var order: Array[String] = []
-var open_id := ""
 var shell: PanelContainer
-var list_page: VBoxContainer
-var chat_page: VBoxContainer
-var thread_rows: VBoxContainer
-var title_label: Label
-var status_label: Label
-var messages: VBoxContainer
-var scroller: ScrollContainer
-var replies: VBoxContainer
-var input_hint: Label
-var typing_row: Control
+var display: Control
+var home_page: Control
+var fake: Control
+var tili: Control
+var status_bar: Control
+var clock_label: Label
+var home_bar: Button
+var notice: PanelContainer
+var notice_title: Label
+var notice_text: Label
+var notice_id := ""
+var notice_clock := 0.0
 var banner: PanelContainer
 var banner_title: Label
 var banner_text: Label
-var clock_label: Label
-var scrambled: Array = []
-var feed_page: VBoxContainer
-var feed_list: VBoxContainer
-var feed_scroll: ScrollContainer
-var feed_finished := false
-var scramble_clock := 0.0
-var rng := RandomNumberGenerator.new()
+var banner_icon: HBoxContainer
+var pending := {}
+var badges := {}
+var app := "home"
+# New posts waiting in Fake; the badge clears once the app is opened.
+var fake_new := 0:
+	set(value):
+		fake_new = value
+		_refresh_badges()
+
+# The story and tests talk to the chat and feed through the phone, as before the apps existed.
+var threads: Dictionary:
+	get: return tili.threads
+var open_id: String:
+	get: return tili.open_id
+var replies: VBoxContainer:
+	get: return tili.replies
+var scrambled: Array:
+	get: return tili.scrambled
+var status_label: Label:
+	get: return tili.status_label
+var feed_list: VBoxContainer:
+	get: return fake.feed_list
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -45,301 +65,386 @@ func _ready() -> void:
 	theme = Theme.new()
 	theme.default_font = ThemeDB.fallback_font
 	_build_shell()
-	_build_list()
-	_build_chat()
+	_build_home()
+	fake = Fake.new()
+	display.add_child(fake)
+	fake.build(SCREEN.x)
+	fake.feed_read.connect(func(): feed_read.emit())
+	tili = Tili.new()
+	display.add_child(tili)
+	tili.build()
+	tili.clock = func(): return clock_label.text
+	tili.reply_chosen.connect(func(index): reply_chosen.emit(index))
+	tili.thread_opened.connect(_on_thread_opened)
+	tili.unread_changed.connect(_refresh_badges)
+	_build_overlays()
 	_build_banner()
+	go_home()
 	shell.hide()
 
-func _box(colour: Color, radius := 0, border := 0, edge := Color.BLACK) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = colour
-	box.set_corner_radius_all(radius)
-	box.set_border_width_all(border)
-	box.border_color = edge
-	box.anti_aliasing_size = 0.8
-	return box
-
-func _text(content: String, size_px: int, colour: Color, parent: Node = null) -> Label:
-	var label := Label.new()
-	label.text = content
-	label.add_theme_font_size_override("font_size", size_px)
-	label.add_theme_color_override("font_color", colour)
-	if parent != null:
-		parent.add_child(label)
-	return label
+# --- Frame and overlays -----------------------------------------------------------------------
 
 func _build_shell() -> void:
 	shell = PanelContainer.new()
-	shell.add_theme_stylebox_override("panel", _box(NIGHT, 44, 7, Color(0.19, 0.20, 0.23)))
+	var frame := Kit.box(Color.BLACK, SCREEN_RADIUS + FRAME, 3, Color(0.46, 0.44, 0.41))
+	frame.set_content_margin_all(FRAME)
+	frame.shadow_color = Color(0, 0, 0, 0.45)
+	frame.shadow_size = 18
+	shell.add_theme_stylebox_override("panel", frame)
 	add_child(shell)
-	shell.custom_minimum_size = SCREEN + Vector2(14, 14)
+	var outer := SCREEN + Vector2.ONE * FRAME * 2
+	shell.custom_minimum_size = outer
 	shell.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
-	shell.offset_left = -SCREEN.x - 84
+	shell.offset_left = -outer.x - 70
 	shell.offset_right = -70
-	shell.offset_top = -(SCREEN.y + 14) * 0.5
-	shell.offset_bottom = (SCREEN.y + 14) * 0.5
-	shell.pivot_offset = Vector2(SCREEN.x + 14.0, (SCREEN.y + 14.0) * 0.5)
-	var screen := PanelContainer.new()
-	screen.add_theme_stylebox_override("panel", _box(PAPER, 38))
-	screen.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
-	shell.add_child(screen)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 0)
-	screen.add_child(stack)
-	var status := MarginContainer.new()
-	for side in ["left", "right"]:
-		status.add_theme_constant_override("margin_" + side, 30)
-	status.add_theme_constant_override("margin_top", 12)
-	var row := HBoxContainer.new()
-	status.add_child(row)
-	clock_label = _text("05:52", 14, INK, row)
-	clock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_text("▂▄▆  63%", 12, INK, row)
-	var bar := PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", _box(Color.WHITE))
-	bar.add_child(status)
-	stack.add_child(bar)
-	list_page = VBoxContainer.new()
-	list_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	list_page.add_theme_constant_override("separation", 0)
-	stack.add_child(list_page)
-	chat_page = VBoxContainer.new()
-	chat_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	chat_page.add_theme_constant_override("separation", 0)
-	stack.add_child(chat_page)
-	_build_feed(stack)
+	shell.offset_top = -outer.y * 0.5
+	shell.offset_bottom = outer.y * 0.5
+	shell.pivot_offset = Vector2(outer.x, outer.y * 0.5)
+	var glass := PanelContainer.new()
+	glass.add_theme_stylebox_override("panel", Kit.box(Color.BLACK, SCREEN_RADIUS))
+	glass.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	shell.add_child(glass)
+	display = Control.new()
+	display.custom_minimum_size = SCREEN
+	display.clip_contents = true
+	glass.add_child(display)
 
-func _build_feed(stack: VBoxContainer) -> void:
-	feed_page = VBoxContainer.new()
-	feed_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	feed_page.add_theme_constant_override("separation", 0)
-	feed_page.hide()
-	stack.add_child(feed_page)
-	var head := PanelContainer.new()
-	var band := _box(Color(0.22, 0.31, 0.25))
-	band.content_margin_left = 10
-	band.content_margin_top = 6
-	band.content_margin_bottom = 8
-	head.add_theme_stylebox_override("panel", band)
-	var row := HBoxContainer.new()
-	head.add_child(row)
-	var back := Button.new()
-	back.text = "‹"
-	back.flat = true
-	back.add_theme_font_size_override("font_size", 28)
-	back.add_theme_color_override("font_color", Color.WHITE)
-	back.pressed.connect(show_list)
-	row.add_child(back)
-	_text("Làng Ta", 24, Color(0.98, 0.96, 0.91), row)
-	feed_page.add_child(head)
-	feed_scroll = ScrollContainer.new()
-	feed_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	feed_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	feed_scroll.get_v_scroll_bar().value_changed.connect(_feed_scrolled)
-	feed_page.add_child(feed_scroll)
-	feed_list = VBoxContainer.new()
-	feed_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	feed_list.add_theme_constant_override("separation", 8)
-	feed_scroll.add_child(feed_list)
-	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/social_posts.json"))
-	for post in data.posts:
-		_feed_card(post, data.groups.filter(func(g): return g.slug == post.group)[0].name)
+func _build_overlays() -> void:
+	status_bar = Control.new()
+	status_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	status_bar.offset_bottom = 50
+	status_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	display.add_child(status_bar)
+	clock_label = Kit.text("05:52", 16, Color.WHITE, status_bar, true)
+	clock_label.position = Vector2(42, 16)
+	var signal_icons := StatusIcons.new()
+	signal_icons.position = Vector2(SCREEN.x - 112, 19)
+	status_bar.add_child(signal_icons)
+	var island := Panel.new()
+	island.add_theme_stylebox_override("panel", Kit.box(Color.BLACK, 18))
+	island.size = Vector2(122, 36)
+	island.position = Vector2((SCREEN.x - island.size.x) * 0.5, 11)
+	island.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	display.add_child(island)
+	home_bar = Kit.plain_button(display)
+	home_bar.size = Vector2(170, 26)
+	home_bar.position = Vector2((SCREEN.x - home_bar.size.x) * 0.5, SCREEN.y - home_bar.size.y)
+	home_bar.tooltip_text = "Về màn hình chính"
+	home_bar.pressed.connect(go_home)
+	var pill := Panel.new()
+	pill.add_theme_stylebox_override("panel", Kit.box(Color.WHITE, 3))
+	pill.size = Vector2(136, 5)
+	pill.position = Vector2((home_bar.size.x - pill.size.x) * 0.5, 13)
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	home_bar.add_child(pill)
+	notice = _notice_card()
+	notice.position = Vector2(10, -130)
+	notice.size = Vector2(SCREEN.x - 20, 0)
+	display.add_child(notice)
+	var tap := Kit.plain_button(notice)
+	tap.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tap.pressed.connect(tap_notice)
 
-func _feed_card(post: Dictionary, group: String) -> void:
-	var card := PanelContainer.new()
-	var paper := _box(Color(1.0, 0.99, 0.96))
-	paper.set_content_margin_all(12)
-	card.add_theme_stylebox_override("panel", paper)
+# Signal bars and battery, drawn so they need no symbol font.
+class StatusIcons extends Control:
+	var tint := Color.WHITE
+
+	func _init() -> void:
+		size = Vector2(80, 14)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		for i in range(4):
+			var bar_height := 4.0 + i * 3.0
+			draw_rect(Rect2(i * 5.0, 13.0 - bar_height, 3.5, bar_height), tint)
+		draw_string(ThemeDB.fallback_font, Vector2(24, 12), "5G", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, tint)
+		var battery := Rect2(46, 1, 25, 12)
+		draw_rect(battery, Color(tint, 0.45), false, 1.2)
+		draw_rect(Rect2(battery.position + Vector2(2, 2), Vector2(battery.size.x * 0.63 - 4, battery.size.y - 4)), tint)
+		draw_rect(Rect2(72, 5, 2, 4), Color(tint, 0.45))
+
+func _set_tint(light: bool) -> void:
+	var tint := Color.WHITE if light else Kit.INK
+	clock_label.add_theme_color_override("font_color", tint)
+	for child in status_bar.get_children():
+		if child is StatusIcons:
+			child.tint = tint
+			child.queue_redraw()
+	home_bar.get_child(0).get_theme_stylebox("panel").bg_color = Color.WHITE if light else Kit.INK
+
+# --- Home screen ------------------------------------------------------------------------------
+
+func _build_home() -> void:
+	home_page = Control.new()
+	home_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	display.add_child(home_page)
+	var wall := TextureRect.new()
+	var gradient := GradientTexture2D.new()
+	gradient.gradient = Gradient.new()
+	gradient.gradient.set_color(0, WALL_TOP)
+	gradient.gradient.set_color(1, WALL_BOTTOM)
+	gradient.fill_from = Vector2(0.2, 0)
+	gradient.fill_to = Vector2(0.8, 1)
+	wall.texture = gradient
+	wall.stretch_mode = TextureRect.STRETCH_SCALE
+	wall.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	home_page.add_child(wall)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 4)
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.offset_top = 66
+	column.offset_left = 22
+	column.offset_right = -22
+	column.offset_bottom = -30
+	column.add_theme_constant_override("separation", 18)
+	home_page.add_child(column)
+	column.add_child(_weather_widget())
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 26)
+	grid.add_theme_constant_override("v_separation", 16)
+	column.add_child(grid)
+	for entry in GRID_APPS:
+		grid.add_child(_app_slot(entry[0], entry[1]))
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(spacer)
+	var search := PanelContainer.new()
+	search.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var pill := Kit.box(Color(1, 1, 1, 0.22), 14)
+	pill.content_margin_left = 16
+	pill.content_margin_right = 16
+	pill.content_margin_top = 5
+	pill.content_margin_bottom = 5
+	search.add_theme_stylebox_override("panel", pill)
+	Kit.text("⌕ Tìm kiếm", 13, Color.WHITE, search)
+	column.add_child(search)
+	var dock := PanelContainer.new()
+	var glass := Kit.box(Color(1, 1, 1, 0.24), 32)
+	glass.set_content_margin_all(12)
+	dock.add_theme_stylebox_override("panel", glass)
+	column.add_child(dock)
+	var dock_row := HBoxContainer.new()
+	dock_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	dock_row.add_theme_constant_override("separation", 26)
+	dock.add_child(dock_row)
+	for kind in DOCK_APPS:
+		dock_row.add_child(_app_slot(kind, ""))
+
+func _weather_widget() -> PanelContainer:
+	var card := PanelContainer.new()
+	var glass := Kit.box(Color(1, 1, 1, 0.16), 24)
+	glass.set_content_margin_all(16)
+	card.add_theme_stylebox_override("panel", glass)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 0)
 	card.add_child(column)
-	_text(post.author, 16, INK, column)
-	_text("%s · %s" % [group, post.time], 12, Color(0.48, 0.45, 0.39), column)
-	_wrapped(post.text, 15, INK, column)
-	_text("♥ %d   ☠ %d   %d bình luận" % [post.love, post.fear, post.comments.size()], 12, Color(0.43, 0.39, 0.33), column)
-	for said in post.comments:
-		_wrapped("%s: %s" % [said[0], said[1]], 13, Color(0.34, 0.31, 0.27), column)
-	feed_list.add_child(card)
+	Kit.text("Bến Trầu", 15, Color.WHITE, column, true)
+	Kit.text("27°", 40, Color.WHITE, column)
+	Kit.text("Nhiều mây · Đêm nay có thể mưa", 13, Color(1, 1, 1, 0.85), column)
+	return card
 
-func _wrapped(content: String, size_px: int, colour: Color, parent: Node) -> void:
-	var label := _text(content, size_px, colour, parent)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size.x = SCREEN.x - 48.0
+func _app_slot(kind: String, title: String) -> Control:
+	var slot := VBoxContainer.new()
+	slot.add_theme_constant_override("separation", 5)
+	var button := Kit.plain_button(slot)
+	button.custom_minimum_size = Vector2.ONE * ICON
+	var icon := Kit.Icon.new(kind, ICON)
+	button.add_child(icon)
+	var badge_holder := Control.new()
+	badge_holder.position = Vector2(ICON - 14, -6)
+	badge_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(badge_holder)
+	badges[kind] = badge_holder
+	button.pressed.connect(_tap_app.bind(kind, icon))
+	if not title.is_empty():
+		var label := Kit.text(title, 11, Color.WHITE, slot)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.35))
+		label.add_theme_constant_override("outline_size", 3)
+	return slot
 
-func _feed_scrolled(value: float) -> void:
-	var bar := feed_scroll.get_v_scroll_bar()
-	if value + bar.page >= bar.max_value - 4.0:
-		finish_feed()
+func _tap_app(kind: String, icon: Control) -> void:
+	if kind == "fake" or kind == "tili":
+		open_app(kind)
+		return
+	# Set dressing: a small shake says "not now" without leaving the home screen.
+	var tween := icon.create_tween()
+	for angle in [0.09, -0.09, 0.06, -0.04, 0.0]:
+		tween.tween_property(icon, "rotation", angle, 0.05)
+
+func _refresh_badges() -> void:
+	if tili == null:
+		return
+	var counts := {"tili": tili.unread_total(), "fake": fake_new}
+	for kind in counts:
+		var holder: Control = badges.get(kind)
+		if holder == null:
+			continue
+		for child in holder.get_children():
+			child.queue_free()
+		if counts[kind] > 0:
+			holder.add_child(Kit.badge(counts[kind]))
+
+# --- Apps -------------------------------------------------------------------------------------
+
+func go_home() -> void:
+	app = "home"
+	home_page.show()
+	fake.hide()
+	tili.hide()
+	_set_tint(true)
+	_refresh_badges()
+
+func open_app(app_name: String) -> void:
+	app = app_name
+	home_page.hide()
+	fake.visible = app_name == "fake"
+	tili.visible = app_name == "tili"
+	_set_tint(false)
+	if app_name == "fake":
+		fake_new = 0
+	var page: Control = fake if app_name == "fake" else tili
+	page.pivot_offset = SCREEN * 0.5
+	page.scale = Vector2.ONE * 0.92
+	page.modulate.a = 0.0
+	var tween := create_tween().set_parallel().set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
+	tween.tween_property(page, "scale", Vector2.ONE, 0.22)
+	tween.tween_property(page, "modulate:a", 1.0, 0.16)
+
+func show_list() -> void:
+	open_app("tili")
+	tili.show_list()
+
+func open_thread(id: String) -> void:
+	if app != "tili":
+		open_app("tili")
+	tili.open_thread(id)
+
+func _on_thread_opened(id: String) -> void:
+	if notice_id == id:
+		_hide_notice()
+	pending.erase(id)
+	thread_opened.emit(id)
+
+func add_thread(id: String, title: String, status: String, avatar: Color, initial: String) -> void:
+	tili.add_thread(id, title, status, avatar, initial)
+
+func _refresh_list() -> void:
+	tili.refresh_list()
 
 func finish_feed() -> void:
-	if not feed_finished:
-		feed_finished = true
-		feed_read.emit()
+	fake.finish_feed()
 
-func _build_list() -> void:
-	var head := PanelContainer.new()
-	var padded := _box(Color.WHITE)
-	padded.content_margin_left = 22
-	padded.content_margin_right = 22
-	padded.content_margin_top = 10
-	padded.content_margin_bottom = 14
-	head.add_theme_stylebox_override("panel", padded)
-	var name_row := HBoxContainer.new()
-	head.add_child(name_row)
-	var title := _text("Nối", 30, BRAND, name_row)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_text("Trò chuyện", 14, Color(0.45, 0.48, 0.5), name_row)
-	list_page.add_child(head)
-	thread_rows = VBoxContainer.new()
-	thread_rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	thread_rows.add_theme_constant_override("separation", 1)
-	var back := PanelContainer.new()
-	back.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	back.add_theme_stylebox_override("panel", _box(Color(0.96, 0.97, 0.97)))
-	back.add_child(thread_rows)
-	list_page.add_child(back)
+# --- Messages ---------------------------------------------------------------------------------
 
-func _build_chat() -> void:
-	chat_page.hide()
-	var head := PanelContainer.new()
-	var padded := _box(Color.WHITE)
-	padded.content_margin_left = 14
-	padded.content_margin_right = 14
-	padded.content_margin_top = 6
-	padded.content_margin_bottom = 10
-	head.add_theme_stylebox_override("panel", padded)
+# Lands in the open chat; otherwise a notification inside the phone, or above it when it is away.
+func receive(id: String, text: String, garbled := false) -> void:
+	if tili.receive(id, text, garbled):
+		return
+	var title: String = threads[id].title
+	var preview: String = tili._noise(18) if garbled else text
+	if shell.visible:
+		_notify(id, title, preview, app == "home")
+	else:
+		pending = {"id": id, "title": title, "text": preview}
+		_show_banner(title, preview, "tili")
+
+func send_mine(id: String, text: String) -> void:
+	tili.send_mine(id, text)
+
+func set_typing(on: bool) -> void:
+	tili.set_typing(on)
+
+func offer_replies(options: Array) -> void:
+	tili.offer_replies(options)
+
+func clear_replies() -> void:
+	tili.clear_replies()
+
+# --- Notifications ----------------------------------------------------------------------------
+
+func _notice_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	var glass := Kit.box(Color(0.97, 0.97, 0.98, 0.95), 24)
+	glass.set_content_margin_all(12)
+	glass.shadow_color = Color(0, 0, 0, 0.25)
+	glass.shadow_size = 12
+	card.add_theme_stylebox_override("panel", glass)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	head.add_child(row)
-	var back := Button.new()
-	back.text = "‹"
-	back.flat = true
-	back.add_theme_font_size_override("font_size", 30)
-	back.add_theme_color_override("font_color", BRAND)
-	back.pressed.connect(show_list)
-	row.add_child(back)
-	var names := VBoxContainer.new()
-	names.add_theme_constant_override("separation", -2)
-	row.add_child(names)
-	title_label = _text("", 18, INK, names)
-	status_label = _text("", 12, Color(0.45, 0.48, 0.5), names)
-	chat_page.add_child(head)
-	scroller = ScrollContainer.new()
-	scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	var pad := MarginContainer.new()
-	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for side in ["left", "right", "top", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 12)
-	messages = VBoxContainer.new()
-	messages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	messages.add_theme_constant_override("separation", 8)
-	pad.add_child(messages)
-	scroller.add_child(pad)
-	chat_page.add_child(scroller)
-	var foot := PanelContainer.new()
-	var foot_box := _box(Color.WHITE)
-	foot_box.content_margin_left = 12
-	foot_box.content_margin_right = 12
-	foot_box.content_margin_top = 8
-	foot_box.content_margin_bottom = 18
-	foot.add_theme_stylebox_override("panel", foot_box)
-	var foot_stack := VBoxContainer.new()
-	foot_stack.add_theme_constant_override("separation", 6)
-	foot.add_child(foot_stack)
-	replies = VBoxContainer.new()
-	replies.add_theme_constant_override("separation", 6)
-	foot_stack.add_child(replies)
-	var field := PanelContainer.new()
-	var field_box := _box(Color(0.93, 0.95, 0.95), 18)
-	field_box.content_margin_left = 16
-	field_box.content_margin_top = 8
-	field_box.content_margin_bottom = 8
-	field.add_theme_stylebox_override("panel", field_box)
-	input_hint = _text("Aa", 15, Color(0.55, 0.58, 0.6), field)
-	foot_stack.add_child(field)
-	chat_page.add_child(foot)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(row)
+	var icon_holder := HBoxContainer.new()
+	icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(Kit.Icon.new("tili", 38))
+	row.add_child(icon_holder)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_theme_constant_override("separation", 0)
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(words)
+	var top := HBoxContainer.new()
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	words.add_child(top)
+	var title := Kit.text("", 15, Kit.INK, top, true)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.clip_text = true
+	Kit.text("bây giờ", 12, Kit.GREY, top)
+	var body := Kit.text("", 14, Color(0.25, 0.26, 0.28), words)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.max_lines_visible = 2
+	body.custom_minimum_size.x = 250
+	card.set_meta("title", title)
+	card.set_meta("body", body)
+	card.set_meta("icon", icon_holder)
+	return card
 
+# Sticky notices wait on the home screen until tapped; inside an app they slide away.
+func _notify(id: String, title: String, text: String, sticky: bool) -> void:
+	notice_id = id
+	notice.get_meta("title").text = title
+	notice.get_meta("body").text = text
+	notice_clock = INF if sticky else NOTICE_SECONDS
+	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(notice, "position:y", 54.0, 0.32)
+
+func _hide_notice() -> void:
+	notice_id = ""
+	create_tween().tween_property(notice, "position:y", -130.0, 0.22)
+
+func tap_notice() -> void:
+	if not notice_id.is_empty():
+		var id := notice_id
+		_hide_notice()
+		open_thread(id)
+
+# Outside the phone, for when it is in Peter's pocket.
 func _build_banner() -> void:
-	banner = PanelContainer.new()
-	var box := _box(Color(1, 1, 1, 0.97), 16, 1, Color(0.82, 0.85, 0.86))
-	box.set_content_margin_all(12)
-	box.shadow_color = Color(0, 0, 0, 0.3)
-	box.shadow_size = 10
-	banner.add_theme_stylebox_override("panel", box)
+	banner = _notice_card()
 	add_child(banner)
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	banner.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	banner.offset_left = -440
 	banner.offset_right = -40
 	banner.offset_top = -120
 	banner.offset_bottom = -30
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 0)
-	banner.add_child(stack)
-	banner_title = _text("", 15, INK, stack)
-	banner_text = _text("", 14, Color(0.32, 0.35, 0.37), stack)
-	banner_text.clip_text = true
+	banner_title = banner.get_meta("title")
+	banner_text = banner.get_meta("body")
+	banner_icon = banner.get_meta("icon")
 
-func add_thread(id: String, title: String, status: String, avatar: Color, initial: String) -> void:
-	threads[id] = {"title": title, "status": status, "avatar": avatar, "initial": initial, "log": [], "unread": 0}
-	order.push_front(id)
-	_refresh_list()
-
-func _avatar(id: String, diameter: int) -> Control:
-	var thread: Dictionary = threads[id]
-	var circle := PanelContainer.new()
-	circle.custom_minimum_size = Vector2.ONE * diameter
-	circle.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	circle.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	circle.add_theme_stylebox_override("panel", _box(thread.avatar, diameter / 2))
-	var letter := _text(thread.initial, diameter / 2, Color.WHITE, circle)
-	letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return circle
-
-func _refresh_list() -> void:
-	for child in thread_rows.get_children():
+func _show_banner(title: String, text: String, kind := "settings") -> void:
+	banner_title.text = title
+	banner_text.text = text
+	for child in banner_icon.get_children():
 		child.queue_free()
-	for id in order:
-		var thread: Dictionary = threads[id]
-		var row := Button.new()
-		row.custom_minimum_size.y = 76
-		row.add_theme_stylebox_override("normal", _box(Color.WHITE))
-		row.add_theme_stylebox_override("hover", _box(Color(0.93, 0.97, 0.97)))
-		row.add_theme_stylebox_override("pressed", _box(Color(0.88, 0.95, 0.95)))
-		row.add_theme_stylebox_override("focus", _box(Color.WHITE))
-		row.pressed.connect(open_thread.bind(id))
-		var inner := HBoxContainer.new()
-		inner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		inner.offset_left = 16
-		inner.offset_right = -16
-		inner.offset_top = 12
-		inner.add_theme_constant_override("separation", 12)
-		inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(inner)
-		var face := _avatar(id, 50)
-		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		inner.add_child(face)
-		var words := VBoxContainer.new()
-		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		words.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		words.add_theme_constant_override("separation", 0)
-		inner.add_child(words)
-		_text(thread.title, 17, INK, words)
-		var last: String = thread.log[-1].text if not thread.log.is_empty() else ""
-		var preview := _text(last, 13, Color(0.45, 0.48, 0.5), words)
-		preview.clip_text = true
-		preview.custom_minimum_size.x = 230
-		if thread.unread > 0:
-			var dot := PanelContainer.new()
-			dot.custom_minimum_size = Vector2(24, 24)
-			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			dot.add_theme_stylebox_override("panel", _box(BRAND, 12))
-			dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			var count := _text(str(thread.unread), 13, Color.WHITE, dot)
-			count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			inner.add_child(dot)
-		thread_rows.add_child(row)
+	banner_icon.add_child(Kit.Icon.new(kind, 38))
+	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(banner, "offset_top", 24.0, 0.32)
+	tween.parallel().tween_property(banner, "offset_bottom", 114.0, 0.32)
+	tween.tween_interval(3.2)
+	tween.tween_property(banner, "offset_top", -120.0, 0.25)
+	tween.parallel().tween_property(banner, "offset_bottom", -30.0, 0.25)
+
+# --- Opening ----------------------------------------------------------------------------------
 
 func is_open() -> bool:
 	return shell.visible
@@ -349,156 +454,22 @@ func toggle() -> void:
 		shell.hide()
 		return
 	# The canvas is scaled by the project, so it can be shorter than the phone.
-	var fit := minf(1.0, (get_viewport_rect().size.y - 28.0) / (SCREEN.y + 14.0))
+	var fit := minf(1.0, (get_viewport_rect().size.y - 28.0) / (SCREEN.y + FRAME * 2.0))
 	shell.show()
+	# A message that came while the phone was away waits on the home screen.
+	if not pending.is_empty():
+		go_home()
+		_notify(pending.id, pending.title, pending.text, true)
+		pending = {}
 	shell.scale = Vector2.ONE * fit * 0.96
 	shell.modulate.a = 0.0
 	var tween := create_tween().set_parallel().set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
 	tween.tween_property(shell, "scale", Vector2.ONE * fit, 0.22)
 	tween.tween_property(shell, "modulate:a", 1.0, 0.18)
 
-func show_list() -> void:
-	open_id = ""
-	chat_page.hide()
-	feed_page.hide()
-	list_page.show()
-	_refresh_list()
-
-func open_thread(id: String) -> void:
-	open_id = id
-	var thread: Dictionary = threads[id]
-	thread.unread = 0
-	list_page.hide()
-	if thread.get("feed", false):
-		feed_page.show()
-		thread_opened.emit(id)
-		return
-	chat_page.show()
-	title_label.text = thread.title
-	status_label.text = thread.status
-	scrambled.clear()
-	for child in messages.get_children():
-		child.queue_free()
-	for entry in thread.log:
-		_add_bubble(entry, false)
-	_to_bottom()
-	thread_opened.emit(id)
-
-func _to_bottom() -> void:
-	await get_tree().process_frame
-	await get_tree().process_frame
-	scroller.scroll_vertical = int(scroller.get_v_scroll_bar().max_value)
-
-# Arrives as a message: into the open chat with a pop, otherwise as a banner and an unread dot.
-func receive(id: String, text: String, garbled := false) -> void:
-	var thread: Dictionary = threads[id]
-	var entry := {"text": text, "mine": false, "garbled": garbled}
-	thread.log.append(entry)
-	order.erase(id)
-	order.push_front(id)
-	if open_id == id and shell.visible:
-		_add_bubble(entry, true)
-		_to_bottom()
-		return
-	thread.unread += 1
-	_refresh_list()
-	_show_banner(thread.title, text if not garbled else _noise(18))
-
-func send_mine(id: String, text: String) -> void:
-	var entry := {"text": text, "mine": true, "garbled": false}
-	threads[id].log.append(entry)
-	if open_id == id:
-		_add_bubble(entry, true)
-		_to_bottom()
-
-func set_typing(on: bool) -> void:
-	if typing_row != null:
-		typing_row.queue_free()
-		typing_row = null
-	if on and open_id != "":
-		typing_row = _bubble_row({"text": "• • •", "mine": false, "garbled": false})
-		messages.add_child(typing_row)
-		_to_bottom()
-
-func _noise(length: int) -> String:
-	var result := ""
-	for i in range(length):
-		result += " " if rng.randf() < 0.14 else GLYPHS[rng.randi() % GLYPHS.length()]
-	return result
-
-func _bubble_row(entry: Dictionary) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_END if entry.mine else BoxContainer.ALIGNMENT_BEGIN
-	row.add_theme_constant_override("separation", 8)
-	if not entry.mine:
-		row.add_child(_avatar(open_id, 34))
-	var bubble := PanelContainer.new()
-	var box := _box(MINE if entry.mine else THEIRS, 16)
-	if entry.garbled:
-		box.bg_color = Color(0.12, 0.13, 0.15)
-	box.corner_radius_top_left = 16 if entry.mine else 4
-	box.corner_radius_top_right = 4 if entry.mine else 16
-	box.content_margin_left = 13
-	box.content_margin_right = 13
-	box.content_margin_top = 9
-	box.content_margin_bottom = 9
-	bubble.add_theme_stylebox_override("panel", box)
-	var label := _text(entry.text, 15, Color(0.86, 0.84, 0.82) if entry.garbled else INK, bubble)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size.x = minf(258.0, entry.text.length() * 8.6 + 6.0)
-	row.add_child(bubble)
-	if entry.garbled:
-		scrambled.append({"label": label, "length": entry.text.length()})
-	return row
-
-func _add_bubble(entry: Dictionary, animate: bool) -> void:
-	var row := _bubble_row(entry)
-	messages.add_child(row)
-	if typing_row != null:
-		messages.move_child(typing_row, -1)
-	if animate:
-		row.modulate.a = 0.0
-		create_tween().tween_property(row, "modulate:a", 1.0, 0.2)
-
-func offer_replies(options: Array) -> void:
-	clear_replies()
-	input_hint.text = "Chọn câu trả lời"
-	for i in range(options.size()):
-		var button := Button.new()
-		button.text = options[i]
-		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.add_theme_font_size_override("font_size", 14)
-		button.add_theme_color_override("font_color", BRAND.darkened(0.25))
-		button.add_theme_color_override("font_hover_color", BRAND.darkened(0.4))
-		var chip := _box(Color(0.90, 0.97, 0.97), 15, 1, BRAND)
-		chip.set_content_margin_all(9)
-		button.add_theme_stylebox_override("normal", chip)
-		button.add_theme_stylebox_override("hover", chip)
-		button.add_theme_stylebox_override("pressed", chip)
-		button.add_theme_stylebox_override("focus", chip)
-		button.pressed.connect(func(): reply_chosen.emit(i))
-		replies.add_child(button)
-
-func clear_replies() -> void:
-	input_hint.text = "Aa"
-	for child in replies.get_children():
-		child.queue_free()
-
-func _show_banner(title: String, text: String) -> void:
-	banner_title.text = title
-	banner_text.text = text
-	var tween := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(banner, "offset_top", 24.0, 0.32)
-	tween.parallel().tween_property(banner, "offset_bottom", 114.0, 0.32)
-	tween.tween_interval(3.2)
-	tween.tween_property(banner, "offset_top", -120.0, 0.25)
-	tween.parallel().tween_property(banner, "offset_bottom", -30.0, 0.25)
-
 func _process(delta: float) -> void:
-	scramble_clock -= delta
-	if scramble_clock > 0.0:
+	if notice_id.is_empty() or notice_clock == INF:
 		return
-	scramble_clock = 0.09
-	for item in scrambled:
-		if is_instance_valid(item.label):
-			item.label.text = _noise(item.length)
+	notice_clock -= delta
+	if notice_clock <= 0.0:
+		_hide_notice()

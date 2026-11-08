@@ -30,6 +30,8 @@ func _ready() -> void:
 	add_child(sky)
 	plan = Plan.new($Layout.definitions())
 	builder = Builder.new()
+	# Mười Gió's porch must be known before the street is built, so its gate is left out.
+	preload("res://scripts/town/muoi_gio.gd").reserve(plan)
 	builder.build(self, plan)
 	var layer := CanvasLayer.new()
 	add_child(layer)
@@ -161,6 +163,9 @@ func spend(amount: int) -> void:
 
 func street_click() -> void:
 	click_sound.play()
+
+func on_hub_message(message: Dictionary) -> void:
+	story.on_hub_message(message)
 
 func hub_state() -> Dictionary:
 	return {"evidence": [], "stage": "DAY_FREE"}

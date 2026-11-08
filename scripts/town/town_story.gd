@@ -3,13 +3,15 @@ extends Node
 const Person := preload("res://scripts/town/town_person.gd")
 const Dialogue := preload("res://scripts/visual_novel_dialogue.gd")
 const Gear := preload("res://scripts/night_gear.gd")
+const CaroPeople := preload("res://scripts/caro/caro_people.gd")
+const PosedPerson := preload("res://scripts/town/posed_person.gd")
 const CAST := {
 	"hoa": {"name": "Cô Hoa", "look": "Female_Adult_07", "place": "post", "inward": -0.8, "motion": "idle"},
 	"sau": {"name": "Bà Sáu", "look": "Female_Adult_02", "place": "shop", "inward": 0.9, "motion": "sit"},
 	"luc": {"name": "Bác Lực", "look": "Security_Male_01", "place": "stall", "inward": 1.0, "motion": "sit"},
 	"phuc": {"name": "Anh Phúc", "look": "Male_Adult_01", "place": "pho", "inward": 0.8, "motion": "idle"},
 	"mai": {"name": "Chị Mai", "look": "Female_Adult_12", "place": "market", "inward": 1.2, "motion": "idle"},
-	"khoa": {"name": "Khoa", "look": "Male_Adult_08", "place": "cafe", "inward": -1.2, "motion": "sit"},
+	"khoa": {"name": "Bơ Tồ", "look": "Male_Adult_08", "place": "cafe", "inward": -1.2, "motion": "sit"},
 }
 const SMALL_TALK := {
 	"hoa": [["Cô Hoa", "Bưu điện mở tới năm giờ chiều nhé cậu."]],
@@ -17,7 +19,7 @@ const SMALL_TALK := {
 	"luc": [["Bác Lực", "Trà đá hai ngàn. Qua cầu này chỉ có đi lạc hoặc đi tìm chuyện."]],
 	"phuc": [["Anh Phúc", "Vui bốn chục, buồn hai lăm, thất tình miễn phí nếu kể đủ ba chi tiết."]],
 	"mai": [["Chị Mai", "Chuối đây em. Đêm qua lại thấy đèn trường bật. Ông già Hẻm 5 mua muối đồng của chị hoài, chả biết để làm gì."]],
-	"khoa": [["Khoa", "Mày sống rồi à. Có gì tối tính, bên kia cầu vắng lắm."]],
+	"khoa": [["Bơ Tồ", "Mày sống rồi à. Có gì tối tính, bên kia cầu vắng lắm."]],
 }
 var world: Node3D
 var people := {}
@@ -26,6 +28,9 @@ var talking := ""
 var finished_day := false
 var gear := {}
 var chess_table: Node3D
+var caro_table: Node3D
+var caro_interaction: Dictionary
+var muoi_gio: Node
 
 func setup(town: Node3D) -> void:
 	world = town
@@ -63,6 +68,10 @@ func setup(town: Node3D) -> void:
 	chess_table.global_transform = Transform3D(frame.basis, frame * Vector3(0, 0.68, 1.7))
 	chess_table.lay(preload("res://scripts/chess/chess_rules.gd").new().board)
 	world.add_interaction(chess_table.global_position, "Chơi cờ", open_chess)
+	_place_baro(frame)
+	muoi_gio = preload("res://scripts/town/muoi_gio.gd").new()
+	add_child(muoi_gio)
+	muoi_gio.setup(self)
 
 func open_shop() -> void:
 	world.player.enabled = false
@@ -77,6 +86,46 @@ func open_chess() -> void:
 	view = preload("res://scripts/chess/chess_view.gd").new()
 	world.hud.add_child(view)
 	view.setup(world, self, chess_table)
+
+# Day 1: Bảy Rô waits beside the chess board, as he wrote on Tili, and guards the way to Night 1.
+func _place_baro(frame: Transform3D) -> void:
+	caro_table = Node3D.new()
+	world.add_child(caro_table)
+	caro_table.global_transform = Transform3D(frame.basis, frame * Vector3(1.9, 0.0, 1.7))
+	var top := MeshInstance3D.new()
+	var slab := BoxMesh.new()
+	slab.size = Vector3(0.7, 0.68, 0.7)
+	top.mesh = slab
+	var paint := StandardMaterial3D.new()
+	paint.albedo_color = Color(0.86, 0.80, 0.66)
+	paint.roughness = 0.8
+	top.material_override = paint
+	caro_table.add_child(top)
+	top.position.y = 0.34
+	var baro: Node3D = PosedPerson.new()
+	baro.who = "bayro"
+	baro.motion = "sit"
+	world.add_child(baro)
+	var seat: Vector3 = caro_table.to_global(Vector3(0, 0, 0.55))
+	baro.global_position = Vector3(seat.x, world.plan.ground(Vector2(seat.x, seat.z)), seat.z)
+	baro.global_rotation.y = caro_table.global_rotation.y + PI
+	_stool(baro.global_position)
+	world.add_interaction(caro_table.global_position, _baro_label(), open_caro)
+	caro_interaction = world.interactions.back()
+
+func _baro_label() -> String:
+	return "Nói chuyện với Bảy Rô" if gear.caro_won else "Chơi caro với Bảy Rô"
+
+func open_caro() -> void:
+	if gear.caro_won:
+		_open("baro")
+		_lines(CaroPeople.REVEAL, close)
+		return
+	world.player.enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	view = preload("res://scripts/caro/caro_view.gd").new()
+	world.hud.add_child(view)
+	view.setup(world, self)
 
 func pay(amount: int) -> void:
 	gear.money += amount
@@ -100,6 +149,10 @@ func playing() -> bool:
 	return not finished_day
 
 func objective() -> Dictionary:
+	if not gear.caro_won:
+		return {"text": "Gặp Bảy Rô ở Góc Cờ · Thắng một ván caro", "position": caro_table.global_position}
+	if muoi_gio.known() and not muoi_gio.done():
+		return {"text": "Mua bẻ khóa và dây thừng của Mười Gió · Hẻm 8", "position": muoi_gio.spot}
 	return {"text": "Tới cổng Trường NEH khi bạn sẵn sàng", "position": Vector3(262, 0, 26)}
 
 func talking_now() -> bool:
@@ -110,11 +163,18 @@ func _open(id: String) -> void:
 	world.player.enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	view = Dialogue.new()
-	var actor: Node3D = Person.new()
-	actor.look = CAST[id].look
-	actor.motion = "talk"
+	var role: Dictionary = CAST[id] if CAST.has(id) else ({"name": muoi_gio.NAME} if id == "muoigio" else CaroPeople.BARO)
+	var actor: Node3D
+	if CAST.has(id):
+		actor = Person.new()
+		actor.look = role.look
+		actor.motion = "talk"
+	else:
+		actor = PosedPerson.new()
+		actor.who = "muoigio" if id == "muoigio" else "bayro"
+		actor.motion = "fold" if id == "muoigio" else "stand"
 	actor.height = 1.7
-	view.setup(world.hud, CAST[id].name, close, actor)
+	view.setup(world.hud, role.name, close, actor)
 
 func close() -> void:
 	if view == null:
@@ -124,6 +184,9 @@ func close() -> void:
 	world.player.enabled = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	talking = ""
+	if not caro_interaction.is_empty():
+		caro_interaction.label = _baro_label()
+	muoi_gio.show_pending()
 	world.player.camera.make_current()
 	world.spend(0)
 
@@ -145,6 +208,17 @@ func _lines(lines: Array, then: Callable, index := 0) -> void:
 	var line: Array = lines[index]
 	view.show_line(line[0], line[1], [{"text": "Tiếp", "action": _lines.bind(lines, then, index + 1)}])
 
+# Bảy Rô points the way to Mười Gió once a game with him is over, won or lost.
+func caro_finished() -> void:
+	muoi_gio.learn("baro")
+
+func on_hub_message(message: Dictionary) -> void:
+	if message.get("type") == "contact" and message.get("id") == "muoigio":
+		muoi_gio.learn("soichi")
+
 func _gate() -> void:
+	if not gear.caro_won:
+		world.hud.show_hint(CaroPeople.GATE_HINT)
+		return
 	finished_day = true
 	world.enter_night()

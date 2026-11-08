@@ -299,8 +299,10 @@ func _shopfront(lot: Dictionary, frame: Transform3D, w: float, recess: float, ta
 			_solid(frame, Vector3(0, 1.5, 0.2), Vector3(inner, 3.0, 0.2))
 		"home":
 			batch.box("paint", frame, Vector3(0, 1.25, recess - 0.04), Vector3(inner * 0.92, 2.5, 0.08), Color(0.32, 0.20, 0.14))
-			batch.quad("rail", frame * Vector3(inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 2.8, 0.3), frame * Vector3(inner * 0.5, 2.8, 0.3), Color.WHITE, Vector2(inner * 2.0, 3.0))
-			_solid(frame, Vector3(0, 1.5, 0.3), Vector3(inner, 3.0, 0.12))
+			# Mười Gió sells from this porch, so its gate is left off and it stays open.
+			if not lot.get("kiosk", false):
+				batch.quad("rail", frame * Vector3(inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 2.8, 0.3), frame * Vector3(inner * 0.5, 2.8, 0.3), Color.WHITE, Vector2(inner * 2.0, 3.0))
+				_solid(frame, Vector3(0, 1.5, 0.3), Vector3(inner, 3.0, 0.12))
 		_:
 			batch.box("lit", frame, Vector3(0, tall - 0.14, 1.2), Vector3(inner * 0.5, 0.05, 0.1), Color.WHITE)
 			batch.box("plaster", frame, Vector3(0, 1.4, recess - 0.04), Vector3(inner, 2.8, 0.08), Color(0.70, 0.66, 0.58))

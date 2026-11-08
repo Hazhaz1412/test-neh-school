@@ -123,7 +123,7 @@ func _build_set() -> void:
 		var actor: Node3D = preload("res://scripts/humanoid_model.gd").new()
 		actor.look = ["Male_Adult_02", "Female_Adult_11", "Male_Adult_08", "Male_Adult_06"][i]
 		actor.target_height = 1.68 if i == 1 else 1.78
-		actor.name = ["Minh", "Lan", "Khoa", "PlayerDouble"][i]
+		actor.name = ["Ba Rô", "Huna", "Bơ Tồ", "PlayerDouble"][i]
 		cast.add_child(actor)
 		actors.append(actor)
 		var animation: AnimationPlayer = actor.animation

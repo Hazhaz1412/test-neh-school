@@ -398,7 +398,7 @@ function openBrowser() {
   });
   bar.webContents.on('before-input-event', shortcuts);
   menu.webContents.on('blur', closeMenu);
-  bar.webContents.once('did-finish-load', () => openTab(sites.HOME));
+  bar.webContents.once('did-finish-load', () => sites.START_TABS.forEach(openTab));
   bar.webContents.loadFile(path.join(__dirname, 'shell', 'bar.html'));
   menu.webContents.loadFile(path.join(__dirname, 'shell', 'menu.html'));
   cover.webContents.loadFile(path.join(__dirname, 'shell', 'cover.html'));

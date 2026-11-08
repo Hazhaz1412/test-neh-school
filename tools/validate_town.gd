@@ -46,7 +46,16 @@ func run() -> void:
 	check(player.enabled, "controls return after talking")
 	var state: Dictionary = town.get_node("ArgBridge")._story_state()
 	check(state.type == "state" and state.stage == "DAY_FREE", "web receives the free morning")
+	# The real save may already hold a win; this check sets its own state and puts it back.
+	var caro_won: bool = story.gear.caro_won
+	story.gear.caro_won = false
+	check(story.caro_table != null and story.objective().text.contains("Bảy Rô"), "Day 1 sends the player to Bảy Rô first")
 	story._gate()
+	await process_frame
+	check(current_scene == town and not story.finished_day, "the school gate waits until Bảy Rô is beaten")
+	story.gear.caro_won = true
+	story._gate()
+	story.gear.caro_won = caro_won
 	var moved := false
 	for i in range(420):
 		await process_frame

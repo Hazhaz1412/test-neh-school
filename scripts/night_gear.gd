@@ -19,7 +19,34 @@ const STOCK := [
 ]
 
 static func fresh() -> Dictionary:
-	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false, "torch": false, "minutes": 420}
+	return {"money": START_MONEY, "bag": [], "camera": true, "pawned": [], "boosts": 0, "heard_khai": false, "torch": false, "minutes": 420,
+		# Bảy Rô only remembers the last few games: enough to greet a returning player and go easier.
+		"caro_won": false, "caro_losses": 0, "caro_last_decisive": "",
+		"muoi_gio_known": false, "lockpick": false, "rope": false}
+
+# Mười Gió's goods are a task, not luggage: owning them never takes a bag slot by day.
+const BLACK_MARKET := [
+	{"kind": "lockpick", "name": "Bộ bẻ khóa", "price": 90, "text": "Mấy cây móc thép mỏng, cuộn trong miếng vải dầu."},
+	{"kind": "rope", "name": "Dây thừng", "price": 60, "text": "Dây dù mười lăm mét, có móc sắt ở đầu."},
+]
+
+# Empty when bought, otherwise Mười Gió's answer for why not.
+static func buy_black(state: Dictionary, kind: String) -> String:
+	for entry in BLACK_MARKET:
+		if entry.kind != kind:
+			continue
+		if state.get(kind, false):
+			return "Mua rồi còn hỏi."
+		if state.money < entry.price:
+			return "Không đủ tiền thì về đi."
+		state.money -= entry.price
+		state[kind] = true
+		write(state)
+		return ""
+	return "Không có món đó."
+
+static func black_market_done(state: Dictionary) -> bool:
+	return BLACK_MARKET.all(func(entry): return state.get(entry.kind, false))
 
 static func read() -> Dictionary:
 	var state := fresh()
