@@ -1,27 +1,31 @@
 extends CharacterBody3D
-const Gear := preload("res://scripts/night_gear.gd")
-# AI B, the demon. It holds no reference to where anyone is: it knows only what it sees, what
-# it hears and the areas the director whispers. It searches rooms and hiding places itself.
-enum State {ROAM, SWEEP, LISTEN, CHASE, STRIKE, REST, GRAB, STAGGER, ADMIRE}
-const NAMES := {State.ROAM: "đi lang thang", State.SWEEP: "tự lục soát", State.LISTEN: "nghe trước chỗ trốn", State.CHASE: "đuổi", State.STRIKE: "vồ", State.REST: "bị gọi lui", State.GRAB: "chụp người chơi", State.STAGGER: "đau, mất dấu", State.ADMIRE: "ngắm chiến lợi phẩm"}
+const Steer := preload("res://scripts/path_steer.gd")
+# AI B, the hunter (Night 1: the guard). It holds no reference to where anyone is: it knows only
+# what it sees, what it hears and the areas the director whispers. It searches rooms and hiding
+# places itself. With a team (hunt_team.gd) a catch is not a kill: it drags the student off to a
+# locked room and goes back to hunting the others.
+enum State {ROAM, SWEEP, LISTEN, CHASE, STRIKE, REST, GRAB, STAGGER}
+const NAMES := {State.ROAM: "đi lang thang", State.SWEEP: "tự lục soát", State.LISTEN: "nghe trước chỗ trốn", State.CHASE: "đuổi", State.STRIKE: "vồ", State.REST: "bị gọi lui", State.GRAB: "lôi người đi nhốt", State.STAGGER: "đau, mất dấu"}
 const STALK_SPEED := 3.6
 const SEARCH_SPEED := 3.2
-const CHASE_SPEED := 4.9
-# A long chase winds it up until a sprint alone no longer outruns it.
-const RAGE_SPEED := 5.75
-const RAGE_SECONDS := 7.0
-const POUNCE_REACH := 6.0
-const POUNCE_SPEED := 8.0
+# 5% faster than a student's sprint (5.2 m/s): on open ground he always closes in.
+const CHASE_SPEED := 5.46
+# The longer he runs unbroken the faster he gets; every climb or shelf he clears starts it over.
+const RAGE_SPEED := 6.25
+const RAGE_SECONDS := 20.0
+const POUNCE_REACH := 3.0
+const POUNCE_SPEED := 7.0
 const POUNCE_SECONDS := 0.6
-const POUNCE_REST := 5.0
+const POUNCE_REST := 8.0
 const SIGHT_RANGE := 26.0
 const TORCH_SIGHT_RANGE := 38.0
 const SIGHT_CONE := 0.3
 const SENSE_ALWAYS := 2.6
 const NOTICE_SECONDS := 0.2
-const LOSE_SECONDS := 3.5
+# Out of sight this long, with nothing heard, before he gives up the chase and searches.
+const LOSE_SECONDS := 6.0
 # For a moment after losing sight it still follows the footsteps.
-const TRACK_SECONDS := 1.2
+const TRACK_SECONDS := 2.0
 const LISTEN_SECONDS := 2.2
 const YANK_SECONDS := 0.4
 const LOST_RADIUS := 14.0
@@ -35,13 +39,14 @@ const PREDICT_SECONDS := 1.0
 const PREDICT_TRUST := 1.5
 const LOOK_SECONDS := 1.5
 const STRIKE_REACH := 1.9
-const GRAB_SECONDS := 1.3
-const GRAB_ARMED_SECONDS := 2.6
 # The guard grabs the student by the collar at his own height, not up to a mouth.
 const LIFT := 0.0
 const HOLD_REACH := 0.75
 const STAGGER_SECONDS := 3.0
-const ADMIRE_SECONDS := 4.0
+# Dragging someone along, he walks; a vault takes him far longer than it takes a student.
+const CARRY_SPEED := 3.2
+const VAULT_SECONDS := 1.4
+const LINGER_SECONDS := 2.0
 const LUNGE_SPEED := 6.5
 const LOW_EYE := 1.3
 const BLIND_SECONDS := 10.0
@@ -101,24 +106,52 @@ var pounce_left := 0.0
 var pounce_clock := 0.0
 var shot_sound: AudioStreamPlayer3D
 var shout: Label
+# Whoever it is after: the player or a teammate.
+var target: CharacterBody3D
+var team: Node
+var jail_door: Node3D
+var carried_layers := Vector2i.ZERO
+var cross_time := 0.0
+var sidestep_time := 0.0
+var last_climbed: Node3D
+# Nailing planks over a low gap he saw a student use.
+const BOARD_SECONDS := 2.0
+const BOARD_REACH := 3.0
+var boarding: Node3D
+var board_time := 0.0
+var board_clock := 0.0
+var climbed_at := 0
+var sidestep_dir := Vector3.ZERO
+# Dragging a fallen shelf out of a gap.
+var clearing: Node3D
+var clear_time := 0.0
+# Knocked back by a falling shelf: a short stagger, then straight back to the chase.
+var stunned := false
+var cross_from := Vector3.ZERO
+var cross_to := Vector3.ZERO
 
 func _ready() -> void:
 	player = world.player
+	target = player
+	team = world.get("team")
 	collision_layer = 2
 	collision_mask = 1
 	floor_snap_length = 0.4
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.32
+	# Thinner than the 0.375 m Night 1's map keeps from every wall, so no corner snags him.
+	capsule.radius = 0.3
 	capsule.height = 1.9
 	shape.shape = capsule
 	shape.position.y = 0.98
 	add_child(shape)
 	agent = NavigationAgent3D.new()
-	agent.path_desired_distance = 0.5
+	# Turn at the corner, not half a metre before it: cutting corners snags on wall ends.
+	agent.path_desired_distance = 0.2
 	agent.target_desired_distance = 0.8
 	agent.path_height_offset = 0.25
 	add_child(agent)
+	agent.link_reached.connect(_on_link)
 	model = preload("res://scripts/guard_hunter_model.gd").new()
 	model.rotation.y = PI
 	add_child(model)
@@ -168,7 +201,7 @@ func is_hunting() -> bool:
 	return state in [State.CHASE, State.STRIKE, State.GRAB]
 
 func is_resting() -> bool:
-	return state in [State.REST, State.STAGGER, State.ADMIRE]
+	return state in [State.REST, State.STAGGER]
 
 # The only way the director can reach the demon.
 func whisper(centre: Vector3, radius: float) -> void:
@@ -181,6 +214,12 @@ func whisper(centre: Vector3, radius: float) -> void:
 		_next_search()
 
 func hear(heard_at: Vector3, radius: float, source: String) -> void:
+	# Mid-chase, the quarry's own running feet and vaults keep him on the trail: only going
+	# quiet out of sight shakes him off.
+	if state == State.CHASE and target != null and global_position.distance_to(heard_at) <= radius * 1.25 and heard_at.distance_to(target.global_position) < 3.0:
+		last_seen = heard_at
+		unseen = minf(unseen, TRACK_SECONDS * 0.5)
+		return
 	if is_hunting() or is_resting() or global_position.distance_to(heard_at) > radius * 1.25:
 		return
 	if source == "breath" and global_position.distance_to(heard_at) > 4.0:
@@ -191,7 +230,7 @@ func hear(heard_at: Vector3, radius: float, source: String) -> void:
 
 # Seen climbing in: that spot is no longer a guess, and nothing else matters now.
 func witness(spot: Node3D) -> void:
-	if state != State.GRAB and not is_resting() and _can_see_player(false):
+	if state != State.GRAB and not is_resting() and _can_see(player, false):
 		_saw_hiding(spot)
 
 func _saw_hiding(spot: Node3D) -> void:
@@ -213,13 +252,27 @@ func _forget() -> void:
 	has_area = false
 
 func _player_exposed() -> bool:
-	return not player.is_hidden() and not world.is_soul_sanctuary(player.global_position)
+	return _exposed(target)
+
+func _exposed(body: CharacterBody3D) -> bool:
+	if body == null or body.is_hidden() or world.is_soul_sanctuary(body.global_position):
+		return false
+	return team == null or team.is_free(body) and body.invulnerable_time <= 0.0
+
+func _bodies() -> Array:
+	return team.free_bodies() if team != null else [player]
+
+func _lit(body: CharacterBody3D) -> bool:
+	return body.flashlight.visible if body == player else body.torch_lit()
 
 func _can_see_player(use_cone := true) -> bool:
+	return _can_see(target, use_cone)
+
+func _can_see(body: CharacterBody3D, use_cone := true) -> bool:
 	var eye := global_position + Vector3.UP * EYE
-	var chest: Vector3 = player.sight_point()
+	var chest: Vector3 = body.sight_point()
 	var offset := chest - eye
-	var reach := TORCH_SIGHT_RANGE if player.flashlight.visible else SIGHT_RANGE
+	var reach := TORCH_SIGHT_RANGE if _lit(body) else SIGHT_RANGE
 	if offset.length() > reach:
 		return false
 	var facing := -global_basis.z
@@ -230,7 +283,7 @@ func _can_see_player(use_cone := true) -> bool:
 		var ray := PhysicsRayQueryParameters3D.create(height, chest, 5)
 		ray.exclude = [get_rid()]
 		var hit := get_world_3d().direct_space_state.intersect_ray(ray)
-		if hit.is_empty() or hit.collider == player:
+		if hit.is_empty() or hit.collider == body:
 			return true
 	return false
 
@@ -242,9 +295,11 @@ func _sense(delta: float) -> void:
 	if sense_clock > 0.0:
 		return
 	sense_clock = 0.15
-	var sees := _player_exposed() and _can_see_player()
+	var seen := _spot_someone()
+	var sees := seen != null
 	if sees:
-		last_seen = player.global_position
+		target = seen
+		last_seen = target.global_position
 		unseen = 0.0
 		notice += 0.15
 		if notice >= NOTICE_SECONDS and not is_hunting():
@@ -252,16 +307,32 @@ func _sense(delta: float) -> void:
 			chase_time = 0.0
 			certain = false
 			roar_sound.play()
-			world.notify("ĐỨNG LẠI! · Bác bảo vệ thấy bạn rồi")
+			if target == player:
+				world.notify("ĐỨNG LẠI! · Bác bảo vệ thấy bạn rồi")
 	elif not certain and _glimpses_hider():
 		notice += 0.15
 		if notice >= NOTICE_SECONDS:
 			notice = 0.0
+			target = player
 			_saw_hiding(player.hidden_spot)
 	else:
 		notice = maxf(0.0, notice - 0.15)
 		if state == State.CHASE:
 			unseen += 0.15
+
+# Who it can see right now: whoever it is already after, otherwise the nearest.
+func _spot_someone() -> CharacterBody3D:
+	if state == State.CHASE and _exposed(target) and _can_see(target):
+		return target
+	var found: CharacterBody3D = null
+	var nearest := INF
+	for body in _bodies():
+		if _exposed(body) and _can_see(body):
+			var gap: float = global_position.distance_to(body.global_position)
+			if gap < nearest:
+				nearest = gap
+				found = body
+	return found
 
 # A desk hides nobody from anything standing close, a cot only from what does not bend down.
 func _glimpses_hider() -> bool:
@@ -388,7 +459,19 @@ func _head_for(place: Node3D) -> void:
 func _physics_process(delta: float) -> void:
 	if not world.simulation_active():
 		return
+	if cross_time > 0.0:
+		_cross(delta)
+		return
+	if clear_time > 0.0:
+		_sense(delta)
+		_clear(delta)
+		return
+	if board_time > 0.0:
+		_sense(delta)
+		_board(delta)
+		return
 	_sense(delta)
+	_look_for_gap_to_board(delta)
 	match state:
 		State.ROAM:
 			_walk(STALK_SPEED, delta)
@@ -406,8 +489,6 @@ func _physics_process(delta: float) -> void:
 			_hold(delta)
 		State.STAGGER:
 			_stagger(delta)
-		State.ADMIRE:
-			_admire(delta)
 		State.REST:
 			rest_left -= delta
 			_walk(STALK_SPEED, delta)
@@ -460,6 +541,7 @@ func _listen(delta: float) -> void:
 	if hider != null and (certain or not hider.holding_breath):
 		certain = false
 		hider.end_hide()
+		target = hider
 		last_seen = hider.global_position
 		state = State.CHASE
 		chase_time = 0.0
@@ -472,17 +554,19 @@ func _chase(delta: float) -> void:
 	chase_time += delta
 	pounce_clock -= delta
 	pounce_left -= delta
+	if not _exposed(target) and unseen <= 0.0:
+		unseen = 0.15
 	if unseen <= TRACK_SECONDS:
-		last_seen = player.global_position
+		last_seen = target.global_position
 	agent.target_position = _intercept() if unseen <= 0.0 else last_seen
-	var gap: float = global_position.distance_to(player.global_position)
+	var gap: float = global_position.distance_to(target.global_position)
 	if unseen <= 0.0 and pounce_clock <= 0.0 and gap < POUNCE_REACH and gap > STRIKE_REACH:
 		pounce_clock = POUNCE_REST
 		pounce_left = POUNCE_SECONDS
 		roar_sound.play()
 	var speed := lerpf(CHASE_SPEED, RAGE_SPEED, clampf(chase_time / RAGE_SECONDS, 0.0, 1.0))
 	_walk(POUNCE_SPEED if pounce_left > 0.0 else speed, delta)
-	if _player_exposed() and gap < STRIKE_REACH:
+	if _player_exposed() and gap < STRIKE_REACH and not _out_of_reach(target):
 		state = State.STRIKE
 		wait = 0.45
 		model.move("idle", 1.4)
@@ -490,16 +574,20 @@ func _chase(delta: float) -> void:
 	if unseen > LOSE_SECONDS:
 		_lost_sight()
 
+# Once a student is 0.2 s into a climb they are over: too late to grab.
+func _out_of_reach(body: CharacterBody3D) -> bool:
+	return body.has_method("past_grab") and body.past_grab()
+
 # Runs for where the prey is going, unless that is somewhere it could not walk to.
 func _intercept() -> Vector3:
-	var ahead: Vector3 = player.global_position + player.velocity * Vector3(1, 0, 1) * minf(global_position.distance_to(player.global_position) / CHASE_SPEED, PREDICT_SECONDS)
+	var ahead: Vector3 = target.global_position + target.velocity * Vector3(1, 0, 1) * minf(global_position.distance_to(target.global_position) / CHASE_SPEED, PREDICT_SECONDS)
 	var walkable := NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, ahead)
-	return walkable if walkable.distance_to(ahead) < PREDICT_TRUST else player.global_position
+	return walkable if walkable.distance_to(ahead) < PREDICT_TRUST else target.global_position
 
 # The reach is a lunge, not a pause: stepping backwards must not outrun the wind-up.
 func _strike(delta: float) -> void:
 	wait -= delta
-	var flat := player.global_position - global_position
+	var flat := target.global_position - global_position
 	flat.y = 0.0
 	if flat.length() > 0.9:
 		velocity = flat.normalized() * LUNGE_SPEED
@@ -509,80 +597,105 @@ func _strike(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, atan2(-flat.x, -flat.z), 1.0 - exp(-12.0 * delta))
 	if wait > 0.0:
 		return
-	if _player_exposed() and global_position.distance_to(player.global_position) < STRIKE_REACH + 0.6 and not player.test_invincible():
+	if _player_exposed() and global_position.distance_to(target.global_position) < STRIKE_REACH + 0.6 and not target.test_invincible() and not _out_of_reach(target):
 		_seize()
 	else:
 		state = State.CHASE
 
-# Every catch is a grab: the player hangs in front of its mouth while the choice runs out.
+# A catch: he takes them by the arm and drags them to the nearest room he can lock.
+# Without a team (the old spirit nights) a catch is the end.
 func _seize() -> void:
+	if team == null:
+		player.invulnerable_time = 0.0
+		player.take_damage(player.health + 1.0, self)
+		state = State.ROAM
+		_next_search()
+		return
 	state = State.GRAB
-	armed = player.inventory.has("salt_gun")
-	wait = GRAB_ARMED_SECONDS if armed else GRAB_SECONDS
+	armed = target == player and player.inventory.has("salt_gun")
 	grab_clock = 0.0
-	grab_from = player.global_position
-	player.seized = true
-	player.cancel_chalk_charge()
-	player.flashlight.hide()
+	grab_from = target.global_position
+	target.seized = true
+	carried_layers = Vector2i(target.collision_layer, target.collision_mask)
+	target.collision_layer = 0
+	target.collision_mask = 0
+	if target == player:
+		player.cancel_chalk_charge()
+		player.flashlight.hide()
+		player.end_hide()
+		# Facing where he is marching them, so they see which room it is.
+		player.rotation.y = rotation.y
+		player.camera.rotation.x = 0.0
 	roar_sound.play()
-	world.progression.fear.beat()
+	if target == player:
+		world.progression.fear.beat()
 	shout.text = "CHUỘT TRÁI · BẮN SÚNG MUỐI" if armed else ""
+	team.seize(target)
+	jail_door = team.jail_for(global_position)
+	agent.target_position = team.inside(jail_door, 3)
+	_forget()
+	notice = 0.0
 
+# Dragged at his side, on foot: the captive can only look on.
 func _hold(delta: float) -> void:
 	grab_clock += delta
-	wait -= delta
-	var mouth := global_position - global_basis.z * HOLD_REACH + Vector3.UP * LIFT
-	player.global_position = grab_from.lerp(mouth, clampf(grab_clock * 4.0, 0.0, 1.0))
-	var face := global_position - player.global_position
-	player.rotation.y = atan2(-face.x, -face.z)
-	player.camera.rotation.x = lerpf(player.camera.rotation.x, MOUTH_PITCH, 1.0 - exp(-8.0 * delta))
-	model.move("idle", 1.4)
-	if wait <= 0.0:
-		_decide()
+	_walk(CARRY_SPEED, delta)
+	_carry_pose()
+	var goal: Vector3 = team.inside(jail_door, 3)
+	var arrived: bool = grab_clock > 0.5 and (global_position.distance_to(goal) < 1.0 or agent.is_navigation_finished() and global_position.distance_to(goal) < 3.0)
+	# Stuck for long on the way: he gets there anyway, nobody is left hanging.
+	if arrived or grab_clock > 60.0:
+		_lock_up()
+
+func _carry_pose() -> void:
+	if target == null or state != State.GRAB:
+		return
+	# Marched ahead of him by the collar, inside his own width: never pushed into a wall or door frame.
+	var ahead := global_position - global_basis.z * 0.45
+	target.global_position = target.global_position.lerp(ahead, clampf(grab_clock * 4.0, 0.0, 1.0)) if grab_clock < 0.25 else ahead
+	if target != player:
+		target.rotation.y = rotation.y
+	else:
+		# The camera rides at the student's eye, ahead of his face: keep his body out of view.
+		player.camera.rotation.x = clampf(player.camera.rotation.x, -0.6, 0.6)
+
+func _lock_up() -> void:
+	shout.text = ""
+	armed = false
+	target.collision_layer = carried_layers.x
+	target.collision_mask = carried_layers.y
+	team.imprison(target, jail_door)
+	director.caught_someone()
+	# A moment at the door, then off to find the others.
+	fall_back(team.outside(jail_door), LINGER_SECONDS)
+	target = player
+
+# The captive fought loose (hunt_team.gd, the struggle bar): he drops them and staggers.
+func break_free() -> void:
+	if state != State.GRAB or target == null:
+		return
+	var body := target
+	body.collision_layer = carried_layers.x
+	body.collision_mask = carried_layers.y
+	var map: RID = get_world_3d().navigation_map
+	body.global_position = NavigationServer3D.map_get_closest_point(map, global_position + global_basis.x * 1.1) + Vector3.UP * 0.05
+	body.seized = false
+	body.invulnerable_time = ESCAPE_GRACE
+	team.release(body)
+	if body == player:
+		player.camera.rotation.x = 0.0
+	shout.text = ""
+	armed = false
+	roar_sound.play()
+	stunned = true
+	state = State.STAGGER
+	wait = 1.5
+	last_seen = body.global_position
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.GRAB and armed and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		get_viewport().set_input_as_handled()
 		fire_salt()
-
-# It wants prizes more than meat: the dearest thing buys the player's life.
-func _dearest() -> String:
-	var best := ""
-	for item in player.inventory:
-		if Gear.VALUE.get(item, 0) > Gear.VALUE.get(best, 0):
-			best = item
-	return best
-
-func _decide() -> void:
-	var prize := _dearest()
-	if prize.is_empty():
-		_release(0.0)
-		player.invulnerable_time = 0.0
-		player.take_damage(player.health + 1.0, self)
-		return
-	player.inventory[player.inventory.find(prize)] = ""
-	stolen.append(prize)
-	world.notify("Bác bảo vệ giật mất %s rồi mải xem · Chạy đi!" % player.ITEM_NAMES[prize])
-	_release(0.0)
-	state = State.ADMIRE
-	wait = ADMIRE_SECONDS
-	velocity = Vector3.ZERO
-	_forget()
-	notice = 0.0
-	model.admire(prize)
-	director.caught_someone()
-
-# It turns the prize over in its claws, medals chiming, and forgets the world for a moment.
-func _admire(delta: float) -> void:
-	wait -= delta
-	model.move("idle", 0.5)
-	rotate_y(sin(wait * 1.7) * delta * 0.5)
-	if int(wait * 0.8) != int((wait + delta) * 0.8):
-		clink_sound.play()
-	if wait <= 0.0:
-		model.stop_admiring()
-		state = State.ROAM
-		_next_search()
 
 func fire_salt() -> void:
 	player.inventory[player.inventory.find("salt_gun")] = ""
@@ -590,7 +703,7 @@ func fire_salt() -> void:
 	roar_sound.pitch_scale = 1.4
 	roar_sound.play()
 	_release(THROW_REACH)
-	player.stamina = player.MAX_STAMINA
+	player.stamina = player.max_stamina
 	player.combat.adrenaline_remaining = player.combat.ADRENALINE_SECONDS
 	player.combat.heartbeat.play()
 	world.notify("Bác bảo vệ kêu lên rồi buông bạn ra · Chạy mau!")
@@ -604,6 +717,11 @@ func _stagger(delta: float) -> void:
 	wait -= delta
 	rotate_y(sin(wait * 9.0) * delta * 3.0)
 	model.move("idle", 1.8)
+	if wait <= 0.0 and stunned:
+		stunned = false
+		state = State.CHASE
+		unseen = 0.0 if _exposed(target) and _can_see(target, false) else LOSE_SECONDS * 0.5
+		return
 	if wait <= 0.0:
 		roar_sound.pitch_scale = 1.0
 		fall_back(director._far_point(player.global_position), BLIND_SECONDS)
@@ -612,30 +730,142 @@ func _release(reach: float) -> void:
 	var away := player.global_position - global_position
 	away.y = 0.0
 	away = away.normalized() if away.length() > 0.01 else global_basis.z
-	var landing := grab_from
+	var landing := player.global_position
 	for distance in [reach, reach * 0.6, reach * 0.3]:
 		var spot: Vector3 = global_position + away * distance
 		spot.y = grab_from.y
 		if reach > 0.0 and player.can_fit(spot):
 			landing = spot
 			break
+	player.collision_layer = carried_layers.x
+	player.collision_mask = carried_layers.y
 	player.global_position = landing
 	player.seized = false
+	if team != null:
+		team.release(player)
 	shout.text = ""
 	player.camera.rotation.x = 0.0
 	player.invulnerable_time = ESCAPE_GRACE
 
+# He hauls the fallen shelf aside: the student it was dropped on gains a few seconds.
+func _clear(delta: float) -> void:
+	clear_time -= delta
+	velocity = Vector3.ZERO
+	var face: Vector3 = clearing.global_position - global_position
+	face.y = 0.0
+	if face.length() > 0.1:
+		rotation.y = lerp_angle(rotation.y, atan2(-face.x, -face.z), 1.0 - exp(-8.0 * delta))
+	model.move("idle", 1.6)
+	_carry_pose()
+	if clear_time <= 0.0:
+		clear_time = 0.0
+		clearing.clear()
+		clearing = null
+
+# Passing a low gap he saw a student slip through, and not running anyone down right now:
+# he boards it up.
+func _look_for_gap_to_board(delta: float) -> void:
+	board_clock -= delta
+	var course: Node3D = world.get("kiting")
+	if board_clock > 0.0 or course == null or state == State.GRAB or state == State.STRIKE or state == State.CHASE and unseen <= 0.0:
+		return
+	board_clock = 0.3
+	for gap in get_tree().get_nodes_in_group("kiting_low"):
+		if course.wants_boarding(gap) and gap.global_position.distance_to(global_position) < BOARD_REACH:
+			boarding = gap
+			board_time = BOARD_SECONDS
+			chase_time = 0.0
+			return
+
+func _board(delta: float) -> void:
+	board_time -= delta
+	velocity = Vector3.ZERO
+	var face: Vector3 = boarding.global_position - global_position
+	face.y = 0.0
+	if face.length() > 0.1:
+		rotation.y = lerp_angle(rotation.y, atan2(-face.x, -face.z), 1.0 - exp(-8.0 * delta))
+	model.move("idle", 1.8)
+	if int(board_time * 3.0) != int((board_time + delta) * 3.0):
+		world.soundscape.at("door", boarding.global_position, -12)
+	if board_time <= 0.0:
+		board_time = 0.0
+		world.kiting.board(boarding)
+		boarding = null
+
+# A shelf fell on him.
+func knock_back(seconds: float, _shelf: Node3D) -> void:
+	if state == State.GRAB or cross_time > 0.0:
+		return
+	clear_time = 0.0
+	clearing = null
+	board_time = 0.0
+	boarding = null
+	chase_time = 0.0
+	stunned = true
+	state = State.STAGGER
+	wait = seconds
+	roar_sound.play()
+
+# A window on his path: he climbs over, slowly.
+func _on_link(details: Dictionary) -> void:
+	var link = details.get("owner")
+	if link is NavigationLink3D and cross_time <= 0.0:
+		_climb(link.get_parent())
+
+func _climb(window: Node3D) -> void:
+	chase_time = 0.0
+	last_climbed = window
+	climbed_at = Time.get_ticks_msec()
+	cross_from = global_position
+	cross_to = preload("res://scripts/kiting_course.gd").far_side(window, global_position)
+	cross_to.y = global_position.y
+	cross_time = VAULT_SECONDS
+
+func _cross(delta: float) -> void:
+	cross_time = maxf(0.0, cross_time - delta)
+	var t := 1.0 - cross_time / VAULT_SECONDS
+	# Up onto the sill, a pause astride it, then down the far side.
+	var along := smoothstep(0.0, 0.35, t) * 0.5 + smoothstep(0.6, 1.0, t) * 0.5
+	global_position = cross_from.lerp(cross_to, along) + Vector3.UP * (0.9 * clampf(sin(t * PI) * 1.6, 0.0, 1.0))
+	var flat := cross_to - cross_from
+	if flat.length() > 0.05:
+		rotation.y = atan2(-flat.x, -flat.z)
+	model.move("idle", 1.0)
+	velocity = Vector3.ZERO
+	_carry_pose()
+	if cross_time <= 0.0:
+		_step(STRIDE)
+		Steer.repath(agent)
+
 func _walk(speed: float, delta: float) -> void:
-	var next := agent.get_next_path_position()
+	var next := Steer.point(agent, global_position)
 	var flat := next - global_position
 	flat.y = 0.0
 	var direction := flat.normalized() if flat.length() > 0.05 else Vector3.ZERO
+	if direction != Vector3.ZERO and sidestep_time <= 0.0:
+		var window: Node3D = preload("res://scripts/kiting_course.gd").crossing_ahead(world, global_position, next)
+		if window != null and (window != last_climbed or Time.get_ticks_msec() - climbed_at > 1000):
+			_climb(window)
+			return
+	if sidestep_time > 0.0:
+		sidestep_time -= delta
+		direction = sidestep_dir
+	elif direction != Vector3.ZERO:
+		var shelf: Node3D = preload("res://scripts/kiting_course.gd").blocking_pallet(world, global_position, direction)
+		if shelf != null:
+			clearing = shelf
+			clear_time = shelf.CLEAR_SECONDS
+			chase_time = 0.0
+			velocity = Vector3.ZERO
+			return
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
-	var climb := next.y - global_position.y
-	# Stairs catch the capsule from some angles, so it lifts itself along the rising path.
-	if climb > 0.12:
-		velocity.y = minf(climb * 7.0, 4.0)
+	# Up a stair: step onto the tread in front (never a rail or a wall).
+	var up := Steer.step_up(self, direction)
+	if Steer.lost_level(agent, global_position):
+		Steer.repath(agent)
+	if up > 0.0:
+		velocity.y = up
 	else:
 		velocity.y = -6.0 if not is_on_floor() else -0.5
 	move_and_slide()
@@ -654,9 +884,13 @@ func _unstick(direction: Vector3, delta: float) -> void:
 		pin_clock = 0.0
 		return
 	pin_clock += delta
-	if pin_clock > 1.2:
+	# Caught on a corner: never through the wall. Back off sideways for a moment, then a fresh path.
+	if pin_clock > 0.5:
 		pin_clock = 0.0
-		global_position = NavigationServer3D.map_get_closest_point(get_world_3d().navigation_map, global_position + direction * 0.9) + Vector3.UP * 0.05
+		pin_from = global_position
+		sidestep_dir = Steer.safe_side(self, direction, 1.0 if randf() < 0.5 else -1.0)
+		sidestep_time = 0.35 if sidestep_dir != Vector3.ZERO else 0.0
+		agent.target_position = agent.target_position
 
 func _step(moved: float) -> void:
 	stride_left -= moved

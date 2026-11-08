@@ -209,11 +209,15 @@ func _finish_dawn() -> void:
 	phase = Phase.DAWN
 	finished = true
 	won = (soul_rescued or not rescue_needed()) and world.player.health > 0
+	if world.team != null:
+		won = world.team.standing() > 0
 	world.set_spirit_world(false, true)
 	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 1.0)
 	world.player.enabled = false
 	world.player.velocity = Vector3.ZERO
 	var survived := "06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if rescue_needed() else "06:00 · HOÀN THÀNH ĐÊM 1\nBạn đã trụ được tới sáng."
+	if world.team != null:
+		survived = "06:00 · HOÀN THÀNH ĐÊM 1\nTrời sáng, bác bảo vệ mở cổng. %d/%d người trong nhóm còn trụ được." % [world.team.remaining(), world.team.members.size()]
 	end_text.text = (survived if won else ("06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu." if rescue_needed() else "06:00 · ĐÊM 1 THẤT BẠI")) + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
@@ -223,6 +227,23 @@ func _finish_dawn() -> void:
 	breathing_audio.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	dawn_reached.emit(soul_rescued)
+
+# Night 1: everyone left is caught at the same moment.
+func team_lost() -> void:
+	if finished:
+		return
+	world.soul_quest.close()
+	if world.progression != null:
+		world.progression.close()
+	finished = true
+	won = false
+	world.player.velocity = Vector3.ZERO
+	end_text.text = "ĐÊM 1 THẤT BẠI\nCả nhóm đều đã bị bác bảo vệ bắt.\n\nR · Chơi lại"
+	end_panel.show()
+	bell.stop()
+	midnight_bell.stop()
+	breathing_audio.stop()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func win() -> void:
 	if active and phase == Phase.NIGHT and clock_reached_dawn() and (soul_rescued or not rescue_needed()) and world.simulation_active():

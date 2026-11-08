@@ -62,11 +62,17 @@ func is_locked() -> bool:
 	# Story classrooms open in order; the remaining rooms use Lan's key.
 	var world := get_parent().get_parent()
 	var number := int(get_meta("room_number", 0))
+	# Night 1: the guard has locked someone in here.
+	if world.get("team") != null and world.team.door_jailed(number):
+		return true
 	if world.get("progression") != null and world.progression.room_available(number):
 		return false
 	return number != 990 and (world.get("has_master_key") != true or world.get("progression") != null and world.progression.door_locked(number))
 
 func interaction_text() -> String:
+	var world := get_parent().get_parent()
+	if world.get("team") != null and world.team.door_jailed(int(get_meta("room_number", 0))):
+		return ""
 	if is_locked():
 		return "E · Cửa khóa · " + room_label
 	return ("E / Đóng cửa · " if is_open else "E / Mở cửa · ") + room_label

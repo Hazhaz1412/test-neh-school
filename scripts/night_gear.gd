@@ -7,12 +7,10 @@ const BAG_ROOM := 4
 const FREE_CHALK := 2
 const REDEEM_SHARE := 0.5
 const BOOST_CARE := 0.1
-# It only wants what looks like a prize; a torch is beneath it.
-const VALUE := {"medal": 120, "camera": 100}
+# What a pawned item costs to buy back.
+const VALUE := {"camera": 100}
 const STOCK := [
-	{"kind": "torch", "name": "Đèn pin", "price": 300, "text": "Sáng hơn, pin dùng 5 phút, không cần bấm. Món này không chiếm chỗ trong túi."},
-	{"kind": "salt_gun", "name": "Súng muối", "price": 180, "text": "Một phát. Bắn lúc bị nó chụp lên: nó đau, ném bạn đi và mất dấu."},
-	{"kind": "medal", "name": "Huy chương mạ", "price": 120, "text": "Giả, nhưng sáng. Nó sẽ giật thứ này thay vì ăn thịt bạn."},
+	{"kind": "salt_gun", "name": "Súng muối", "price": 180, "text": "Một phát. Bắn lúc đang bị lôi đi: bác buông bạn ra và mất dấu một lúc."},
 	{"kind": "battery", "name": "Pin", "price": 30, "text": "Thêm 50% pin cho đèn và máy ảnh."},
 	{"kind": "medicine", "name": "Sơ cứu", "price": 40, "text": "Hồi 30 máu."},
 	{"kind": "chalk", "name": "Phấn", "price": 10, "text": "Ném ra để dụ tiếng động."},
@@ -103,12 +101,13 @@ static func redeem(state: Dictionary, kind: String) -> String:
 	write(state)
 	return ""
 
-# Six slots, a light always first; leftover room gets the free chalk.
+# Six slots, the torch always first (the same one as Night 0); leftover room gets the free chalk.
 static func loadout(state: Dictionary) -> Array:
-	var slots: Array = ["torch" if state.torch else "crank"]
+	var slots: Array = ["torch"]
 	if state.camera:
 		slots.append("camera")
-	slots.append_array(state.bag)
+	# Medals and hand torches from older saves no longer do anything.
+	slots.append_array(state.bag.filter(func(kind): return not kind in ["medal", "crank", "torch"]))
 	for i in range(FREE_CHALK):
 		if slots.size() < 6:
 			slots.append("chalk")

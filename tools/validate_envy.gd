@@ -65,10 +65,8 @@ func run() -> void:
 	director.quiet_time = director.PATIENCE
 	check(director.make_hint().radius < wide * 0.5, "hiding longer narrows the hint")
 	director.quiet_time = 0.0
-	var poor: float = director.make_hint().radius
+	# The hint no longer depends on what the player carries (nothing is stolen any more).
 	var kept: Array[String] = school.player.inventory.duplicate()
-	for i in range(6): school.player.inventory[i] = ""
-	check(director.make_hint().radius > poor, "carrying less keeps the hint wider")
 	school.player.inventory = kept
 	demon.set_physics_process(true)
 	director.set_physics_process(false)
@@ -118,12 +116,12 @@ func run() -> void:
 	var seen := await until(func(): return demon.is_hunting(), 8.0)
 	check(seen, "it notices a player in plain view")
 	school.player.invulnerable_time = 0.0
-	var struck := await until(func(): return not demon.stolen.is_empty() or school.player.health < 100.0, 10.0)
-	check(struck, "reaching the player ends in a grab")
-	check(school.player.health == 100.0 and demon.stolen.has("camera"), "the camera buys the player's life")
-	check(demon.state == demon.State.ADMIRE, "it stops to admire what it took")
-	school.player.inventory[1] = "camera"
-	check(demon.is_resting(), "after a catch the director calls it back")
+	var struck := await until(func(): return school.player.health < 100.0, 10.0)
+	# Nothing is stolen any more; without a team to free them (the spirit nights), a catch ends it.
+	check(struck and school.player.health <= 0.0, "reaching the player ends the run")
+	school.player.health = 100.0
+	school.player.enabled = true
+	school.death_panel.hide()
 	# Left alone: A whispers, B hunts a hider holding their breath, nobody steers either.
 	director.set_physics_process(true)
 	demon.fall_back(demon.global_position, 0.0)

@@ -330,9 +330,10 @@ func lamp(pos: Vector3, tall := true) -> void:
 
 func planter(center: Vector2, size: Vector2) -> void:
 	box(campus, "GardenBed", Vector3(center.x, 0.015, center.y), Vector3(size.x, 0.035, size.y), ground_material(Color(0.17, 0.26, 0.15)), false)
+	# A flush edging strip, not a kerb: the beds are walked across freely (Night 1 runs through them).
 	for side in [-1, 1]:
-		box(campus, "BedBorder", Vector3(center.x + side * size.x / 2, 0.09, center.y), Vector3(0.16, 0.18, size.y), exterior_mat)
-		box(campus, "BedBorder", Vector3(center.x, 0.09, center.y + side * size.y / 2), Vector3(size.x, 0.18, 0.16), exterior_mat)
+		box(campus, "BedBorder", Vector3(center.x + side * size.x / 2, 0.03, center.y), Vector3(0.16, 0.06, size.y), exterior_mat, false)
+		box(campus, "BedBorder", Vector3(center.x, 0.03, center.y + side * size.y / 2), Vector3(size.x, 0.06, 0.16), exterior_mat, false)
 	for i in range(18):
 		var p := Vector3(center.x + rng.randf_range(-size.x * 0.43, size.x * 0.43), 0.04, center.y + rng.randf_range(-size.y * 0.43, size.y * 0.43))
 		prop("grass" if i % 3 == 0 else "flower_purpleA", p, rng.randf_range(0.22, 0.42), rng.randf_range(0, TAU), false, true)

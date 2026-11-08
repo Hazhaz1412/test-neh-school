@@ -165,7 +165,8 @@ func run() -> void:
 		return demon.state in [demon.State.STRIKE, demon.State.GRAB], 8.0)
 	check(arrived, "it reaches a player on the far side of the fountain")
 	check(closest[0] > 2.5, "without running into it: %.1f m from the centre" % closest[0])
-	# Faster than a sprint once it is wound up.
-	check(demon.RAGE_SPEED > school.player.RUN_SPEED and demon.CHASE_SPEED < school.player.RUN_SPEED, "a sprint escapes it at first, not forever")
+	# Night 1 rule: the guard outruns any sprint, and more so once wound up. Only vaults,
+	# shelves and cover buy distance.
+	check(demon.CHASE_SPEED > school.player.RUN_SPEED and demon.RAGE_SPEED > demon.CHASE_SPEED, "a sprint never outruns him")
 	print("RESULT / ", failures, " failures")
 	quit(1 if failures else 0)

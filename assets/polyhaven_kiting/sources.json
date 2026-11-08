@@ -1,0 +1,183 @@
+[
+ {
+  "id": "SchoolDesk_01",
+  "name": "School Desk 01",
+  "authors": [
+   "Ethan Place"
+  ],
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/SchoolDesk_01",
+  "files": {
+   "SchoolDesk_01/SchoolDesk_01_1k.gltf": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/SchoolDesk_01/SchoolDesk_01_1k.gltf",
+    "sha256": "9d840b58a9e66ce9dc3d8d5396fb97cf954b12dc27adaf41b8cc78ae1a6404eb",
+    "bytes": 2686
+   },
+   "SchoolDesk_01/textures/SchoolDesk_01_diff_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/SchoolDesk_01/SchoolDesk_01_diff_1k.jpg",
+    "sha256": "4fed6d98265c6be27b9e6c9b010a5bba55a9aca4edfcc3fae9a12309ca6a5b94",
+    "bytes": 71566
+   },
+   "SchoolDesk_01/textures/SchoolDesk_01_nor_gl_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/SchoolDesk_01/SchoolDesk_01_nor_gl_1k.jpg",
+    "sha256": "64de8791fec46894945136190504127d194c1fc8d999e15c639dc94d053581be",
+    "bytes": 85765
+   },
+   "SchoolDesk_01/textures/SchoolDesk_01_arm_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/SchoolDesk_01/SchoolDesk_01_arm_1k.jpg",
+    "sha256": "ee1e2ea17ca21471b8a4822400ddc6bd3a4d441822a7eb429bef8cb1ab6dd43d",
+    "bytes": 134042
+   },
+   "SchoolDesk_01/SchoolDesk_01.bin": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/SchoolDesk_01/SchoolDesk_01.bin",
+    "sha256": "80d0ece097fde9b1efe15a9babfb6bb1573d228bab6e02e3806cb5eca39c2c0c",
+    "bytes": 127564
+   }
+  }
+ },
+ {
+  "id": "wooden_bookshelf_worn",
+  "name": "Wooden Bookshelf Worn",
+  "authors": [
+   "Ulan Cabanilla"
+  ],
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_bookshelf_worn",
+  "files": {
+   "wooden_bookshelf_worn/wooden_bookshelf_worn_1k.gltf": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_bookshelf_worn/wooden_bookshelf_worn_1k.gltf",
+    "sha256": "a1c5b3f1e71ae0b5eb73047e8097bceaa5f17e5d2d0d7ae1b8053d5ec0878fc6",
+    "bytes": 2849
+   },
+   "wooden_bookshelf_worn/textures/wooden_bookshelf_worn_nor_gl_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bookshelf_worn/wooden_bookshelf_worn_nor_gl_1k.jpg",
+    "sha256": "90ffb1b3f7bb638d5a7e1a2b244a260d623e314a6010a6b8c23c57203e510ac9",
+    "bytes": 993276
+   },
+   "wooden_bookshelf_worn/wooden_bookshelf_worn.bin": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_bookshelf_worn/wooden_bookshelf_worn.bin",
+    "sha256": "170758113b50132380ab46943f6eab18f2714460dead065aae37241a94abf0f9",
+    "bytes": 267964
+   },
+   "wooden_bookshelf_worn/textures/wooden_bookshelf_worn_arm_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bookshelf_worn/wooden_bookshelf_worn_arm_1k.jpg",
+    "sha256": "41b3aca38fb55cb300d971016a597c80425da3744a6d33d82fe78f9dbe609eaa",
+    "bytes": 713979
+   },
+   "wooden_bookshelf_worn/textures/wooden_bookshelf_worn_diff_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bookshelf_worn/wooden_bookshelf_worn_diff_1k.jpg",
+    "sha256": "970f60178decadd0d8fb1e5872f718350a49b027fd69469210c41ead350cba56",
+    "bytes": 799126
+   }
+  }
+ },
+ {
+  "id": "steel_frame_shelves_02",
+  "name": "Steel Frame Shelves 02",
+  "authors": [
+   "James Ray Cock"
+  ],
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/steel_frame_shelves_02",
+  "files": {
+   "steel_frame_shelves_02/steel_frame_shelves_02_1k.gltf": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/steel_frame_shelves_02/steel_frame_shelves_02_1k.gltf",
+    "sha256": "df103b9fbb08a60e262cc1d8af5cb37f3c1231a8764eeacec23d363be24feca6",
+    "bytes": 2775
+   },
+   "steel_frame_shelves_02/textures/steel_frame_shelves_02_nor_gl_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/steel_frame_shelves_02/steel_frame_shelves_02_nor_gl_1k.jpg",
+    "sha256": "c0033947364a267d17307943df975bc9d81268b51532c73340dd0bf45d204990",
+    "bytes": 51446
+   },
+   "steel_frame_shelves_02/steel_frame_shelves_02.bin": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/steel_frame_shelves_02/steel_frame_shelves_02.bin",
+    "sha256": "bcfe8e37632961b13f7ac845f7f2505181c394e7bd356c123a0ef7706aabd70d",
+    "bytes": 142344
+   },
+   "steel_frame_shelves_02/textures/steel_frame_shelves_02_diff_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/steel_frame_shelves_02/steel_frame_shelves_02_diff_1k.jpg",
+    "sha256": "2b41f59f3fbc6464e10ce11ee17c80f35173de8321865e4c4a966c55f5898f15",
+    "bytes": 144386
+   },
+   "steel_frame_shelves_02/textures/steel_frame_shelves_02_arm_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/steel_frame_shelves_02/steel_frame_shelves_02_arm_1k.jpg",
+    "sha256": "7fbcad4858018270eec05cbcdfec886adf4de39a057a8fc15a3c1d1d009f0307",
+    "bytes": 199312
+   }
+  }
+ },
+ {
+  "id": "wooden_crate_01",
+  "name": "Wooden Crate 01",
+  "authors": [
+   "James Ray Cock"
+  ],
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_crate_01",
+  "files": {
+   "wooden_crate_01/wooden_crate_01_1k.gltf": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_crate_01/wooden_crate_01_1k.gltf",
+    "sha256": "fd9c6073acfc671e12b64666053f2805ae33aff5d3dbbcfe5c97c08c06644927",
+    "bytes": 5612
+   },
+   "wooden_crate_01/textures/wooden_crate_01_diff_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_01/wooden_crate_01_diff_1k.jpg",
+    "sha256": "16653f4abaf4c1d9bca94bde3bd8c54d0ea9a5298d1648abcf57de1f7ecc34cc",
+    "bytes": 711292
+   },
+   "wooden_crate_01/textures/wooden_crate_01_nor_gl_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_01/wooden_crate_01_nor_gl_1k.jpg",
+    "sha256": "f4ea44c7dc1686123d337039cb713d74e8a2dbc6d1bd2beeac276d06f5df3fab",
+    "bytes": 594076
+   },
+   "wooden_crate_01/wooden_crate_01.bin": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_crate_01/wooden_crate_01.bin",
+    "sha256": "85f381f8035f7a6f2f3b848640894c6d3333b261946dd8a338c0fe19e0bea21e",
+    "bytes": 189408
+   },
+   "wooden_crate_01/textures/wooden_crate_01_arm_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_01/wooden_crate_01_arm_1k.jpg",
+    "sha256": "cd0b031c3924905e16ffd78ead062c2cc274148c4104d09635310097738b4679",
+    "bytes": 776699
+   }
+  }
+ },
+ {
+  "id": "wooden_crate_02",
+  "name": "Wooden Crate 02",
+  "authors": [
+   "James Ray Cock",
+   "Jurita Burger"
+  ],
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_crate_02",
+  "files": {
+   "wooden_crate_02/wooden_crate_02_1k.gltf": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_crate_02/wooden_crate_02_1k.gltf",
+    "sha256": "e90985d317664668988cb95ce707784c94ab0ccc6d13c980ca789fa69a5cf7b6",
+    "bytes": 4150
+   },
+   "wooden_crate_02/textures/wooden_crate_02_diff_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_diff_1k.jpg",
+    "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07",
+    "bytes": 716110
+   },
+   "wooden_crate_02/textures/wooden_crate_02_arm_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_arm_1k.jpg",
+    "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a",
+    "bytes": 819577
+   },
+   "wooden_crate_02/wooden_crate_02.bin": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_crate_02/wooden_crate_02.bin",
+    "sha256": "e68e272641f704e5241e4108894f0b97363d511944db8b991a48787d0160ea5e",
+    "bytes": 150064
+   },
+   "wooden_crate_02/textures/wooden_crate_02_nor_gl_1k.jpg": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_nor_gl_1k.jpg",
+    "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8",
+    "bytes": 546319
+   }
+  }
+ }
+]

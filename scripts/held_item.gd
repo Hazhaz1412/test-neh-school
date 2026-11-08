@@ -130,8 +130,9 @@ func _process(delta: float) -> void:
 		hide()
 		return
 	var kind: String = player.selected_item()
-	# At the eye the viewfinder replaces the hands and camera.
-	visible = player.enabled and not player.seized and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished and not camera_raised()
+	# At the eye the viewfinder replaces the hands and camera; as the head turns back (right mouse,
+	# hands empty or holding anything but the camera) the hands sink out of view.
+	visible = player.enabled and not player.seized and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished and not camera_raised() and player.look_back_eased < 0.3
 	if kind != shown_kind:
 		# Switching slots puts the finger gun away too.
 		shown_kind = kind
@@ -146,6 +147,7 @@ func _process(delta: float) -> void:
 	position = BASE_POSITION + Vector3(0, -equip * 0.18 - recoil * 0.035, recoil * 0.06)
 	var charge: float = player.chalk_charge_fraction() if kind == "chalk" and player.chalk_charging else 0.0
 	position += Vector3(0.03, -0.02, 0.10) * charge
+	position.y -= 0.3 * minf(player.look_back_eased / 0.3, 1.0)
 	rotation.x = -charge * 0.45
 	rotation.z = sin(player.step_time) * player.velocity.length() * 0.003
 	var lift := smoothstep(0.0, 1.0, raise)

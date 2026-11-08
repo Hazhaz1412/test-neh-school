@@ -25,6 +25,12 @@ var guard_night := false
 @export_group("Survival · enemy tuning")
 var encounters: Node
 var envy: Node
+# Night 1's four students (hunt_team.gd); null on other nights.
+var team: Node
+# Night 1's kiting loops (kiting_course.gd); null on other nights.
+var kiting: Node3D
+# A longer breath on Night 1: running is how a chase is stretched out, not how it is won.
+const HUNT_STAMINA := 260.0
 @export_range(5.0, 35.0, 0.5) var ghost_detection_range := 18.0
 @export_range(1.0, 6.0, 0.1) var ghost_chase_speed := 4.65
 @export_range(4.0, 9.0, 0.1) var ghost_rush_speed := 6.4
@@ -228,7 +234,7 @@ func _build_ui() -> void:
 	stamina_bar.position = Vector2(1050, 36)
 	stamina_bar.size = Vector2(195, 8)
 	stamina_bar.show_percentage = false
-	stamina_bar.max_value = player.MAX_STAMINA
+	stamina_bar.max_value = player.max_stamina
 	var background := StyleBoxFlat.new()
 	background.bg_color = Color(0.15, 0.22, 0.22)
 	var fill := StyleBoxFlat.new()
@@ -391,6 +397,11 @@ func _process(delta: float) -> void:
 		interaction_label.text = "E · Cửa khóa" if target.is_locked() else ("E · Đóng cửa" if target.is_open else "E · Mở cửa")
 	elif target != null and target.has_method("hide_position"):
 		interaction_label.text = "E · Nấp"
+	if kiting != null and not player.is_hidden() and not kiting.prompt().is_empty():
+		interaction_label.text = kiting.prompt()
+	# The rescue bar carries its own prompt.
+	if team != null and not team.prompt().is_empty():
+		interaction_label.text = ""
 	if environmental_story and target != null and not player.is_hidden():
 		interaction_label.text = "E"
 	for light in flicker_lights:
@@ -441,14 +452,27 @@ func _begin_corridor() -> void:
 func _begin_night_one() -> void:
 	Progress.mark("night1")
 	guard_night = true
+	# Night 1's yards carry vault walls and crawl gaps; the guard's map knows them.
+	var course := preload("res://scripts/kiting_course.gd")
+	kiting = course.build(self)
+	if ResourceLoader.exists(course.NAVIGATION):
+		NavigationServer3D.map_set_cell_size(get_world_3d().navigation_map, course.NAV_CELL)
+		NavigationServer3D.map_set_cell_height(get_world_3d().navigation_map, course.NAV_CELL_HEIGHT)
+		$Navigation.navigation_mesh = load(course.NAVIGATION)
 	survival.start_run(false)
 	progression.begin_night_one()
 	var gear := Gear.read()
 	player.inventory.assign(Gear.loadout(gear))
-	player.crank_on = player.flashlight.visible
+	player.select_item("torch")
 	player.stamina_care = 1.0 - Gear.BOOST_CARE * gear.boosts
+	player.max_stamina = HUNT_STAMINA
+	player.stamina = HUNT_STAMINA
+	stamina_bar.max_value = HUNT_STAMINA
+	team = preload("res://scripts/hunt_team.gd").new()
+	add_child(team)
+	team.setup(self)
 	envy.hunting_night = true
-	notify("Đêm 1 · Ghen Tị" if gear.torch else "Đêm 1 · Đèn pin đã mất ở Đêm 0, chỉ còn đèn bấm tay · Chuột phải để sạc")
+	notify("Đêm 1 · Cả nhóm sống tới 06:00 · Bị bắt thì chờ đồng đội cứu")
 
 func simulation_active() -> bool:
 	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)

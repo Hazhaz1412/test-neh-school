@@ -215,7 +215,7 @@ func current_goal() -> String:
 	return "Bình minh · Đêm 1 kết thúc"
 
 func journal_context() -> String:
-	var text := ("ĐÊM 1 · GHEN TỊ\n" if world.get_tree().has_meta("night_one") else "ĐÊM 0 · MỞ ĐẦU\n") + current_goal()
+	var text := ("ĐÊM 1\n" if world.get_tree().has_meta("night_one") else "ĐÊM 0 · MỞ ĐẦU\n") + current_goal()
 	if evidence.has("clip"): text += "\n\nPhòng 103 sáng đèn dù trường đã cắt điện. Trên sàn chỉ có một chiếc cài tóc nhựa hồng bị gãy đôi, mất một cánh hoa."
 	if restroom != null and restroom.broken: text += "\n\nVừa nhặt cài tóc thì có tiếng kính vỡ ở tầng 2, ngay phía trên. Gương trong nhà vệ sinh A-203 rơi xuống, làm bể vòi nước; nước tràn ra hành lang và thấm xuống trần phòng 103."
 	if evidence.has("mirror"): text += "\n\nTrong tủ đồ của nhà vệ sinh, giữa đám gián và nhện, có một chiếc gương cầm tay bị vỡ. Ai đó đã cất nó ở đây."

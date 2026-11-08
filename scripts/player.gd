@@ -45,6 +45,42 @@ signal died
 var health := 100.0
 var invulnerable_time := 0.0
 var stamina := MAX_STAMINA
+# Raised for Night 1 (world.HUNT_STAMINA); MAX_STAMINA elsewhere.
+var max_stamina := MAX_STAMINA
+# Caught on Night 1: no moving or using anything, but the head still turns.
+var captive := false
+# Vaulting a low window of the kiting course (kiting_course.gd).
+const VAULT_SECONDS := 0.45
+const VAULT_STAMINA := 6.0
+const VAULT_NOISE := 10.0
+var vault_time := 0.0
+# Sprint + C: a slide that carries the run's speed low along the ground, for some breath.
+const SLIDE_SECONDS := 0.75
+const SLIDE_SPEED := 7.6
+const SLIDE_STAMINA := 18.0
+const SLIDE_FROM := 4.6
+var slide_time := 0.0
+var slide_dir := Vector3.ZERO
+var was_running := false
+# Fatigue, 0..1: while the guard is chasing, every second and every bit of breath won back make
+# the next breath come back slower. Shaking him off, or being caught, clears it.
+const FATIGUE_PER_SECOND := 1.0 / 80.0
+const FATIGUE_PER_STAMINA := 1.0 / 450.0
+const FATIGUE_GRIP := 0.85
+const FATIGUE_SHAKEN := 4.0
+var fatigue := 0.0
+var unchased := 0.0
+# Hold the right mouse button to look back over the shoulder while running on. The head turns
+# like a real one: it eases out, sweeps, eases in (LOOK_BACK_SECONDS each way), the view dips and
+# leans a little mid-turn, and the hands drop out of sight once the head is round.
+const LOOK_BACK_SECONDS := 0.32
+const LOOK_BACK_YAW := 2.75
+const LOOK_BACK_SHIFT := -0.09
+const LOOK_BACK_ROLL := 0.07
+var look_back := 0.0
+var look_back_eased := 0.0
+var vault_from := Vector3.ZERO
+var vault_to := Vector3.ZERO
 var enabled := true
 var step_time := 0.0
 var bob_amount := 0.0 # 0 standing still .. 1 at full sprint.
@@ -310,7 +346,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.keycode == KEY_G and not event.pressed:
 		release_chalk_charge("key")
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and enabled and not seized:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and enabled and (not seized or captive):
 		rotation.y -= event.relative.x * LOOK_SENSITIVITY
 		if is_hidden():
 			var forward: float = hidden_spot.rotation.y + PI
@@ -321,10 +357,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not held_visual.fire_finger_gun() and (selected_item() != "camera" or camera_aiming and held_visual.camera_raised()):
 				use_selected_item()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			# With the camera in hand it raises the viewfinder; otherwise holding it turns the
+			# head back (_process).
 			if selected_item() == "camera":
 				camera_aiming = not camera_aiming and not is_hidden()
-			elif selected_item().is_empty() and not is_hidden():
-				held_visual.push_both_hands()
 			else:
 				pump_crank()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -377,6 +413,10 @@ func _physics_process(delta: float) -> void:
 	if seized:
 		velocity = Vector3.ZERO
 		return
+	# A vault, once started, always finishes: never left astride the sill.
+	if vault_time > 0.0:
+		_tick_vault(delta)
+		return
 	if health <= 0.0 or not enabled or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		velocity = Vector3.ZERO
 		return
@@ -389,7 +429,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_hidden():
 		velocity = Vector3.ZERO
-		stamina = minf(MAX_STAMINA, stamina + 12 * delta)
+		stamina = minf(max_stamina, stamina + 12 * delta * recovery())
 		return
 	var direction := Vector2(
 		float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)),
@@ -397,6 +437,12 @@ func _physics_process(delta: float) -> void:
 	var moving := direction.length() > 0.0
 	var quiet := Input.is_physical_key_pressed(KEY_CTRL)
 	var wants_crouch := Input.is_physical_key_pressed(KEY_C)
+	if slide_time > 0.0:
+		_tick_slide(delta)
+		return
+	if wants_crouch and not crouching and was_running and is_on_floor() and stamina >= SLIDE_STAMINA and Vector2(velocity.x, velocity.z).length() > SLIDE_FROM:
+		_start_slide()
+		return
 	if wants_crouch != crouching and is_on_floor():
 		set_crouching(wants_crouch)
 	if stamina <= 1:
@@ -404,7 +450,10 @@ func _physics_process(delta: float) -> void:
 	if stamina > 22:
 		sprint_exhausted = false
 	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not crouching and not sprint_exhausted
-	stamina = clampf(stamina + (-SPRINT_DRAIN * combat.sprint_multiplier() * stamina_care if running else 15.0 * (1 - fear * 0.005)) * delta, 0.0, MAX_STAMINA)
+	var regained := 0.0 if running else minf(15.0 * (1 - fear * 0.005) * recovery() * delta, max_stamina - stamina)
+	stamina = clampf(stamina + (-SPRINT_DRAIN * combat.sprint_multiplier() * stamina_care * delta if running else regained), 0.0, max_stamina)
+	_tick_fatigue(delta, regained)
+	was_running = running
 	var target := transform.basis * Vector3(direction.x, 0, direction.y).normalized()
 	_tick_lean(delta)
 	var speed := CROUCH_SPEED if crouching else (1.35 if quiet else (RUN_SPEED if running else WALK_SPEED))
@@ -419,6 +468,9 @@ func _physics_process(delta: float) -> void:
 	var jump_pressed := Input.is_physical_key_pressed(KEY_SPACE)
 	# Space holds the breath while the guard searches the stalls, so it must not jump too.
 	var breath_beat: bool = get_parent().get("progression") != null and get_parent().progression.guard_part != null and get_parent().progression.guard_part.blocks_jump()
+	if jump_pressed and not jump_held and is_on_floor() and not crouching and not breath_beat and _try_vault():
+		jump_held = true
+		return
 	if jump_pressed and not jump_held and is_on_floor() and not crouching and stamina >= JUMP_STAMINA and not breath_beat:
 		velocity.y = JUMP_VELOCITY
 		stamina -= JUMP_STAMINA
@@ -446,9 +498,120 @@ func _physics_process(delta: float) -> void:
 	bob_amount = move_toward(bob_amount, bob_target, delta * 4.0)
 	camera.position.y = lerpf(STAND_EYE, CROUCH_EYE, crouch_blend) - absf(sin(step_time)) * BOB_HEIGHT * bob_amount
 	startle = maxf(0, startle - delta * 1.7)
-	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount + lean_offset
-	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount - lean * LEAN_ROLL
+	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount + lean_offset + LOOK_BACK_SHIFT * look_back_eased
+	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount - lean * LEAN_ROLL + sin(look_back_eased * PI) * LOOK_BACK_ROLL
 	camera.fov = lerpf(camera.fov, (79.0 if running else 73.0) + startle * 4 + (3.0 if combat.adrenaline_remaining > 0 else 0.0), delta * 5.0)
+
+func recovery() -> float:
+	return 1.0 - fatigue * FATIGUE_GRIP
+
+func _being_chased() -> bool:
+	var envy = get_parent().get("envy")
+	var demon = envy.demon if envy != null else null
+	return demon != null and demon.target == self and demon.state in [demon.State.CHASE, demon.State.STRIKE]
+
+func _tick_fatigue(delta: float, regained: float) -> void:
+	if _being_chased():
+		unchased = 0.0
+		fatigue = minf(1.0, fatigue + delta * FATIGUE_PER_SECOND + regained * FATIGUE_PER_STAMINA)
+	else:
+		unchased += delta
+		if unchased > FATIGUE_SHAKEN:
+			fatigue = maxf(0.0, fatigue - delta * 0.5)
+
+func _start_slide() -> void:
+	slide_dir = Vector3(velocity.x, 0, velocity.z).normalized()
+	slide_time = SLIDE_SECONDS
+	stamina -= SLIDE_STAMINA
+	set_crouching(true, true)
+	crouch_blend = 0.6
+	get_parent().emit_noise(global_position, 9.0, "slide")
+	get_parent().soundscape.at("footstep", global_position, -16)
+
+func _tick_slide(delta: float) -> void:
+	slide_time = maxf(0.0, slide_time - delta)
+	var t := 1.0 - slide_time / SLIDE_SECONDS
+	var speed := lerpf(SLIDE_SPEED, CROUCH_SPEED, t * t)
+	velocity.x = slide_dir.x * speed
+	velocity.z = slide_dir.z * speed
+	velocity.y = 0.0 if is_on_floor() else velocity.y - GRAVITY * delta
+	# Boards across a low gap: a slide smashes through them, at a cost. Too weak to take it,
+	# the slide just stops against them.
+	var course := preload("res://scripts/kiting_course.gd")
+	var boarded: Node3D = course.boarded_ahead(get_parent(), global_position, slide_dir, 0.7)
+	if boarded != null:
+		if health > course.BREAK_COST:
+			get_parent().kiting.unboard(boarded)
+			invulnerable_time = 0.0
+			take_damage(course.BREAK_COST)
+			get_parent().notify("Phá ván · mất 25% máu")
+		else:
+			slide_time = 0.0
+			get_parent().notify("Không đủ sức phá ván · Giữ E để gỡ")
+	move_and_slide()
+	# A wall ends it early.
+	if Vector2(velocity.x, velocity.z).length() < speed * 0.4:
+		slide_time = 0.0
+	crouch_blend = move_toward(crouch_blend, 1.0, delta * 8.0)
+	camera.position.y = lerpf(STAND_EYE, CROUCH_EYE, crouch_blend) - 0.12
+	camera.rotation.z = lerpf(camera.rotation.z, 0.07, delta * 10.0)
+	camera.fov = lerpf(camera.fov, 84.0, delta * 8.0)
+	if slide_time <= 0.0:
+		was_running = false
+		camera.rotation.z = 0.0
+
+# SPACE at a low window: over it in one quick move, louder than a footstep. The guard takes
+# three times as long over the same sill.
+func _try_vault() -> bool:
+	var course := preload("res://scripts/kiting_course.gd")
+	var window: Node3D = course.vault_near(get_parent(), global_position, 1.4)
+	if window == null or stamina < VAULT_STAMINA:
+		return false
+	var across: Vector3 = course.far_side(window, global_position) - global_position
+	across.y = 0.0
+	if across.length() < 0.2 or (-global_basis.z).dot(across.normalized()) < 0.2:
+		return false
+	vault_from = global_position
+	vault_to = global_position + across
+	vault_time = VAULT_SECONDS
+	stamina -= VAULT_STAMINA
+	lean = 0.0
+	lean_offset = 0.0
+	get_parent().emit_noise(global_position, VAULT_NOISE, "vault")
+	get_parent().soundscape.at("footstep", global_position, -14)
+	return true
+
+# 0.2 s into a climb the guard can no longer grab them.
+const GRAB_WINDOW := 0.2
+func past_grab() -> bool:
+	return vault_time > 0.0 and VAULT_SECONDS - vault_time > GRAB_WINDOW
+
+func _tick_vault(delta: float) -> void:
+	vault_time = maxf(0.0, vault_time - delta)
+	var t := 1.0 - vault_time / VAULT_SECONDS
+	global_position = vault_from.lerp(vault_to, smoothstep(0.0, 1.0, t)) + Vector3.UP * sin(t * PI) * 0.95
+	velocity = Vector3.ZERO
+	camera.rotation.z = sin(t * PI) * 0.06
+	camera.position.y = STAND_EYE - sin(t * PI) * 0.25
+	if vault_time <= 0.0:
+		var forward := (vault_to - vault_from).normalized()
+		velocity = forward * RUN_SPEED * 0.8
+		camera.rotation.z = 0.0
+
+func _process(delta: float) -> void:
+	var parent := get_parent()
+	var wants: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and selected_item() != "camera" and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and enabled and health > 0 and not is_hidden() and not (parent.get("progression") != null and parent.progression.controls_player())
+	look_back = move_toward(look_back, 1.0 if wants else 0.0, delta / LOOK_BACK_SECONDS)
+	_pose_look_back()
+
+# Ease in and out, like a neck: slow to start, quick through the middle, slow to settle.
+# Only while the head is round (or coming back) does it own the camera's yaw: cutscenes and
+# combat aim the camera themselves the rest of the time.
+func _pose_look_back() -> void:
+	var was := look_back_eased
+	look_back_eased = smoothstep(0.0, 1.0, look_back)
+	if look_back_eased > 0.0 or was > 0.0:
+		camera.rotation.y = LOOK_BACK_YAW * look_back_eased
 
 # Crouch or stand. Standing up needs headroom unless `force` (scripted moves).
 func set_crouching(value: bool, force := false) -> bool:
@@ -598,7 +761,13 @@ func reset_survival() -> void:
 	bob_amount = 0.0
 	velocity = Vector3.ZERO
 	recover()
+	max_stamina = MAX_STAMINA
 	stamina = MAX_STAMINA
+	look_back = 0.0
+	fatigue = 0.0
+	slide_time = 0.0
+	captive = false
+	vault_time = 0.0
 	battery = 100
 	crank_charge = 100.0
 	crank_on = false

@@ -6,7 +6,7 @@ const CHAPTERS := [
 	{"id": "corridor", "title": "Đêm 0 · Hành lang đỏ", "text": "Chạy trốn dưới đường hầm", "scene": "res://scenes/school_runtime.tscn", "meta": "chapter_corridor"},
 	{"id": "home", "title": "Tỉnh giấc · 05:52", "text": "Chỉ là một giấc mơ?", "scene": "res://scenes/home.tscn"},
 	{"id": "town", "title": "Ngày 1 · Khu phố", "text": "Tiếp tục ở giờ đã dừng", "scene": "res://scenes/town.tscn"},
-	{"id": "night1", "title": "Đêm 1 · Ghen Tị", "text": "Con quỷ đầu tiên", "scene": "res://scenes/school_runtime.tscn", "meta": "night_one"},
+	{"id": "night1", "title": "Đêm 1", "text": "Trốn bác bảo vệ tới sáng", "scene": "res://scenes/school_runtime.tscn", "meta": "night_one"},
 ]
 const METAS := ["prologue", "chapter_corridor", "night_one", "next_survival_run"]
 static var path := "user://progress.cfg"

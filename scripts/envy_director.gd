@@ -33,10 +33,9 @@ func setup(school: Node3D) -> void:
 	world.get_node("HUD").add_child(debug_label)
 
 func players() -> Array:
-	return [world.player]
+	return world.team.free_bodies() if world.get("team") != null else [world.player]
 
 func _ready_to_hunt() -> bool:
-	# Night 1 now ends with Lan; the demon hunts from the next night on.
 	return world.envy_enabled and hunting_night and world.night_hunt() and world.progression.briefing_complete and world.simulation_active()
 
 func start() -> void:
@@ -61,25 +60,24 @@ func _far_point(from: Vector3) -> Vector3:
 			best = point
 	return NavigationServer3D.map_get_closest_point(map, best) + Vector3.UP * 0.05
 
-# Envy goes for whoever has the most.
-func prey() -> CharacterBody3D:
-	var richest: CharacterBody3D = null
-	var most := -1
-	for player in players():
-		var owned: int = player.inventory.filter(func(item): return not item.is_empty()).size()
-		if owned > most and player.health > 0:
-			most = owned
-			richest = player
-	return richest
+# The guard is told about one student at a time: mostly the nearest, now and then another.
+func prey(nearest_only := false) -> CharacterBody3D:
+	var free := players().filter(func(body): return body.get("health") == null or body.health > 0)
+	if free.is_empty():
+		return null
+	if demon != null and (nearest_only or rng.randf() < 0.7):
+		free.sort_custom(func(a, b): return a.global_position.distance_squared_to(demon.global_position) < b.global_position.distance_squared_to(demon.global_position))
+		return free[0]
+	return free[rng.randi() % free.size()]
 
 func pressure() -> float:
 	return clampf(quiet_time / PATIENCE, 0.0, 1.0)
 
 func make_hint() -> Dictionary:
 	var target := prey()
-	var owned: int = target.inventory.filter(func(item): return not item.is_empty()).size()
-	var radius := lerpf(WIDE_AREA, TIGHT_AREA, pressure()) * (1.15 - owned * 0.05)
-	radius = maxf(radius, TIGHT_AREA * 0.75)
+	if target == null:
+		return {}
+	var radius := lerpf(WIDE_AREA, TIGHT_AREA, pressure())
 	# The true position is somewhere inside, never the centre: B still has to search.
 	var drift := Vector2.from_angle(rng.randf() * TAU) * radius * rng.randf_range(0.35, 0.8)
 	return {"centre": target.global_position + Vector3(drift.x, 0, drift.y), "radius": radius}
@@ -95,7 +93,7 @@ func _physics_process(delta: float) -> void:
 		enemy.set_dormant(true)
 	if not world.simulation_active():
 		return
-	var target := prey()
+	var target := prey(true)
 	if target == null or demon == null:
 		return
 	var distance: float = demon.global_position.distance_to(target.global_position)
@@ -108,7 +106,8 @@ func _physics_process(delta: float) -> void:
 		menace = maxf(0.0, menace - delta * 4.0)
 		quiet_time += delta
 	# Never called off mid-chase: it only backs away once it has lost sight of its prey.
-	if menace >= MENACE_LIMIT and not demon.is_resting() and not demon.is_hunting():
+	# The spirits' demon was called off now and then; the guard never gives anyone a breather.
+	if menace >= MENACE_LIMIT and not world.guard_night and not demon.is_resting() and not demon.is_hunting():
 		menace = 45.0
 		demon.fall_back(_far_point(target.global_position), REST_SECONDS)
 		return
@@ -116,7 +115,8 @@ func _physics_process(delta: float) -> void:
 	if hint_clock <= 0.0 and not demon.is_hunting() and not demon.is_resting():
 		hint_clock = lerpf(SLOW_HINT, FAST_HINT, pressure())
 		last_hint = make_hint()
-		demon.whisper(last_hint.centre, last_hint.radius)
+		if not last_hint.is_empty():
+			demon.whisper(last_hint.centre, last_hint.radius)
 
 func caught_someone() -> void:
 	menace = 45.0

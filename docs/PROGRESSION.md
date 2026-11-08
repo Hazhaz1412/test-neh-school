@@ -1,5 +1,38 @@
 # Đêm 1: Ba manh mối và hành lang linh hồn
 
+> **Cập nhật 2026-11-08 (lần 5) · Đêm 1 kiểu trốn thoát theo đội.** Tên chỉ còn "Đêm 1". Đèn pin luôn là cây của đêm 0; đèn bấm tay và huy chương đã bỏ.
+>
+> - **Đội:** người chơi và 3 bạn AI: Ba Rô, Huna, Bơ Tồ (`hunt_team.gd`, `teammate_bot.gd`). Code viết theo danh sách người chơi, để sau này thay bot bằng người qua mạng.
+> - **Thanh 600 giây:** mỗi lần bị bắt trừ 200 giây; trong lúc bị nhốt thanh tiếp tục chảy. Cứu được tối đa 2 lần, lần bắt thứ 3 là bị loại. Cả đội cùng bị giữ một lúc là thua. Sống tới 06:00 là thắng.
+> - **Bị bắt:** bác lôi người đó tới phòng gần nhất trong 4 phòng nhốt (A-101, A-108, B-1101, B-1105) rồi khóa cửa. Lúc bị lôi đi, bấm A/D luân phiên để đẩy thanh kháng cự; thanh tự tụt, nên chỉ thoát được khi bị lôi xa. Mỗi lần thoát, lần sau khó hơn 50%; vào phòng thì tính lại từ đầu.
+> - **Bị nhốt:** người chơi đi lại trong phòng được nhưng không ra được cửa. Đồng đội giữ E 3 giây ở ngoài cửa để mở. Phòng nhốt có dấu đỏ nhìn xuyên tường.
+> - **Bác bảo vệ (AI của quỷ Ghen Tị):**
+>   - Tốc độ gốc bằng 105% người chơi và tăng dần khi rượt.
+>   - Tốc độ về lại mức gốc mỗi khi bác leo cửa sổ (1,4 giây, người chơi chỉ mất 0,45 giây), dọn kệ đổ (2,8 giây), bị kệ đè hoặc đóng ván.
+>   - Người đã leo được hơn 0,2 giây thì không bắt được.
+>   - Bác nghe tiếng chân chạy nên không mất dấu dễ: muốn cắt đuôi phải khuất tầm nhìn và đi êm.
+>   - Bị kẹt thì bác bước ngang, không còn dịch chuyển xuyên tường.
+>   - Bác nhớ các khe thấp đã thấy học sinh chui và quay lại đóng ván. Khe bị đóng ván thì giữ E 5 giây để gỡ, hoặc trượt vào phá ván và mất 25% máu.
+> - **Người chơi:**
+>   - Stamina 260.
+>   - Thanh mệt: bị rượt càng lâu và hồi stamina càng nhiều thì stamina hồi càng chậm. Cắt đuôi được hoặc bị bắt thì thanh mệt về 0.
+>   - Đang chạy bấm C để trượt.
+>   - SPACE để leo cửa sổ hoặc kệ đã đổ. E để gạt kệ.
+>   - Giữ chuột phải để quay đầu nhìn ra sau; đầu xoay mượt cả lúc quay đi và quay về.
+> - **Bãi kiting (`kiting_course.gd`, `kiting_pallet.gd`):** 8 ô vòng đặt ở những chỗ được quét va chạm là trống.
+>   - Giữa mỗi ô là chồng thùng để chạy vòng. Đầu tây để trống, đầu đông bịt tường có một khe thấp.
+>   - Tường bắc có một khe kệ và một cửa sổ; tường nam có một cửa sổ và một khe thấp.
+>   - Đá, cỏ, bụi trang trí nằm trong ô được dọn đi.
+> - **Navmesh riêng `hunt_navigation.tres`:** ô 0,125 m, ô dọc 0,125 m, bán kính 0,375 m, leo tối đa 0,3 m (`tools/bake_hunt_navigation.gd`).
+>   - Ô 0,25 m làm tròn khoảng chừa ở góc tường xuống còn vài cm, nên người và bot cạ góc.
+>   - Mức leo 0,5 m nối sàn với hông dốc cầu thang, nên bác cố trèo lên từ bên hông rồi đi lạc vào gầm cầu thang.
+>   - Bác và bot bước lên bậc bằng cách dò mặt bậc ngay trước chân, cao tối đa 0,65 m (`scripts/path_steer.gd`), nên không trèo được lan can hay bàn. Bước né khi bị kẹt không bao giờ đẩy ra khỏi mép dốc.
+> - **Bồn cây giữa sân:** bỏ gờ (`tools/build_map.gd`), scene đã dựng lại. So từng node thì chỉ 16 viền bồn cây thay đổi.
+> - **Kiểm tra và đo:**
+>   - `tools/validate_night_one.gd`: 60 kiểm tra.
+>   - `tools/measure_guard_chase.gd`: đo số lần bác đứng đơ, số lần mất dấu, và quãng bác phải đi tăng bao nhiêu sau mỗi lần leo hoặc chui.
+>   - `tools/capture_night_one.gd`: ảnh `docs/night1-*.png`.
+
 > **Cập nhật 2026-11-08 (lần 4) · Đêm 1 không còn thế giới linh hồn:** vào đêm 1 qua cổng trường thì trường vẫn như đêm 0 (`world.guard_night`). Phím B bị tắt, không có ma bắt nạt hay cảnh hù. Kẻ săn vẫn là AI của quỷ Ghen Tị (`envy_director.gd` + `envy_demon.gd`), nhưng mặc thân bác bảo vệ (`guard_hunter_model.gd`): model Rocketbox, mũ, đèn pin có ánh sáng thật, tiếng giày CC0, tiếng chìa khóa và còi. Các hệ thống của đêm săn (tiếng ồn, phấn, hoảng loạn, chuông) kiểm tra `world.night_hunt()` thay vì `spirit_enabled`. Sân thượng không còn là chỗ an toàn ở đêm này. Kiểm tra: `tools/validate_night_one.gd`, `tools/validate_envy_smart.gd`; ảnh: `tools/capture_night_one.gd`.
 
 > **Cập nhật 2026-11-08 (lần 3):**

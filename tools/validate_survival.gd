@@ -214,7 +214,8 @@ func validate() -> void:
 	interact(school.survival.gate)
 	check(not school.survival.won and not school.survival.finished, "Returning with the key and pressing E cannot bypass time or soul rescue")
 	school.survival.advance_clock(1000)
-	check(school.survival.finished and not school.survival.won, "Dawn without a rescued soul does not complete night one")
+	# An is gone from the rooftop: there is no soul to free, reaching dawn alive is the night.
+	check(school.survival.finished and school.survival.won, "Dawn reached alive completes night one")
 	key(KEY_N)
 	await frames(4)
 	check(school.survival.active and not school.survival.won and not school.has_master_key and player.health == 100 and player.battery == 100 and player.chalk == 3, "A fresh night resets victory, inventory and finite survival resources")

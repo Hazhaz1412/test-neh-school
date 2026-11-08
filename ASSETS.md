@@ -196,3 +196,16 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 - **Model:** `Security_Male_01` của Microsoft Rocketbox (MIT), đã có sẵn trong `assets/rocketbox/townsfolk/`. Mũ bảo vệ và đèn pin là mesh trong `scripts/security_guard.gd`.
 - **Động tác (MIT, Rocketbox):** thêm `m_idle_look_around_01`, `m_listen_door`, `m_documents_check`, `m_documents_take` (thư mục `all_animations_max_motextr_static/`) và `m_walk_fast_01` (thư mục `all_animations_max_motextr_xy/`) vào `assets/rocketbox/animations/`, tải từ https://github.com/microsoft/Microsoft-Rocketbox. Chạy dùng `m_run_fast_01` có sẵn. Tay cầm đèn pin giơ ra trước được dựng bằng IK trong `humanoid_model.gd` (`hand_target`).
 - **Âm thanh:** `guard_whistle.wav` (còi), `guard_keys.wav` (chùm chìa khóa), `floor_thud.wav` (đồ đổ trên tầng 3) tổng hợp bằng `tools/build_guard_audio.py`.
+
+## Đêm 1: bãi kiting và đội
+
+- **Model (CC0 1.0, Poly Haven), bản 1k:** `assets/polyhaven_kiting/`, gồm:
+  - `SchoolDesk_01` (Ethan Place): bàn kê dưới cửa sổ để leo.
+  - `wooden_bookshelf_worn` (Ulan Cabanilla): kệ để gạt đổ chặn lối.
+  - `steel_frame_shelves_02` (James Ray Cock): kệ sắt trang trí.
+  - `wooden_crate_01` (James Ray Cock) và `wooden_crate_02` (James Ray Cock, Jurita Burger): chồng thùng ở giữa vòng.
+
+  Tải từ https://polyhaven.com qua API chính thức. URL từng file và SHA-256 ở `assets/polyhaven_kiting/sources.json`.
+- **Tường bê tông và ván gỗ:** dùng lại texture Poly Haven có sẵn `dirty_concrete` và `rough_wood` (`assets/polyhaven_school/`).
+- **Ba bạn đồng đội:** model Rocketbox (MIT) có sẵn `Male_Child_01`, `Female_Child_01`, `Male_Adult_08`.
+- **Âm thanh:** dùng lại `floor_thud.wav` (kệ đổ), `chair_impact.wav` (phá ván), tiếng giày CC0 `assets/audio/guard_steps/`, `guard_keys.wav`, `guard_whistle.wav`.

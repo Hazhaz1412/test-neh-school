@@ -49,9 +49,13 @@ func _draw() -> void:
 	# Health is always legible. Other gauges appear only when they matter.
 	text_at("♥", Vector2(30, height - 36), Color(0.76, 0.47, 0.43), 20)
 	meter(Vector2(60, height - 42), p.health, Color(0.68, 0.76, 0.67), 105)
-	var stamina_percent: float = p.stamina / p.MAX_STAMINA * 100
+	var stamina_percent: float = p.stamina / p.max_stamina * 100
 	if stamina_percent < 97 or world.progression.runner.active:
 		meter(Vector2(60, height - 31), stamina_percent, Color(0.45, 0.60, 0.60), 105)
+	# Fatigue: how much slower the next breath comes back while he is on your heels.
+	if p.fatigue > 0.02:
+		meter(Vector2(60, height - 26), p.fatigue * 100.0, Color(0.86, 0.55, 0.25), 105)
+		text_at("MỆT", Vector2(170, height - 22), Color(0.86, 0.55, 0.25, 0.85), 11)
 	var crank: bool = p.selected_item() == "crank"
 	var charge: float = p.crank_charge if crank else p.battery
 	if crank or p.flashlight.visible or p.selected_item() == "camera" or p.selected_item() == "battery" or p.battery < 20:

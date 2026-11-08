@@ -49,6 +49,11 @@ func validate() -> void:
 	root.add_child(school)
 	current_scene = school
 	await frames(25)
+	# The night navmesh is swapped in at load; queries before its first sync come back empty.
+	var waited := 0
+	while NavigationServer3D.map_get_iteration_id(school.get_world_3d().navigation_map) < 2 and waited < 600:
+		await physics_frame
+		waited += 1
 	var player: CharacterBody3D = school.player
 	player.set_physics_process(false)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
