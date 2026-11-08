@@ -1,6 +1,6 @@
 extends Node3D
 
-enum Stage { ROOM_LURE, NOISE_UPSTAIRS, CABINET_SCARE, MIRROR_FOUND, HIDE, STEALTH, PHOTO_EVIDENCE, ESCAPE_RUN, BASEMENT_DESCENT, CORRIDOR_RUN, FOLLOW_LAN, ROOM_HIDE, LAN_DIALOGUE, TABLE_ESCAPE, UNDER_TABLE, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE, LAN_FAREWELL }
+enum Stage { ROOM_LURE, NOISE_UPSTAIRS, CABINET_SCARE, MIRROR_FOUND, HIDE, STEALTH, PHOTO_EVIDENCE, ESCAPE_RUN, GATE_BREAK, BASEMENT_DESCENT, CORRIDOR_RUN, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE }
 const MIRROR_TO_CALL := 0.4
 const DESCENT_SECONDS := 1.8
 const CLIP_SPOT := Vector3(14.2, 0.05, 3.3)
@@ -12,15 +12,12 @@ var evidence := {}
 var clip: Node3D
 var restroom: Node3D
 var crash_sound: AudioStreamPlayer3D
-var lan: Node3D
 var runner: Node3D
 var lure_light: OmniLight3D
 var window_lure: Node3D
 var guard_part: Node3D
 var subtitle_label: Label
 var subtitle_clock := 0.0
-var return_table: Node3D
-var portal_arrived := false
 var escape: Node3D
 var fear: CanvasLayer
 var uneasy_music: AudioStreamPlayer
@@ -31,16 +28,6 @@ var blackout := false
 var power_surge := false
 var briefing_complete := false
 var stairs_open := false
-var lan_seen := {}
-var lan_node := "hub"
-var dialogue_data: Dictionary
-var lan_view: Control
-const FAREWELL := [
-	["Lan", "Mới một giờ đêm thôi. Lúc này nó không với tới cậu được, nhưng đừng ở lại lâu."],
-	["Bạn", "Còn cô thì sao? Cô ra khỏi đây được chứ?"],
-	["Lan", "Đừng lo cho tôi. Đưa điện thoại đây, tôi lưu số. Có chuyện gì tôi sẽ nhắn.", "Đưa điện thoại"],
-	["Lan", "Xong rồi. Về nhà đi, ngủ một chút. Đừng trả lời tin nhắn nào không phải của tôi."],
-]
 var panel: PanelContainer
 var heading: Label
 var body_text: Label
@@ -53,14 +40,12 @@ var interference_material: ShaderMaterial
 
 func setup(school: Node3D) -> void:
 	world = school
-	dialogue_data = JSON.parse_string(FileAccess.get_file_as_string("res://data/night1_dialogue.json"))
 	world.player.damaged.connect(func(_amount):
 		if panel_visible(): close())
 	name = "NightOneStory"
 	_clear_lure_room()
 	clip = make_interactable("clip", CLIP_SPOT)
 	clip.rotation.y = 0.4
-	lan = make_interactable("lan", Vector3(212, -299.95, -910))
 	lure_light = OmniLight3D.new()
 	lure_light.position = Vector3(14.5, 2.6, 3.6)
 	lure_light.light_color = Color(1.0, 0.79, 0.45)
@@ -84,14 +69,6 @@ func setup(school: Node3D) -> void:
 	crash_sound.max_distance = 70
 	crash_sound.volume_db = 2
 	add_child(crash_sound)
-	return_table = preload("res://scripts/story_table.gd").new()
-	return_table.world = world
-	return_table.story = self
-	return_table.returning = true
-	return_table.kind = 1
-	return_table.position = Vector3(12.8, 0.05, 1.5)
-	world.get_node("HidingSpots").add_child(return_table)
-	return_table.get_node("Cover/HideSign").hide()
 	laugh = AudioStreamPlayer.new()
 	laugh.stream = loop_wav("res://assets/audio/haunting_laughter.wav")
 	laugh.volume_db = -13
@@ -121,7 +98,7 @@ func setup(school: Node3D) -> void:
 	layer.layer = 8
 	add_child(layer)
 	layer.add_child(interference)
-	runner = preload("res://scripts/endless_corridor.gd").new()
+	runner = preload("res://scripts/tunnel_escape.gd").new()
 	add_child(runner)
 	runner.setup(self)
 	escape = preload("res://scripts/school_escape.gd").new()
@@ -188,21 +165,25 @@ func make_interactable(kind: String, pos: Vector3) -> Node3D:
 	return item
 
 func panel_visible() -> bool:
-	return panel != null and panel.visible or lan_view!=null and lan_view.visible
+	return panel != null and panel.visible
 
 func narrative_paused() -> bool:
 	return false
 
 func tutorial_active() -> bool:
-	# The camera works while tailing the guard: the photo in 306 is the point.
-	return world.survival.active and stage < Stage.INVESTIGATE_AN and not stage in [Stage.STEALTH, Stage.PHOTO_EVIDENCE]
+	return world.survival.active and stage < Stage.INVESTIGATE_AN
+
+# In the restroom and on the tail a flash would give the player away; only the papers in B-302
+# are worth that.
+func camera_allowed() -> bool:
+	return not tutorial_active() or stage == Stage.PHOTO_EVIDENCE and guard_part.part == guard_part.Part.PHOTO
 
 func controls_player() -> bool:
-	return runner.active or escape.active or restroom.locks_player() or guard_part.locks_player() or stage == Stage.BASEMENT_DESCENT or stage == Stage.UNDER_TABLE and not portal_arrived
+	return runner.active or escape.locks_player() or restroom.locks_player() or guard_part.locks_player() or stage == Stage.BASEMENT_DESCENT
 
 func room_available(number: int) -> bool:
-	# During the tail the side rooms on floor 3 are open, so there is somewhere to duck into.
-	return number == 103 or number == RESTROOM and stage >= Stage.NOISE_UPSTAIRS or number in [302, 305, 306] and stage in [Stage.STEALTH, Stage.PHOTO_EVIDENCE]
+	# During the tail block B's top-floor rooms are open; on the way out every room is.
+	return number == 103 or number == RESTROOM and stage >= Stage.NOISE_UPSTAIRS or number in [1301, 1302, 1303] and stage in [Stage.STEALTH, Stage.PHOTO_EVIDENCE] or stage == Stage.ESCAPE_RUN
 
 func door_locked(_room_number: int) -> bool:
 	return false
@@ -225,15 +206,11 @@ func current_goal() -> String:
 		Stage.HIDE: return "Có người dưới lầu · Trốn đi"
 		Stage.STEALTH: return "Bám theo bác bảo vệ · Đừng để bị nghe thấy"
 		Stage.PHOTO_EVIDENCE: return "Chụp lại giấy tờ bác bảo vệ đang dọn"
-		Stage.ESCAPE_RUN: return "BỊ PHÁT HIỆN · Chạy khỏi trường!"
-		Stage.BASEMENT_DESCENT: return "Cổng khóa · Chạy xuống hầm kỹ thuật"
+		Stage.ESCAPE_RUN: return "BỊ PHÁT HIỆN · Lẻn ra cổng chính, đừng để bác bảo vệ bắt"
+		Stage.GATE_BREAK: return "Cổng khóa · Phá cửa phòng kỹ thuật trước khi bác ấy xuống tới nơi"
+		Stage.BASEMENT_DESCENT: return "Chạy xuống hầm kỹ thuật"
 		Stage.CORRIDOR_RUN: return "CHẠY! · WASD di chuyển · SHIFT chạy · SPACE nhảy · CTRL trượt khi lấy đà"
-		Stage.FOLLOW_LAN: return "LAN: CHẠY THEO TÔI!"
-		Stage.ROOM_HIDE: return "Núp trong phòng · Đừng gây tiếng động"
-		Stage.LAN_DIALOGUE: return "E · Hỏi Lan về lời nguyền"
-		Stage.TABLE_ESCAPE: return "Lan chỉ một lối đi dưới gầm bàn"
-		Stage.UNDER_TABLE: return "Chờ tiếng ngoài cửa im đi, rồi chui ra khỏi gầm bàn"
-		Stage.INVESTIGATE_AN, Stage.COMFORT_AN: return "Tìm linh hồn mắc kẹt · Lắng nghe tiếng khóc trong trường"
+		Stage.INVESTIGATE_AN, Stage.COMFORT_AN: return "Sống sót tới bình minh"
 		Stage.SURVIVE_DAWN: return "An đã được giải thoát · Oán niệm suy yếu · Sống tới bình minh"
 	return "Bình minh · Đêm 1 kết thúc"
 
@@ -243,9 +220,8 @@ func journal_context() -> String:
 	if restroom != null and restroom.broken: text += "\n\nVừa nhặt cài tóc thì có tiếng kính vỡ ở tầng 2, ngay phía trên. Gương trong nhà vệ sinh A-203 rơi xuống, làm bể vòi nước; nước tràn ra hành lang và thấm xuống trần phòng 103."
 	if evidence.has("mirror"): text += "\n\nTrong tủ đồ của nhà vệ sinh, giữa đám gián và nhện, có một chiếc gương cầm tay bị vỡ. Ai đó đã cất nó ở đây."
 	if stage >= Stage.HIDE: text += "\n\nBác bảo vệ trường nghe tiếng động, lên soát từng phòng tầng 2. Tiếng gì đó đổ trên tầng 3 kéo bác đi ngay trước cửa nhà vệ sinh."
-	if evidence.has("photo"): text += "\n\nĐã chụp được tập giấy tờ và một tấm ảnh lớp học mà bác bảo vệ lén dọn khỏi bàn giáo viên phòng 306."
-	elif stage >= Stage.ESCAPE_RUN: text += "\n\nTấm ảnh chụp vội không thấy rõ giấy tờ trên bàn phòng 306."
-	if briefing_complete: text += "\n\nLan: Bình minh chỉ đưa nhóm ra ngoài tạm thời. Hãy giúp các linh hồn thoát khỏi oán niệm để phá lời nguyền. Danh tính của Lan vẫn là bí ẩn."
+	if evidence.has("photo"): text += "\n\nĐã chụp được tập giấy tờ và một tấm ảnh lớp học mà bác bảo vệ lén dọn khỏi bàn giáo viên phòng B-302."
+	elif stage >= Stage.ESCAPE_RUN: text += "\n\nTấm ảnh chụp vội không thấy rõ giấy tờ trên bàn phòng B-302."
 	return text
 
 func reset() -> void:
@@ -262,16 +238,11 @@ func reset() -> void:
 	stairs_open = true
 	blackout = false
 	power_surge = false
-	portal_arrived = false
-	return_table.set_available(false)
 	escape.reset()
 	guard_part.reset()
 	fear.clear()
 	subtitle_label.hide()
-	lan_seen.clear()
-	lan_node = "hub"
 	clip.set_available(true)
-	lan.set_available(false)
 	lure_light.show()
 	window_lure.reset()
 	restroom.reset()
@@ -297,9 +268,6 @@ func interact_with(item: Node3D) -> bool:
 		return true
 	if item == restroom.hand_mirror and stage == Stage.CABINET_SCARE and not restroom.swarm.locks_player():
 		collect_mirror()
-		return true
-	if item == lan and stage == Stage.LAN_DIALOGUE:
-		show_lan_page()
 		return true
 	return false
 
@@ -359,8 +327,9 @@ func photo_taken() -> void:
 func guard_position() -> Vector3:
 	return guard_part.guard_position()
 
+# Out in the yard: the guard spots the player from upstairs and the gate is chained.
 func begin_escape() -> void:
-	stage = Stage.ESCAPE_RUN
+	stage = Stage.GATE_BREAK
 	stage_time = 0
 	guard_part.stand_down()
 	escape.start()
@@ -388,106 +357,12 @@ func begin_first_chase() -> void:
 	interference.hide()
 	runner.start()
 
-func enter_lan_room() -> void:
-	stage = Stage.LAN_DIALOGUE
-	stage_time = 0
-	runner.lan.hide()
-	lan.global_position = runner.refuge.to_global(Vector3(-8.5, 0.05, 1.8))
-	lan.set_available(true)
-	show_lan_page()
-
-func show_lan_page() -> void:
-	world.soul_quest.close()
-	world.map_panel.hide()
-	world.player.cancel_chalk_charge()
-	panel.hide()
-	panel_kind = "lan"
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	lan_node = "hub"
-	var choices: Array = []
-	for question in dialogue_data.lan.questions:
-		choices.append({"text":question.question,"action":choose_lan_question.bind(question.id)})
-	var understood: bool = dialogue_data.lan.required.all(func(id):return lan_seen.has(id))
-	if understood: choices.append({"text":"Tôi hiểu rồi. Tôi sẽ chui xuống gầm bàn.","action":advance_lan})
-	lan_view.show_line("Lan",dialogue_data.lan.intro if lan_seen.is_empty() else "Bạn còn muốn hỏi điều gì?",choices)
-
-func choose_lan_question(id: String) -> void:
-	if stage!=Stage.LAN_DIALOGUE or not panel_visible(): return
-	for question in dialogue_data.lan.questions:
-		if question.id!=id: continue
-		lan_node = "question"
-		lan_view.show_line("Bạn",question.question,[{"text":"Nghe Lan trả lời","action":answer_lan_question.bind(id)}])
-		return
-
-func answer_lan_question(id: String) -> void:
-	if stage!=Stage.LAN_DIALOGUE or not panel_visible(): return
-	for question in dialogue_data.lan.questions:
-		if question.id!=id: continue
-		lan_node = "answer"
-		lan_view.show_line("Lan",question.answer,[{"text":"Hỏi tiếp","action":finish_lan_question.bind(id)}])
-		return
-
-func finish_lan_question(id: String) -> void:
-	if stage!=Stage.LAN_DIALOGUE or not panel_visible(): return
-	lan_seen[id] = true
-	show_lan_page()
-
-func advance_lan() -> void:
-	if stage != Stage.LAN_DIALOGUE or not panel_visible(): return
-	if not dialogue_data.lan.required.all(func(id):return lan_seen.has(id)): return
-	close()
-	stage = Stage.TABLE_ESCAPE
-	stage_time = 0
-	runner.table.get_node("Interaction").collision_layer = 16
-	lan.visual.get_child(0).reach = 0.7
-	world.player.look_at(Vector3(runner.table.global_position.x, world.player.position.y, runner.table.global_position.z))
-
-func begin_table_crossing() -> void:
-	stage = Stage.UNDER_TABLE
-	stage_time = 0
-	portal_arrived = false
-
-func arrive_under_table() -> void:
-	var p: CharacterBody3D = world.player
-	var torch_was_on: bool = p.saved_flashlight
-	runner.table.release()
-	p.hidden_spot = null
-	runner.restore_pose()
+# The jump into the reservoir was the end of the dream: Peter wakes up at home.
+func finish_dream() -> void:
 	runner.reset()
-	lan.set_available(false)
-	blackout = false
-	briefing_complete = true
-	return_table.set_available(true)
-	return_table.occupant = p
-	return_table.entry_position = return_table.approach_position()
-	p.begin_hide(return_table)
-	p.saved_flashlight = torch_was_on
-	# A cable trench under the table comes up through the floor of 103: the same school, no other world.
-	world.set_spirit_world(false, true)
-	portal_arrived = true
-	world.collect_master_key()
-	world.notice_time = 0
-	world.encounters.give_break(15)
-	fear.fade = 0.0
-
-# Night 1 ends here: Lan waits by the table, they swap numbers and Peter goes home.
-func finish_table_crossing() -> void:
-	stage = Stage.LAN_FAREWELL
-	stage_time = 0
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	var p: CharacterBody3D = world.player
-	lan.global_position = p.global_position + p.global_basis.x * 1.3
-	lan.show()
-	_farewell(0)
-
-func _farewell(index: int) -> void:
-	if index >= FAREWELL.size():
-		lan_view.hide()
-		_go_home()
-		return
-	var line: Array = FAREWELL[index]
-	var reply: String = line[2] if line.size() > 2 else "Tiếp"
-	lan_view.show_line(line[0], line[1], [{"text": reply, "action": _farewell.bind(index + 1)}])
+	runner.restore_pose()
+	fear.fade = 1.0
+	_go_home()
 
 func _go_home() -> void:
 	if world.get_tree().has_meta("story_stay_in_school"):
@@ -499,7 +374,6 @@ func _go_home() -> void:
 
 func close() -> void:
 	if panel != null: panel.hide()
-	if lan_view!=null: lan_view.hide()
 	panel_kind = ""
 	if world != null and world.player.health > 0 and not world.paused_by_user and not world.map_panel.visible and not world.survival.finished:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -538,7 +412,6 @@ func bypass_for_test() -> void:
 	evidence["photo"] = true
 	clip.set_available(false)
 	restroom.hand_mirror.set_available(false)
-	lan.set_available(false)
 	lure_light.hide()
 	laugh.stop()
 	laughter_echo.stop()
@@ -550,7 +423,7 @@ func bypass_for_test() -> void:
 
 func tick_player(delta: float) -> void:
 	if runner.active: runner.tick(delta)
-	elif escape.active: escape.tick(delta)
+	elif escape.locks_player(): escape.tick(delta)
 	else: world.player.velocity = Vector3.ZERO
 
 func _physics_process(delta: float) -> void:
@@ -560,22 +433,18 @@ func _physics_process(delta: float) -> void:
 		mirror_falls()
 	elif stage == Stage.MIRROR_FOUND and stage_time >= MIRROR_TO_CALL:
 		begin_guard()
-	elif stage in [Stage.HIDE, Stage.STEALTH, Stage.PHOTO_EVIDENCE]:
-		var parts := {1: Stage.HIDE, 2: Stage.STEALTH, 3: Stage.PHOTO_EVIDENCE}
+	elif stage in [Stage.HIDE, Stage.STEALTH, Stage.PHOTO_EVIDENCE, Stage.ESCAPE_RUN]:
+		var parts := {guard_part.Part.HIDE: Stage.HIDE, guard_part.Part.STEALTH: Stage.STEALTH, guard_part.Part.PHOTO: Stage.PHOTO_EVIDENCE,
+			guard_part.Part.DUCK: Stage.ESCAPE_RUN, guard_part.Part.SEARCH: Stage.ESCAPE_RUN, guard_part.Part.SNEAK: Stage.ESCAPE_RUN}
 		if parts.has(guard_part.part) and parts[guard_part.part] != stage:
 			stage = parts[guard_part.part]
 			stage_time = 0
-		elif guard_part.part == guard_part.Part.DONE and stage_time >= 0.9:
-			begin_escape()
 	if stage == Stage.BASEMENT_DESCENT:
 		# Down the service stairs in the dark; the tunnel's red lamps come up out of it.
 		fear.fade = clampf(stage_time / (DESCENT_SECONDS * 0.6), 0, 1)
 		if stage_time >= DESCENT_SECONDS:
 			fear.fade = 0.0
 			world.survival.begin_midnight()
-	if stage == Stage.UNDER_TABLE and not portal_arrived:
-		fear.fade = clampf(stage_time / 1.2, 0, 1)
-		if stage_time >= 1.8: arrive_under_table()
 	if world.survival.soul_rescued: stage = Stage.SURVIVE_DAWN
 
 func _process(delta: float) -> void:
@@ -638,15 +507,12 @@ func _build_ui() -> void:
 	subtitle_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	subtitle_label.hide()
 	world.get_node("HUD").get_child(0).add_child(subtitle_label)
-	lan_view = preload("res://scripts/visual_novel_dialogue.gd").new()
-	lan_view.setup(world.get_node("HUD").get_child(0),"Lan",close)
 
 func show_panel(kind: String, title: String, text: String) -> void:
 	world.soul_quest.close()
 	world.map_panel.hide()
 	world.player.cancel_chalk_charge()
 	panel_kind = kind
-	lan_view.hide()
 	heading.show()
 	body_text.show()
 	heading.text = title

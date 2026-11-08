@@ -1,5 +1,5 @@
 extends SceneTree
-# Entering through the gate must give a playable night: demon hunting, An reachable, dawn winnable.
+# Entering through the gate must give a playable night: the guard hunting in the ordinary school.
 var failures := 0
 
 func check(ok: bool, label: String) -> void:
@@ -19,7 +19,7 @@ func run() -> void:
 	var story: Node3D = school.progression
 	check(school.survival.active and school.survival.phase == school.survival.Phase.NIGHT, "the night is running")
 	check(not school.survival.opening.playing, "no opening cutscene")
-	check(school.spirit_enabled, "the school is in the spirit world")
+	check(not school.spirit_enabled and school.guard_night, "the school stays the ordinary night school, as in Night 0")
 	check(story.stage == story.Stage.COMFORT_AN, "An's story is open: " + story.current_goal())
 	check(story.stairs_open and school.has_master_key, "the campus is open")
 	check(school.player.global_position.distance_to(Vector3(12, 0.05, 75.2)) < 2.0, "Peter starts at the gate")
@@ -34,7 +34,7 @@ func run() -> void:
 	check(demon_up, "the demon is awake")
 	check(school.envy.demon.global_position.distance_to(school.player.global_position) > 20.0, "it does not start on top of Peter")
 	check(school.enemies.all(func(e): return e.dormant), "the old ghosts are gone")
-	check(not school.survival.soul_rescued, "An still has to be saved")
+	check(school.envy.demon.model.get_script() == preload("res://scripts/guard_hunter_model.gd"), "the hunter wears the guard's body")
 	var quest: Node3D = school.soul_quest
 	var missing: int = quest.memories.size() - quest.found.size()
 	print("memories still in the school: ", missing)

@@ -13,6 +13,8 @@ const CityBuilder := preload("res://scripts/city_backdrop/city_builder.gd")
 @export_group("Survival · encounters")
 const Gear := preload("res://scripts/night_gear.gd")
 @export var envy_enabled := true
+# Night 1 is hunted in the ordinary school, as in Night 0: no spirit world, only the guard.
+var guard_night := false
 @export var smart_spawn_enabled := true
 @export_range(1, 6, 1) var max_active_ghosts := 3
 @export_range(8.0, 60.0, 1.0) var encounter_interval_seconds := 22.0
@@ -301,7 +303,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if survival.opening.playing or soul_quest != null and soul_quest.panel_visible() or progression != null and progression.panel_visible():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_B:
+		if event.keycode == KEY_B and not guard_night:
 			set_spirit_world(not spirit_enabled)
 		if event.keycode == KEY_N:
 			survival.start_run()
@@ -433,11 +435,12 @@ func _update_light_budget() -> void:
 func _begin_corridor() -> void:
 	survival.start_run(false)
 	survival.begin_midnight()
-	set_spirit_world(true, true)
+	set_spirit_world(false, true)
 	progression.begin_first_chase()
 
 func _begin_night_one() -> void:
 	Progress.mark("night1")
+	guard_night = true
 	survival.start_run(false)
 	progression.begin_night_one()
 	var gear := Gear.read()
@@ -450,17 +453,22 @@ func _begin_night_one() -> void:
 func simulation_active() -> bool:
 	return (progression == null or not progression.narrative_paused()) and player.enabled and player.health > 0 and (not map_panel.visible or survival != null and survival.active) and not paused_by_user and (survival == null or not survival.opening.playing and not survival.finished)
 
+# Whether the night's hunter, items and fear run: the spirit world, or Night 1's guard.
+func night_hunt() -> bool:
+	return spirit_enabled or guard_night
+
 func is_soul_sanctuary(feet: Vector3) -> bool:
-	if progression != null and progression.runner.room_hidden and progression.runner.in_refuge(feet):
-		return true
 	# The three wings of A's roof; do not include the open courtyard below.
+	# A refuge only for the spirits' night: the guard of Night 1 climbs to the roof like anywhere else.
+	if guard_night:
+		return false
 	return feet.y >= 11.35 and absf(feet.x) <= 38.5 and feet.z >= -12.5 and feet.z <= 56.2 and (feet.z <= 9.2 or absf(feet.x) >= 21.7)
 
 func emit_noise(position_heard: Vector3, radius: float, source: String) -> void:
 	# The prologue's guard listens in the ordinary school, not the spirit world.
 	if progression != null and simulation_active():
 		progression.hear_noise(position_heard, radius, source)
-	if not simulation_active() or not spirit_enabled or is_soul_sanctuary(position_heard):
+	if not simulation_active() or not night_hunt() or is_soul_sanctuary(position_heard):
 		return
 	for ghost in enemies:
 		if is_instance_valid(ghost):

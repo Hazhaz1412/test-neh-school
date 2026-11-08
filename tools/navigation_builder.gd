@@ -9,7 +9,8 @@ static func bake(school: Node3D, path := "res://scenes/campus_navigation.tres") 
 	mesh.cell_size = 0.25
 	mesh.cell_height = 0.25
 	mesh.agent_height = 1.75
-	mesh.agent_radius = 0.50
+	# Rounded up to whole cells: 0.5 m (two cells) seals every 1.3 m classroom doorway.
+	mesh.agent_radius = 0.25
 	mesh.agent_max_climb = 0.5 # Two voxels: at one, a 26 degree stair flight bakes as a row of ledges.
 	mesh.agent_max_slope = 35.0
 	mesh.region_min_size = 2.0

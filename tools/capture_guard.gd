@@ -51,33 +51,96 @@ func validate() -> void:
 	await frames(20)
 	stand(Vector3(-23.5, 7.85, 20.5), Vector3(-23.5, 9.0, 30))
 	await shot("guard-look-back")
-	# 306: at the teacher's desk, back to the room.
-	school.get_node("Architecture/ClassroomDoor306").set_open(true, true)
+	# The corridor to block B: piers to press in behind when he looks back, and a peek round one.
+	guard.place(Vector3(1.5, 7.85, -36.0), Vector3(1.5, 7.85, -10.0))
+	guard.run([guard.wait(30.0, "look_around", true)])
+	school.player.flashlight.hide()
+	stand(Vector3(-1.1, 7.85, -23.4), Vector3(1.5, 9.0, -36.0))
+	await frames(20)
+	await shot("guard-connector-bay")
+	school.player.lean_offset = 0.6
+	school.player.camera.position.x = 0.6
+	school.player.camera.rotation.z = -0.17
+	await shot("guard-connector-peek")
+	school.player.lean_offset = 0.0
+	school.player.camera.position.x = 0.0
+	school.player.camera.rotation.z = 0.0
+	stand(Vector3(1.5, 7.85, -6.0), Vector3(1.5, 8.6, -30.0))
+	guard.stop()
+	await shot("guard-connector")
+	# B-302: at the teacher's desk, back to the room.
+	school.get_node("Architecture/ClassroomDoor1302").set_open(true, true)
 	guard.place(gp.DESK_STAND, gp.DESK)
 	guard.run([guard.work()])
 	await frames(40)
 	school.player.set_crouching(true, true)
-	stand(Vector3(-30.2, 7.85, 41.5), gp.EVIDENCE + Vector3(0, 0.3, 0))
-	await shot("guard-306-desk")
-	stand(Vector3(-31.0, 7.85, 35.6), gp.EVIDENCE)
-	await shot("guard-306-papers")
+	stand(Vector3(-1.2, 7.85, -46.5), gp.EVIDENCE + Vector3(0, 0.3, 0))
+	await shot("guard-b302-desk")
 	school.player.set_crouching(false, true)
-	# Chase: the pursuer model in the hall.
-	var chaser: Node3D = story.escape.ghost
-	guard.stop()
-	chaser.appear(Vector3(-23.5, 7.85, 40.0), Vector3(-23.5, 7.85, 30))
-	chaser.animate(0.1, 0.6)
-	stand(Vector3(-23.5, 7.85, 31.0), Vector3(-23.5, 8.9, 40))
-	await shot("guard-chase")
-	chaser.vanish()
-	# The chained gate and the booth.
-	stand(Vector3(1.0, 0.05, 68.0), Vector3(4.0, 1.4, 76.0))
-	await shot("guard-booth")
-	# The tunnel.
-	story.escape.reset()
-	story.enter_basement()
+	# The flash: four seconds to get into a locker.
+	gp.part = gp.Part.PHOTO
+	story.stage = story.Stage.PHOTO_EVIDENCE
+	gp.photo_taken()
+	for i in range(70):
+		gp._process(1.0 / 60.0)
+		await process_frame
+	stand(Vector3(-2.5, 7.85, -43.0), Vector3(-6.0, 8.6, -41.0))
+	await shot("guard-duck")
+	# In the locker with him listening at the door.
+	var locker: Node3D = school.get_node("HidingSpots/HallB_2b")
+	locker.occupant = school.player
+	locker.entry_position = locker.approach_position()
+	school.player.begin_hide(locker)
+	gp._start_search(locker)
+	guard.place(Vector3(locker.global_position.x, 7.85, -40.1), locker.global_position)
+	guard.run([guard.wait(30.0, "listen")])
+	for i in range(30):
+		gp._process(1.0 / 60.0)
+		await process_frame
+	await shot("guard-locker")
+	school.player.end_hide()
+	gp.stand_down()
+	# In the yard: he shouts from the third-floor window and pins the player in his torch.
+	var escape: Node3D = story.escape
+	school.player.global_position = Vector3(1.0, 0.05, 64.0)
+	story.begin_escape()
+	for i in range(150):
+		escape._physics_process(1.0 / 60.0)
+		escape.tick(1.0 / 60.0)
+		await process_frame
+	await shot("guard-gate-call")
+	# The clock, the booth and the toolbox.
+	for i in range(int(escape.CALL_SECONDS * 60)):
+		escape._physics_process(1.0 / 60.0)
+	stand(Vector3(3.2, 0.05, 71.2), escape.TOOLBOX + Vector3(0.4, 0.4, 1.0))
+	escape.time_left = 15.3
+	escape._physics_process(1.0 / 60.0)
+	await shot("guard-toolbox")
+	# The lock plate: one screw out, one being turned.
+	escape.take_tool()
+	var breaker: Control = escape.breaker
+	breaker.turn(1, -TAU * 3.0)
+	breaker.engage(0, breaker.screw_center(0) + Vector2(80, 0))
+	breaker.turn(0, -TAU * 1.7)
+	Input.warp_mouse(breaker.get_global_transform_with_canvas() * (breaker.screw_center(0) + Vector2.from_angle(-0.9) * 85.0))
+	escape.time_left = 11.6
+	escape._physics_process(1.0 / 60.0)
+	for i in range(20): escape.tick(1.0 / 60.0)
+	await shot("guard-screws")
+	for i in [0, 2, 3]: breaker.turn(i, -TAU * 3.0)
+	for k in range(8): breaker.kick()
+	escape.time_left = 6.4
+	escape._physics_process(1.0 / 60.0)
+	for i in range(20): escape.tick(1.0 / 60.0)
+	await shot("guard-kick")
+	while escape.active: breaker.kick()
+	# The tunnel: the guard runs behind with his torch.
 	story._physics_process(story.DESCENT_SECONDS + 0.1)
 	for i in range(240):
+		story.runner.tick(1.0 / 60.0)
+		await process_frame
+	story.runner.ghost_distance = story.runner.travel_distance - 5.0
+	for i in range(30):
 		story.runner.tick(1.0 / 60.0)
 		await process_frame
 	school.player.camera.rotation.y = PI

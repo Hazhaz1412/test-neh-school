@@ -37,7 +37,7 @@ func players() -> Array:
 
 func _ready_to_hunt() -> bool:
 	# Night 1 now ends with Lan; the demon hunts from the next night on.
-	return world.envy_enabled and hunting_night and world.spirit_enabled and world.progression.briefing_complete and world.simulation_active()
+	return world.envy_enabled and hunting_night and world.night_hunt() and world.progression.briefing_complete and world.simulation_active()
 
 func start() -> void:
 	started = true

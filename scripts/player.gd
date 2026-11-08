@@ -35,6 +35,11 @@ const LANDING_NOISE := 8.0
 const BOB_HEIGHT := 0.06
 const BOB_SWAY := 0.035
 const BOB_ROLL := 0.02
+# Z / X lean the head out to the left or right: round a pillar, a doorway, a corner. The body
+# stays behind cover; let go and the head comes back.
+const LEAN_REACH := 0.6
+const LEAN_ROLL := 0.17
+const LEAN_SPEED := 5.0
 signal damaged(amount: float)
 signal died
 var health := 100.0
@@ -87,6 +92,8 @@ var noise_clock := 0.0
 var breathing_clock := 0.0
 var crouching := false
 var crouch_blend := 0.0 # Eases the camera between standing (0) and crouched (1).
+var lean := 0.0
+var lean_offset := 0.0
 var jump_held := false # Jump on the press only, not while Space stays down after a QTE.
 var airborne_time := 0.0
 # Right click toggles the viewfinder; the shutter only fires through it.
@@ -361,6 +368,8 @@ func _physics_process(delta: float) -> void:
 	invulnerable_time = maxf(0.0, invulnerable_time - delta)
 	if get_parent().progression != null and get_parent().progression.controls_player():
 		# Scripted runs drive the camera and expect a standing capsule.
+		lean = 0.0
+		lean_offset = 0.0
 		if crouching:
 			set_crouching(false, true)
 		get_parent().progression.tick_player(delta)
@@ -397,7 +406,9 @@ func _physics_process(delta: float) -> void:
 	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not crouching and not sprint_exhausted
 	stamina = clampf(stamina + (-SPRINT_DRAIN * combat.sprint_multiplier() * stamina_care if running else 15.0 * (1 - fear * 0.005)) * delta, 0.0, MAX_STAMINA)
 	var target := transform.basis * Vector3(direction.x, 0, direction.y).normalized()
+	_tick_lean(delta)
 	var speed := CROUCH_SPEED if crouching else (1.35 if quiet else (RUN_SPEED if running else WALK_SPEED))
+	if absf(lean) > 0.2: speed = minf(speed, CROUCH_SPEED)
 	speed *= test_speed_multiplier()
 	velocity.x = move_toward(velocity.x, target.x * speed, delta * 18.0)
 	velocity.z = move_toward(velocity.z, target.z * speed, delta * 18.0)
@@ -435,8 +446,8 @@ func _physics_process(delta: float) -> void:
 	bob_amount = move_toward(bob_amount, bob_target, delta * 4.0)
 	camera.position.y = lerpf(STAND_EYE, CROUCH_EYE, crouch_blend) - absf(sin(step_time)) * BOB_HEIGHT * bob_amount
 	startle = maxf(0, startle - delta * 1.7)
-	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount
-	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount
+	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount + lean_offset
+	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount - lean * LEAN_ROLL
 	camera.fov = lerpf(camera.fov, (79.0 if running else 73.0) + startle * 4 + (3.0 if combat.adrenaline_remaining > 0 else 0.0), delta * 5.0)
 
 # Crouch or stand. Standing up needs headroom unless `force` (scripted moves).
@@ -451,9 +462,27 @@ func set_crouching(value: bool, force := false) -> bool:
 		crouch_blend = 1.0 if value else 0.0
 	return true
 
-# Where a ghost looks to see the player: the chest, lower while crouched.
+# Where a ghost looks to see the player: the chest, lower while crouched. Leaning out round
+# cover, only the head shows, so that is what has to be seen.
 func sight_point() -> Vector3:
+	if absf(lean_offset) > 0.15:
+		return camera.global_position - Vector3.UP * 0.08
 	return global_position + Vector3.UP * (CROUCH_SIGHT if crouching else STAND_SIGHT)
+
+func _tick_lean(delta: float) -> void:
+	var wanted := 0.0
+	if is_on_floor() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		wanted = float(Input.is_physical_key_pressed(KEY_X)) - float(Input.is_physical_key_pressed(KEY_Z))
+	lean = move_toward(lean, wanted, delta * LEAN_SPEED)
+	var reach := LEAN_REACH
+	if absf(lean) > 0.01:
+		# Never put the head through a wall.
+		var from := global_position + Vector3.UP * (camera.position.y - 0.05)
+		var query := PhysicsRayQueryParameters3D.create(from, from + global_basis.x * signf(lean) * (LEAN_REACH + 0.25), 1)
+		query.exclude = [get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty(): reach = maxf(0.0, from.distance_to(hit.position) - 0.25)
+	lean_offset = move_toward(lean_offset, lean * reach, delta * 3.0)
 
 func is_hidden() -> bool:
 	return is_instance_valid(hidden_spot)
@@ -506,7 +535,7 @@ func cancel_chalk_charge() -> void:
 func begin_chalk_charge(source: String) -> bool:
 	if get_parent().progression != null and get_parent().progression.tutorial_active():
 		return false
-	if chalk_charging or selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().spirit_enabled:
+	if chalk_charging or selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().night_hunt():
 		return false
 	chalk_charging = true
 	chalk_charge_source = source
@@ -516,7 +545,7 @@ func begin_chalk_charge(source: String) -> bool:
 func tick_chalk_charge(delta: float) -> void:
 	if not chalk_charging:
 		return
-	if selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().spirit_enabled:
+	if selected_item() != "chalk" or not can_use_item() or is_hidden() or not get_parent().night_hunt():
 		cancel_chalk_charge()
 		return
 	chalk_charge_time = minf(CHALK_CHARGE_SECONDS, chalk_charge_time + delta)
@@ -535,7 +564,7 @@ func _notification(what: int) -> void:
 func throw_chalk(charge := 0.0) -> bool:
 	if get_parent().progression != null and get_parent().progression.tutorial_active():
 		return false
-	if chalk <= 0 or is_hidden() or not get_parent().spirit_enabled or not can_use_item():
+	if chalk <= 0 or is_hidden() or not get_parent().night_hunt() or not can_use_item():
 		return false
 	var decoy: CharacterBody3D = preload("res://scripts/chalk_decoy.gd").new()
 	decoy.world = get_parent()
@@ -603,6 +632,8 @@ func can_fit(feet: Vector3, height := 1.75) -> bool:
 
 func begin_hide(spot: Node3D) -> void:
 	cancel_chalk_charge()
+	lean = 0.0
+	lean_offset = 0.0
 	hidden_spot = spot
 	camera_aiming = false
 	# The spot sets its own capsule and eye height; leave the hiding place standing.

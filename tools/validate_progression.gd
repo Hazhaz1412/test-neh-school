@@ -48,6 +48,7 @@ func run_until(condition: Callable, seconds: float) -> bool:
 func validate_guard() -> void:
 	var gp: Node3D = story.guard_part
 	var guard: Node3D = gp.guard
+	var F1 := 0.05
 	var F2 := 3.95
 	var F3 := 7.85
 	story.set_physics_process(true)
@@ -80,6 +81,11 @@ func validate_guard() -> void:
 	check(shoved and not story.restroom.stall_open(5), "In the restroom he shoved open every other stall, leaving the player's for last")
 	check(seen.prompt and seen.held > 2.0 and seen.lowest > 0.0, "Next to the player's stall the breath had to be held (%.1f s), without running out" % seen.held)
 	check(guard.global_position.z < 6.0 and story.stage == story.Stage.STEALTH and gp.hud.visible, "At the player's door the noise upstairs takes him away and stealth begins")
+	school.player.battery = 100
+	school.player.select_item("camera")
+	check(not school.player.take_photo(), "The camera does not fire in the restroom or on the tail")
+	# The stall test leaves the player behind; losing him is checked further down.
+	gp.follow_grace = 1e9
 	check(await run_until(func(): return guard.global_position.y > F3 - 0.2, 60.0), "He climbs to the third floor")
 	# Hearing: a sprint behind him is heard, a crouch at the same distance is not.
 	var behind: Vector3 = guard.global_position + guard.global_basis.z * 5.0
@@ -95,14 +101,34 @@ func validate_guard() -> void:
 	school.player.global_position = Vector3(ahead.x, guard.global_position.y, ahead.z)
 	check(await run_until(func(): return gp.fail_clock >= 0.0, 4.0), "Standing in his torch beam, the player is caught")
 	check(await run_until(func(): return gp.fail_clock < 0.0, 3.0) and gp.part == gp.Part.STEALTH and school.player.global_position.y < 5 and guard.global_position.distance_to(gp.NEAR_RESTROOM) < 3.0, "Being caught restarts the tail from the restroom")
-	stall = story.restroom.stall_doors[5]
-	if story.restroom.stall_open(5): story.restroom.toggle_stall(5)
-	school.player.global_position = Vector3(21.15, F2, -10.1 + 5 * 1.55 + 0.78)
-	check(await run_until(func(): return gp.part == gp.Part.PHOTO, 150.0) and gp.fail_clock < 0.0, "Left alone, he walks the whole route to 306 and starts clearing the desk")
-	check(guard.busy_with("work") and school.get_node("Architecture/ClassroomDoor306").is_open and guard.global_position.distance_to(gp.DESK_STAND) < 0.3, "In 306 he works at the teacher's desk with the door open")
-	# The photo from behind him, between the desks.
-	school.player.global_position = Vector3(-31.0, F3, 41.5)
+	# Falling far behind loses him.
+	gp.follow_grace = 0.0
+	await run_until(func(): return gp.follow_grace <= 0.0 and guard.global_position.distance_to(school.player.global_position) > gp.LOSE_RANGE + 1.0, 40.0)
+	check(await run_until(func(): return gp.warn.visible, 2.0), "Too far behind, a warning says he is getting away")
+	check(await run_until(func(): return gp.fail_clock >= 0.0, gp.LOSE_SECONDS + 1.0), "Staying too far behind loses him")
+	check(await run_until(func(): return gp.fail_clock < 0.0, 3.0) and gp.part == gp.Part.STEALTH, "Losing him restarts the tail")
+	# A careful tail: crouched, torch off, sixteen metres behind on his own path, all the way to B-302.
+	school.player.flashlight.hide()
 	school.player.set_crouching(true, true)
+	var trail: Array = []
+	var walked := {"total": 0.0}
+	var shadow := func():
+		var at: Vector3 = guard.global_position
+		if trail.is_empty() or at.distance_to(trail[-1][1]) > 0.25:
+			if not trail.is_empty(): walked.total += at.distance_to(trail[-1][1])
+			trail.append([walked.total, at])
+		var want: float = walked.total - 16.0
+		if want > 0.0:
+			for point in trail:
+				if point[0] >= want:
+					school.player.global_position = point[1]
+					break
+		return gp.part == gp.Part.PHOTO or gp.fail_clock >= 0.0
+	check(await run_until(shadow, 180.0) and gp.fail_clock < 0.0, "Tailing him crouched sixteen metres back, torch off, he never notices and is never lost")
+	check(gp.part == gp.Part.PHOTO and guard.busy_with("work") and school.get_node("Architecture/ClassroomDoor1302").is_open and guard.global_position.distance_to(gp.DESK_STAND) < 0.4, "He goes up to block B and works at the teacher's desk in B-302 with the door open")
+	check(school.player.global_position.y > F3 - 0.3 and school.player.global_position.z < -30.0, "The tail ends on block B's top floor")
+	# The photo from behind him, between the desks.
+	school.player.global_position = Vector3(-1.2, F3, -46.5)
 	school.player.look_at(Vector3(gp.EVIDENCE.x, F3, gp.EVIDENCE.z))
 	school.player.camera.look_at(gp.EVIDENCE)
 	await frames(30)
@@ -111,25 +137,162 @@ func validate_guard() -> void:
 	school.player.battery = 100
 	school.player.select_item("camera")
 	check(school.player.take_photo() and story.evidence.has("photo") and school.soul_quest.found.size() == 3, "The photo is the third clue")
-	check(await run_until(func(): return story.stage == story.Stage.ESCAPE_RUN, 3.0) and story.escape.active and story.escape.ghost.visible and not guard.visible, "The flash gives the player away and the escape starts with the guard behind")
-	check(story.escape.ghost.global_position.distance_to(gp.DESK_STAND) < 7.0, "The chase starts from where he stood")
+	check(gp.part == gp.Part.DUCK and gp.duck_panel.visible, "The flash gives the player away: four seconds to hide")
 	school.player.set_crouching(false, true)
-	# The gate segment: chained, so the booth's basement door, pulled open with E.
-	story.set_physics_process(false)
-	school.player.global_position = Vector3(0, 0.05, 10)
-	story.escape.begin_segment(story.escape.Segment.GATE)
-	for i in range(1500):
-		story.escape.tick(1.0 / 60.0)
-		if not story.escape.approaching and story.escape.rattle <= 0 and story.escape.rail_s >= story.escape.rail_lengths[-1] - 0.05: break
-	check(school.player.global_position.distance_to(story.escape.BOOTH_DOOR) < 1.2, "After the chained gate the player ends at the booth's basement door")
-	check(not story.escape.ghost.global_position.is_equal_approx(Vector3.ZERO) and story.escape.gap > 0, "The guard is still behind")
-	for i in range(story.escape.DOOR_PULLS): story.escape.pull_door()
-	check(story.stage == story.Stage.BASEMENT_DESCENT and not story.escape.active, "Wrenching the door open leads down to the basement")
+	# Not hiding: he has the player when the four seconds run out, and the dash starts again.
+	check(await run_until(func(): return gp.fail_clock >= 0.0, gp.DUCK_SECONDS + 0.5), "Not in a locker after four seconds: caught")
+	check(await run_until(func(): return gp.fail_clock < 0.0, 3.0) and gp.part == gp.Part.DUCK and gp.duck_clock > gp.DUCK_SECONDS - 0.3, "The four seconds start again from the doorway")
+	check(story.stage == story.Stage.ESCAPE_RUN and not school.player.take_photo(), "The camera is off again once he is after the player")
+	# Into the nearest hall locker through the real E ray.
+	var locker: Node3D = school.get_node("HidingSpots/HallB_2b")
+	var dash_from: Vector3 = school.player.global_position
+	check(dash_from.distance_to(locker.approach_position()) < 9.0, "The nearest locker is %.1f m from the doorway, two seconds at a run" % dash_from.distance_to(locker.approach_position()))
+	check(await approach(locker, 1.0) and locker.interact(school.player), "The locker is entered with E")
+	check(await run_until(func(): return gp.part == gp.Part.SEARCH, gp.DUCK_SECONDS + 0.5), "Inside a locker when the time is up, he comes out searching")
+	var heard := {"held": 0.0}
+	var hold := func():
+		gp.test_hold = gp.breath_close
+		if gp.breath_held(): heard.held += 1.0 / 60.0
+		return gp.part == gp.Part.SNEAK or gp.fail_clock >= 0.0
+	check(await run_until(hold, 30.0) and gp.fail_clock < 0.0, "He listens at the locker; holding the breath, the player is not found")
+	gp.test_hold = false
+	check(heard.held > 1.5, "The breath had to be held while he stood at the locker (%.1f s)" % heard.held)
+	check(gp.part == gp.Part.SNEAK and guard.hunting and gp.hud.visible, "He goes off to hunt the floors")
+	check(school.player.end_hide(), "The player climbs out of the locker")
+	# The hunt: standing still out of his way, he gets a feel for where the player is and comes.
+	var nav: RID = school.get_world_3d().navigation_map
+	school.player.global_position = Vector3(-14.0, F2, 7.5)
+	gp.hunch_clock = 0.0
+	var start_gap: float = guard.global_position.distance_to(school.player.global_position)
+	check(await run_until(func(): return guard.global_position.distance_to(school.player.global_position) < 10.0 or gp.hunt_mode == "chase" or gp.fail_clock >= 0.0, 45.0), "Standing still, he homes in on the player (from %.0f m away)" % start_gap)
+	await run_until(func(): return gp.fail_clock < 0.0 and gp.part == gp.Part.SNEAK, 6.0)
+	# A run within earshot: he turns and walks over to look.
+	gp.hunch_clock = 99.0
+	school.player.global_position = Vector3(-23.5, F1, 40)
+	await frames(30)
+	var noise_at: Vector3 = guard.global_position + guard.global_basis.z * 6.0
+	noise_at = NavigationServer3D.map_get_closest_point(nav, noise_at) - Vector3.UP * 0.35
+	guard.heard_clock = 0.0
+	guard.awareness = 0.0
+	school.emit_noise(noise_at, school.player.movement_noise(true, false), "steps")
+	var gap_before: float = guard.global_position.distance_to(noise_at)
+	await run_until(func(): return guard.global_position.distance_to(noise_at) < 1.5, 8.0)
+	check(guard.global_position.distance_to(noise_at) < minf(gap_before, 2.0), "A run nearby: he walks over to where it came from")
+	guard.awareness = 0.0
+	# Seen: he runs at the player instead of standing there.
+	guard.place(Vector3(-10.0, F2, 7.5), Vector3(-20.0, F2, 7.5))
+	guard.run([guard.wait(5.0, "idle")])
+	school.player.global_position = Vector3(-14.5, F2, 7.5)
+	var ok_chase: bool = await run_until(func(): return gp.hunt_mode == "chase", 3.0)
+	check(ok_chase and gp.fail_clock < 0.0 and guard.deaf, "Seen, he gives chase")
+	school.player.global_position = Vector3(-23.5, F1, 40)
+	check(await run_until(func(): return gp.hunt_mode == "search", gp.LOSE_SIGHT + 1.5), "Out of his sight long enough, he loses the player and searches where they vanished")
+	check(await run_until(func(): return gp.hunt_mode == "hunt", 40.0) and not guard.deaf, "Then he goes back to hunting")
+	# Run down: he catches the player when he gets to them.
+	await run_until(func(): return gp.fail_clock < 0.0, 3.0)
+	gp.hunch_clock = 99.0
+	gp.hunt_mode = "hunt"
+	guard.place(Vector3(-10.0, F2, 7.5), Vector3(-20.0, F2, 7.5))
+	guard.run([guard.wait(5.0, "idle")])
+	school.player.global_position = Vector3(-13.5, F2, 7.5)
+	check(await run_until(func(): return gp.fail_clock >= 0.0, 4.0), "Seen close up, he runs the player down")
+	await run_until(func(): return gp.fail_clock < 0.0, 3.0)
+	check(gp.part == gp.Part.SNEAK and school.player.global_position.distance_to(gp.SNEAK_START) < 0.5 and guard.visible and absf(guard.global_position.y - F3) < 0.6, "The sneak restarts by the lockers, with him on the same floor")
+	var back_gap: float = guard.global_position.distance_to(school.player.global_position)
+	school.player.global_position = Vector3(-14.0, F3, -40.5)
+	await run_until(func(): return gp.fail_clock >= 0.0 or guard.global_position.distance_to(school.player.global_position) < back_gap - 8.0, 10.0)
+	check(gp.fail_clock >= 0.0 or guard.global_position.distance_to(school.player.global_position) < back_gap - 8.0, "After a catch he comes straight back for the player, not off somewhere else")
+	await run_until(func(): return gp.fail_clock < 0.0, 3.0)
+	# A locker he opens is no hiding place.
+	var trap: Node3D = school.get_node("HidingSpots/HallB_2")
+	trap.occupant = school.player
+	trap.entry_position = trap.approach_position()
+	school.player.begin_hide(trap)
+	guard.place(Vector3(2.0, F3, -40.5), trap.global_position)
+	guard.run(gp._spot_checks(trap.global_position, 1))
+	check(await run_until(func(): return gp.fail_clock >= 0.0, 10.0), "Hiding in the locker he decides to open gets the player caught")
+	await run_until(func(): return gp.fail_clock < 0.0, 3.0)
+	# Out in the yard by the gate: he shouts down from the window, and the gate is chained.
+	var escape: Node3D = story.escape
+	school.player.global_position = Vector3(1.0, F1, 63.0)
+	school.player.rotation.y = 0.0
+	check(await run_until(func(): return story.stage == story.Stage.GATE_BREAK, 1.0) and escape.active and escape.segment == escape.Segment.CALL, "Near the gate the guard calls out")
+	check(guard.visible and absf(guard.global_position.y - F3) < 0.3 and guard.global_position.z < 10.0 and escape.beam.visible and escape.beam_glare.visible, "He stands at a third-floor window with his torch on the player")
+	check(story.controls_player() and story.subtitle_label.text.contains("Đứng yên"), "\"Đứng yên đó!\": the player is held for the cutscene")
+	check(await run_until(func(): return escape.segment == escape.Segment.BREAK_IN, escape.CALL_SECONDS + 1.0), "After the cutscene the clock starts")
+	check(not story.controls_player() and escape.time_left > escape.TIME_LIMIT - 0.5 and escape.timer_panel.visible, "The player moves freely, with %.0f s on the clock" % escape.time_limit)
+	check(await run_until(func(): return escape.guard_phase == "stairs", escape.time_limit - escape.YARD_SECONDS - escape.STAIRS_SECONDS + 1.0) and not guard.visible, "He keeps his torch on the player from the window, then leaves for the stairs")
+	escape.time_left = escape.YARD_SECONDS + 0.05
+	check(await run_until(func(): return escape.guard_phase == "yard", 1.0) and guard.visible and guard.global_position.z < 12.0, "He comes out of the main entrance")
+	var yard_start: Vector3 = guard.global_position
+	await run_until(func(): return escape.time_left < escape.YARD_SECONDS * 0.5, escape.YARD_SECONDS)
+	check(guard.global_position.z > yard_start.z + 20.0, "He runs across the yard towards the booth")
+	# Out of time: caught, and the break-in starts again with more time.
+	check(await run_until(func(): return escape.fade_clock > 0.0, escape.YARD_SECONDS), "Out of time, he catches the player")
+	check(await run_until(func(): return escape.fade_clock <= 0.0, 2.0) and escape.step == "tool" and escape.attempts == 1 and is_equal_approx(escape.time_limit, escape.TIME_LIMIT + escape.TIME_PER_RETRY), "The break-in restarts with %.0f s" % escape.time_limit)
+	check(not escape.has_tool and escape.screwdriver.visible and escape.booth_door.rotation.y == 0.0, "Tool back in the box, door shut")
+	# The toolbox through the real E ray: taking the screwdriver goes straight to the lock plate.
+	check(await approach(escape.toolbox, -0.05) and escape.toolbox.interact(school.player), "The screwdriver is taken from the toolbox with E")
+	check(escape.step == "screws" and escape.breaker.visible and story.controls_player() and school.player.global_position.distance_to(escape.DOOR_STAND) < 0.1, "The player kneels at the lock plate")
+	var breaker: Control = escape.breaker
+	breaker.size = Vector2(1280, 720)
+	# Circling too wide slips off the screw.
+	breaker.engage(0, breaker.screw_center(0) + Vector2(60, 0))
+	breaker.drag(breaker.screw_center(0) + Vector2(breaker.SLIP + 20, 0))
+	check(breaker.held == -1 and breaker.progress(0) == 0.0, "Swinging the mouse too far slips off the screw")
+	# Back and forth does nothing; three full circles back a screw out.
+	breaker.engage(0, breaker.screw_center(0) + Vector2(60, 0))
+	for k in range(12): breaker.drag(breaker.screw_center(0) + Vector2.from_angle(0.4 * (1 if k % 2 == 0 else -1)) * 60.0)
+	check(breaker.progress(0) < 0.05, "Wiggling does not turn it")
+	for i in range(4):
+		breaker.engage(i, breaker.screw_center(i) + Vector2(70, 0))
+		for k in range(1, 24 * 3 + 5):
+			breaker.drag(breaker.screw_center(i) + Vector2.from_angle(-k * TAU / 24.0) * 70.0)
+		if i < 3: check(breaker.removed[i] and not escape.plate_screws[i].visible, "Screw %d is out after three turns" % (i + 1))
+	check(escape.step == "kick" and breaker.step == "kick" and not escape.lock_plate.visible, "All four out: the plate drops and the door has to be kicked")
+	# Slow kicks fade away; fast ones break it.
+	for k in range(6):
+		breaker.kick()
+		await run_until(func(): return false, 0.5)
+	check(breaker.power < 0.3 and escape.step == "kick", "Two kicks a second never get the door open")
+	var kicks := 0
+	while escape.active and kicks < 60:
+		breaker.kick()
+		kicks += 1
+		await run_until(func(): return false, 1.0 / 9.0)
+	check(not escape.active and story.stage == story.Stage.BASEMENT_DESCENT and escape.booth_door.rotation.y < -1.0, "Kicking fast (%d kicks) bursts the door and the player runs down" % kicks)
+	print("BREAK-IN / ", escape.report)
 	story._physics_process(story.DESCENT_SECONDS + 0.1)
-	check(story.stage == story.Stage.CORRIDOR_RUN and story.runner.active and not school.spirit_enabled, "The red corridor is the service tunnel, with no spirit world")
-	check(story.runner.ghosts.size() == 1 and story.runner.ghosts[0].model.variant == "guard", "Only the guard chases through the tunnel")
+	check(story.stage == story.Stage.CORRIDOR_RUN and story.runner.active and not school.spirit_enabled, "Down the stairs: the service tunnels, no spirit world")
+	var tunnel: Node3D = story.runner
+	for i in range(int((tunnel.DOOR_START + 0.4) * 60)): tunnel.tick(1.0 / 60.0)
+	check(tunnel.guard_on and tunnel.guard.visible and tunnel.guard.model.variant == "guard", "The guard bursts through the stair door after the player")
+	var body_y: float = tunnel.guard.model.visual.global_position.y
+	check(absf(body_y - tunnel.guard.global_position.y) < 0.5 and tunnel.guard.model.body_mesh.is_visible_in_tree(), "His body is where his torch is (model %.1f m from his feet)" % absf(body_y - tunnel.guard.global_position.y))
 	story.runner.reset()
 	story.runner.restore_pose()
+	# The corridor to block B: wide, with piers to press in behind when he looks back.
+	story.runner.active = false
+	gp.reset()
+	var hall_floor := PhysicsRayQueryParameters3D.create(Vector3(-1.2, F3 + 1.0, -20.0), Vector3(-1.2, F3 - 0.5, -20.0), 1)
+	check(not school.get_world_3d().direct_space_state.intersect_ray(hall_floor).is_empty(), "The corridor to block B is six metres wide")
+	guard.place(Vector3(1.5, F3, -36.0), Vector3(1.5, F3, -10.0))
+	guard.sweep = 0.0
+	var p: CharacterBody3D = school.player
+	p.set_crouching(false, true)
+	p.global_position = Vector3(-1.1, F3, -23.6)
+	p.look_at(Vector3(1.5, F3, -36.0))
+	p.lean_offset = 0.0
+	p.camera.position.x = 0.0
+	await frames(2)
+	check(not guard.can_see_player(), "Pressed in behind a pier, he looks straight down the corridor and does not see the player")
+	p.lean_offset = 0.6
+	p.camera.position.x = 0.6
+	await frames(1)
+	check(guard.can_see_player(), "Leaning out to peek (Z / X) shows the head: hold it too long and he sees it")
+	p.lean_offset = 0.0
+	p.camera.position.x = 0.0
+	guard.stop()
 	# Breathing normally with him right outside the stall gives the player away.
 	story.runner.active = false
 	gp.part = gp.Part.HIDE
@@ -145,6 +308,7 @@ func validate_guard() -> void:
 	gp.reset()
 
 func validate() -> void:
+	root.get_tree().set_meta("story_stay_in_school", true)
 	school = load("res://scenes/school_runtime.tscn").instantiate()
 	school.play_opening_on_launch = false
 	root.add_child(school)

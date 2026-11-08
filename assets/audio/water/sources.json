@@ -1,0 +1,72 @@
+[
+ {
+  "file": "ocean_splash.ogg",
+  "page": "https://opengameart.org/content/ocean-splash",
+  "download": "https://opengameart.org/sites/default/files/cannon_miss.ogg",
+  "from": "cannon_miss.ogg",
+  "license": "CC0",
+  "downloaded": "2026-11-08",
+  "download_sha256": "d91a1effc2964673033fa9f8d22093029fa0b500aea0bafb86724738c0e89fe3",
+  "file_sha256": "d91a1effc2964673033fa9f8d22093029fa0b500aea0bafb86724738c0e89fe3"
+ },
+ {
+  "file": "water_splash_01.ogg",
+  "page": "https://opengameart.org/content/6-short-water-splashes",
+  "download": "https://opengameart.org/sites/default/files/ezwa-water_splash.7z",
+  "from": "water_splash-01.flac (converted to Ogg)",
+  "license": "CC0 / public domain (qubodup, from pdsounds.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "6187fa510cb7b5e8c3ac7c79f294ddc0e44d07472758bf6ecf2628a372ae9a26",
+  "file_sha256": "90995c859483b77b6eba5f1553d514acbde8ee93a2bee901b4153574e01d4638"
+ },
+ {
+  "file": "water_splash_04.ogg",
+  "page": "https://opengameart.org/content/6-short-water-splashes",
+  "download": "https://opengameart.org/sites/default/files/ezwa-water_splash.7z",
+  "from": "water_splash-04.flac (converted to Ogg)",
+  "license": "CC0 / public domain (qubodup, from pdsounds.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "6187fa510cb7b5e8c3ac7c79f294ddc0e44d07472758bf6ecf2628a372ae9a26",
+  "file_sha256": "f1f8a96556781717b042f6ecbab4806aecfff2599b530f8d0f441a7cc6604d13"
+ },
+ {
+  "file": "bubbles_loop1.ogg",
+  "page": "https://opengameart.org/content/bubble-sound-effects",
+  "download": "https://opengameart.org/sites/default/files/bubbles-loop1-amp.wav",
+  "from": "bubbles-loop1-amp.wav (converted to Ogg)",
+  "license": "CC0 (Brian MacIntosh)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "94eaef4afc1146dcdfd3077cc7a6cbe6dc97daac62b8f6560dfc913dd57488a9",
+  "file_sha256": "315e550dab339b0d5c2020a0265384c5929403fd4a263735e63b8db9720b789c"
+ },
+ {
+  "file": "bubbles_loop2.ogg",
+  "page": "https://opengameart.org/content/bubble-sound-effects",
+  "download": "https://opengameart.org/sites/default/files/bubbles-loop2-amp.wav",
+  "from": "bubbles-loop2-amp.wav (converted to Ogg)",
+  "license": "CC0 (Brian MacIntosh)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "b62a599e2b64223c3aa8a0644a0579ba0a95e5886ddb84ccd5e33e274fd47465",
+  "file_sha256": "e1e9876f69012517c5c576ae4ad9aaf95cd003c0a7f38aa128b9ef15eba3e575"
+ },
+ {
+  "file": "bubbles_single2.ogg",
+  "page": "https://opengameart.org/content/bubble-sound-effects",
+  "download": "https://opengameart.org/sites/default/files/bubbles-single2.wav",
+  "from": "bubbles-single2.wav (converted to Ogg)",
+  "license": "CC0 (Brian MacIntosh)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "c6c7b9f3e7415e1fee6d5ca0c9556fa03443c4cbeaa623f7a70476fc5b5a11e8",
+  "file_sha256": "02eaba77e7c2f7c1a87cd6c819a030f1af8e1f2bb7b78a0b7a8ffe9c52203807"
+ },
+ {
+  "file": "underwater_pad.ogg",
+  "page": "https://opengameart.org/content/underwater-ambient-pad",
+  "download": "https://opengameart.org/sites/default/files/Underwater-Ambient-Pad-isaiah658.ogg",
+  "from": "Underwater-Ambient-Pad-isaiah658.ogg",
+  "license": "CC0 (isaiah658)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "5f40c6b20ac4e7b6944f176ecbfd24c5839257e5c818fecca33d7ddb147a20e7",
+  "file_sha256": "5f40c6b20ac4e7b6944f176ecbfd24c5839257e5c818fecca33d7ddb147a20e7"
+ }
+]

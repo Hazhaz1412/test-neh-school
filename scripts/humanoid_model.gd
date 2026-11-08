@@ -45,7 +45,9 @@ func _ready() -> void:
 	var foot := (skeleton.global_transform * skeleton.get_bone_global_rest(skeleton.find_bone(skeleton.get_bone_name(0) + " R Foot"))).origin
 	var scale_by := target_height / ((top.y - foot.y) * (1.12 if variant == STUDENT else 1.14))
 	visual.scale *= scale_by
-	visual.position.y = global_position.y - foot.y * scale_by + 0.06
+	# Local offset: a model built under a node far from y=0 (the tunnel sits at y=-300) must
+	# not be pushed that far again, or only its torch light is left where it should stand.
+	visual.position.y = -(foot.y - global_position.y) * scale_by + 0.06
 	animation = AnimationPlayer.new()
 	visual.add_child(animation)
 	var kind: String = variant if variant in [STUDENT, GUARD] else ("f" if look.begins_with("Female") else "m")

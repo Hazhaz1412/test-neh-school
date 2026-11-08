@@ -1,0 +1,62 @@
+[
+ {
+  "file": "stone_L1.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneL1.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "2d85768f04a85b6068f3548b33d6e0b0424c5e62b0941042d593affd3a9555d4"
+ },
+ {
+  "file": "stone_L2.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneL2.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "1cdd36f02590d2b968b1dd311334e71db8514d7c276e62ad474d01c26b37d4de"
+ },
+ {
+  "file": "stone_L3.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneL3.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "6e008bba3c24c6adc20151126768eba8c9259ec9f40b7c0b8399d60a9ca67812"
+ },
+ {
+  "file": "stone_R1.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneR1.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "d6949efd0255d50efe4853cc077b18e3ee96b155707ccf4199fd530aaac82d58"
+ },
+ {
+  "file": "stone_R2.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneR2.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "075c27afbf29b7771cb01a7bf51530b835e82c56698ca5551318fa0c6b7adb9f"
+ },
+ {
+  "file": "stone_R3.ogg",
+  "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+  "download": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+  "from": "ogg/Fantozzi-StoneR3.ogg",
+  "license": "CC0 (Fantozzi, via freesound.org)",
+  "downloaded": "2026-11-08",
+  "download_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+  "file_sha256": "73bbdfc3d9e891bc1afbab7050de3bd59adf13cf5145ff3fb2f1fa7b251d6d82"
+ }
+]

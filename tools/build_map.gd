@@ -745,11 +745,22 @@ func build_side_wing(side: int, floor_number: int) -> void:
 		fixture(Vector3(side * 23.5, 2.85, z), false)
 	box(architecture, "WingFloorBand", Vector3(side * 21.95, 3.65, 32.5), Vector3(0.32, 0.22, 47), dark_mat, false)
 
+# Six metres wide, with wall piers every seven metres and a filing cabinet in two of the bays:
+# somewhere to press into when someone ahead turns round, and corners to peek past.
+const CONNECTOR_WIDTH := 6.0
+const CONNECTOR_PIERS := [-10.5, -17.5, -24.5, -31.5]
+
 func build_connector(floor_number: int) -> void:
-	floor_area(Vector2(1.5, -21.5), Vector2(3, 35))
-	box(architecture, "ConnectorLowCeiling", Vector3(1.5, 3.05, -21.5), Vector3(3, 0.18, 35), wall_mat)
-	window_wall(0, -21.5, 35)
-	window_wall(3, -21.5, 35)
+	var half := CONNECTOR_WIDTH * 0.5
+	floor_area(Vector2(1.5, -21.5), Vector2(CONNECTOR_WIDTH, 35))
+	box(architecture, "ConnectorLowCeiling", Vector3(1.5, 3.05, -21.5), Vector3(CONNECTOR_WIDTH, 0.18, 35), wall_mat)
+	window_wall(1.5 - half, -21.5, 35)
+	window_wall(1.5 + half, -21.5, 35)
+	for z in CONNECTOR_PIERS:
+		for side in [-1.0, 1.0]:
+			wall(Vector3(1.5 + side * (half - 0.4), 1.8, z), Vector3(0.8, 3.6, 0.6))
+	for spot in [[Vector3(1.5 - half + 0.3, 0, -21.0), PI / 2], [Vector3(1.5 + half - 0.3, 0, -28.0), -PI / 2]]:
+		prop("bookcaseClosedWide", spot[0], 1.9, spot[1])
 	for z in [-8.0, -18.0, -28.0, -37.0]:
 		fixture(Vector3(1.5, 2.85, z), false)
 	sign_text(architecture, "KHU B ↑ / TẦNG %d" % floor_number, Vector3(1.5, 2.75, -5.5), 0, 22)
@@ -778,8 +789,8 @@ func build_annex(floor_number: int) -> void:
 		register_room(x, z, width, depth, number, kinds[index], "B", (index + floor_number) % 3, not north)
 		sign_text(architecture, "B-%d / %s" % [number % 1000, ROOM_TITLES[kinds[index]]], Vector3(x, 2.87, front + (0.2 if north else -0.2)), 0 if north else PI, 20)
 	# Close the southern side of the hall around the connector mouth.
-	for x in [-5.0, 6.5]:
-		wall(Vector3(x, 1.8, -39), Vector3(10 if x < 0 else 7, 3.6, 0.25))
+	for x in [-5.75, 7.25]:
+		wall(Vector3(x, 1.8, -39), Vector3(8.5 if x < 0 else 5.5, 3.6, 0.25))
 	for x in [-25.0, -12.0, 1.5, 14.0, 27.0]:
 		fixture(Vector3(x, 2.85, -40.5), false)
 	sign_text(architecture, "B / THƯ VIỆN · LỚP HỌC · PHÒNG CHỨC NĂNG", Vector3(1.5, 2.8, -41.8), 0, 20)

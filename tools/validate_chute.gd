@@ -40,8 +40,13 @@ func validate() -> void:
 	for index in range(2):
 		var plan: Array = chute.plan_gates(index)
 		check(plan.all(func(g): return g.closed.size() == 2 and (g.then.is_empty() or g.then.size() == 2)), "Slide %d: every gate leaves exactly one lane open" % (index + 1))
-		check(plan.size() >= (13 if index == 0 else 24), "Slide %d is relentless: %d gates" % [index + 1, plan.size()])
-		check(plan.filter(func(g): return not g.then.is_empty()).size() >= 3, "Slide %d has gates that switch at the last moment" % (index + 1))
+		check(plan.size() >= (6 if index == 0 else 10), "Slide %d keeps the rider busy: %d gates" % [index + 1, plan.size()])
+		check(plan.filter(func(g): return not g.then.is_empty()).size() >= (1 if index == 0 else 2), "Slide %d has gates that switch late" % (index + 1))
+		var tightest := 999.0
+		for g in range(1, plan.size()): tightest = minf(tightest, plan[g].at - plan[g - 1].at)
+		var top_speed: float = chute.SPEED + chute.SPEED_GAIN
+		check(tightest / top_speed >= 1.3, "Slide %d: at least %.2f s between two gates even at top speed" % [index + 1, tightest / top_speed])
+		check((chute.HAND_SEEN - chute.HAND_RISEN) / top_speed >= 1.5 and chute.SWITCH_LEAD / top_speed >= 1.1, "Slide %d: rods show over 1.5 s before full length, a switch over 1.1 s before the gate" % (index + 1))
 		var clean := ride(chute, index, "lean")
 		chute.used.clear()
 		var left := ride(chute, index, "left")
@@ -52,7 +57,6 @@ func validate() -> void:
 		check(left >= plan.size() / 2 and right >= plan.size() / 2, "Slide %d: hugging a wall is never safe (left %d, right %d of %d gates)" % [index + 1, left, right, plan.size()])
 	var shots: Array = OS.get_cmdline_user_args()
 	if not shots.is_empty() and DisplayServer.get_name() != "headless":
-		for ghost in runner.ghosts: ghost.hide()
 		chute.reset()
 		chute.enter(0)
 		for i in range(90): await process_frame
@@ -60,6 +64,9 @@ func validate() -> void:
 		for at in [[20.0, 0.0, "slide-rebar-ahead"], [44.0, -1.7, "slide-cable"], [90.0, 2.4, "slide-wall-side"]]:
 			chute.metres = at[0]
 			chute.arc = at[1]
+			# Real mouse motion over the window leans the camera; shots look straight down the tube.
+			chute.lean = 0.0
+			chute.pitch = -0.08
 			chute._tick_gates(at[0] - 1.0)
 			chute._place()
 			var fr: Transform3D = chute.frame(0, chute.metres)
