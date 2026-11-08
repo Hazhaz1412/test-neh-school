@@ -5,11 +5,14 @@ const news = require('./news');
 const school = require('./school');
 const registry = require('./registry');
 const social = require('./social');
+const soichi = require('./soichi');
 const { escape, fold } = require('./text');
 const QRCode = require('qrcode');
 
 const SEARCH = 'gaaglu.com';
-const DOMAINS = [SEARCH, ...news.DOMAINS, school.DOMAIN, registry.DOMAIN, social.DOMAIN];
+const DOMAINS = [SEARCH, ...news.DOMAINS, school.DOMAIN, registry.DOMAIN, social.DOMAIN, soichi.DOMAIN];
+// Gaaglu opens on these two tabs: its own search page and Sợi Chỉ.
+const START_TABS = [`https://${SEARCH}/`, soichi.HOME];
 const HOME = `https://${SEARCH}/`;
 const LOGO = fs.readFileSync(path.join(__dirname, '..', 'shell', 'logo.svg'), 'utf8');
 
@@ -47,7 +50,7 @@ function blend(query, results) {
   const stories = news.search(query);
   const lead = stories.slice(0, 3);
   const rest = stories.slice(3);
-  const local = [...school.search(query), ...social.search(query), ...registry.search(query)];
+  const local = [...school.search(query), ...soichi.search(query), ...social.search(query), ...registry.search(query)];
   const list = [...local, ...results].map(resultItem);
   rest.forEach((story, index) => list.splice(index * 3 + local.length + 1, 0, resultItem(story)));
   return (lead.length ? storyBox(lead) : '') + list.join('');
@@ -80,6 +83,7 @@ function offline(host) {
 function render(host, url, results = [], request = {}) {
   if (host === school.DOMAIN) return school.render(url);
   if (host === social.DOMAIN) return social.render(url);
+  if (host === soichi.DOMAIN) return soichi.render(url);
   if (host === registry.DOMAIN) return registry.render(request.method ?? 'GET', url, request.form ?? new URLSearchParams(), request.cookie);
   if (news.DOMAINS.includes(host)) return news.render(host, url);
   if (url.pathname !== '/' && url.pathname !== '/search') return [404, page('404', '<main><h2>404</h2><p>Trang này không tồn tại.</p></main>')];
@@ -91,4 +95,4 @@ function isHome(address) {
   return url.hostname === SEARCH && url.pathname === '/' && !url.search;
 }
 
-module.exports = { DOMAINS, HOME, HOME_HOST: SEARCH, render, offline, isHome, isCrisis, devicePage };
+module.exports = { DOMAINS, HOME, START_TABS, HOME_HOST: SEARCH, render, offline, isHome, isCrisis, devicePage };

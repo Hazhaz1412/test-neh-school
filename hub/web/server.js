@@ -6,12 +6,15 @@ const { WebSocketServer } = require('ws');
 const sites = require('./sites');
 const news = require('./news');
 const lens = require('./lens');
+const soichi = require('./soichi');
 
 async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, onInstall = () => {}, onGameGone = () => {}, searchWeb = async () => [] } = {}) {
   const story = { evidence: [], stage: '', game: false };
   const listeners = new Set();
   let gameSocket = null;
   let hostHeader = '';
+  // A contact asked for while the game is away is handed over when it comes back.
+  let pendingContact = null;
 
   const announce = () => {
     for (const res of listeners) res.write(`data: ${JSON.stringify(story)}\n\n`);
@@ -53,6 +56,8 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
     }
     if (url.pathname === '/thiet-bi') return reply(res, 200, await sites.devicePage(phone.url));
     const host = req.headers['x-fake-host'];
+    const contact = host === soichi.DOMAIN ? soichi.contactOf(url) : null;
+    if (contact && !sendToGame({ type: 'contact', id: contact })) pendingContact = contact;
     const query = host === sites.HOME_HOST ? url.searchParams.get('q')?.trim() : null;
     const results = query && !sites.isCrisis(query) ? await searchWeb(query) : [];
     const form = req.method === 'POST' ? await readForm(req) : null;
@@ -81,6 +86,10 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
       story.game = true;
       announce();
       sendToGame({ type: 'lens', on: phone.connected() });
+      if (pendingContact) {
+        sendToGame({ type: 'contact', id: pendingContact });
+        pendingContact = null;
+      }
       ws.on('message', (data, isBinary) => (isBinary ? phone.frame(data) : receive(parse(data), data.toString())));
       ws.on('close', () => {
         if (gameSocket !== ws) return;

@@ -52,12 +52,35 @@ function ask(host, path, { method = 'GET', form, cookie } = {}) {
   assert.equal((await ask(GOV, '/ho-so', { cookie })).status, 303, 'logging out closes the record');
   assert.ok((await ask('langta.vn', '/')).text.includes('Tuấn Xe Ôm'), 'the feed shows posts');
   assert.equal((await ask('langta.vn', '/nhom/cuu-hs-neh')).status, 200);
-  assert.ok((await ask('langta.vn', '/tim?q=ph%C3%B2ng%20102')).text.includes('Ngọc Ánh'), 'the feed can be searched');
+  assert.ok((await ask('langta.vn', '/tim?q=truy%E1%BB%87n%20ma')).text.includes('Ngọc Ánh'), 'the feed can be searched');
   assert.ok((await ask('gaaglu.com', '/search?q=truy%E1%BB%87n%20ma')).text.includes('langta.vn'), 'search finds the feed');
   const big = await ask(GOV, '/tra-cuu', { method: 'POST', form: { so: 'x'.repeat(9000) } }).catch(() => ({ status: 413 }));
   assert.equal(big.status, 413);
   assert.ok((await ask('gaaglu.com', '/search?q=tr%C6%B0%E1%BB%9Dng%20NEH')).text.includes(SCHOOL), 'search finds the school');
   assert.ok((await ask('gaaglu.com', '/search?q=tra%20c%E1%BB%A9u%20cccd')).text.includes(GOV), 'search finds the registry');
+  // Sợi Chỉ: the feed, Bảy Rô's reply, and the contact that reaches the game.
+  const SOICHI = 'soichi.vn';
+  assert.ok((await ask(SOICHI, '/')).text.includes('thuongthuong.neh'), 'Sợi Chỉ shows its feed');
+  const thread = (await ask(SOICHI, '/bai/nam-2009')).text;
+  assert.ok(thread.includes('Nếu muốn biết sự thật hãy ib tôi') && thread.includes('/nhan-tin/bayro'), 'Bảy Rô offers to talk');
+  const rope = (await ask(SOICHI, '/bai/day-thung')).text;
+  assert.ok(rope.includes('muoi.gio') && rope.includes('/nhan-tin/muoigio'), 'Mười Gió answers the rope post');
+  assert.equal((await ask(SOICHI, '/nhan-tin/ai-do')).status, 404, 'only known contacts can be messaged');
+  assert.ok((await ask('gaaglu.com', '/search?q=s%E1%BB%A3i%20ch%E1%BB%89')).text.includes(SOICHI), 'search finds Sợi Chỉ');
+  const WebSocket = require('ws');
+  // Asked while no game is connected: kept, then delivered once the game links.
+  assert.equal((await ask(SOICHI, '/nhan-tin/bayro')).status, 200);
+  const game = new WebSocket(`ws://127.0.0.1:${stack.port}/game?token=${stack.token}`);
+  const contact = await new Promise((resolve, reject) => {
+    game.on('message', (data) => {
+      const message = JSON.parse(data.toString());
+      if (message.type === 'contact') resolve(message);
+    });
+    game.on('error', reject);
+    setTimeout(() => reject(new Error('no contact message')), 3000);
+  });
+  assert.equal(contact.id, 'bayro', 'the game hears who to add on Tili');
+  game.close();
   stack.close();
   console.log('webs OK');
   process.exit(0);

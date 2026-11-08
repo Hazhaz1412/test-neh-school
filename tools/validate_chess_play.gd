@@ -96,7 +96,7 @@ func run() -> void:
 	await process_frame
 	check(town.player.enabled and town.player.camera.current, "leaving returns to the street")
 	view = await open("mid")
-	check(view.timer.visible, "Khoa plays against a clock")
+	check(view.timer.visible, "Bơ Tồ plays against a clock")
 	clock = town.minutes
 	view.clock = 0.05
 	await create_timer(0.3).timeout

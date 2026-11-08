@@ -1,5 +1,6 @@
 extends SceneTree
-# The evening before Night 0: Peter's rented room, the feed, the group chat, the walk to the door.
+# The evening Peter moves in: the landlady's messages, the house and its doors, and the bed that
+# leads into the Night 0 dream.
 var failures := 0
 
 func check(ok: bool, label: String) -> void:
@@ -19,29 +20,31 @@ func run() -> void:
 	var story: Node = home.story
 	story.begin_prologue()
 	check(not has_meta("prologue"), "the flag is spent")
-	check(story.step == "feed" and home.phone.threads.has("langta"), "the evening starts with the feed")
+	check(story.step == "settle" and home.goal.text.contains("ngủ"), "the evening asks only for sleep")
 	check(home.phone.threads.has("sau") and home.phone.threads["sau"].log[0].text.contains("Số 14"), "the landlady gives the address")
-	story.toggle_phone()
-	home.phone.open_thread("langta")
-	await process_frame
-	check(home.phone.feed_list.get_child_count() >= 8, "every post is on the phone")
-	check(story.step == "feed", "opening the feed is not reading it")
-	home.phone.finish_feed()
-	await create_timer(0.2).timeout
-	check(story.step == "chat", "reaching the end brings the group chat")
-	home.phone.open_thread("team")
-	var left := 12.0
-	while home.phone.replies.get_child_count() == 0 and left > 0.0:
-		await create_timer(0.2).timeout
-		left -= 0.2
-	check(home.phone.replies.get_child_count() > 0, "Peter gets to answer")
-	home.phone.reply_chosen.emit(0)
-	left = 8.0
-	while story.step != "leave" and left > 0.0:
-		await create_timer(0.2).timeout
-		left -= 0.2
-	check(story.step == "leave", "the plan is made")
-	check(home.interactions.any(func(e): return e.label == "Ra khỏi nhà"), "the door opens the night")
+	check(home.phone.fake_new == 0, "nothing on Fake pulls him in yet")
+	var labels: Array = home.interactions.map(func(e): return e.label)
+	check("Cửa chính" in labels and "Mở cửa phòng tắm" in labels and "Đóng cửa phòng ngủ" in labels, "the house has a front door, a bathroom door and an open bedroom door")
+	var bathroom: Dictionary = home.interactions.filter(func(e): return e.label == "Mở cửa phòng tắm")[0]
+	bathroom.action.call()
+	await create_timer(0.8).timeout
+	check(bathroom.label == "Đóng cửa phòng tắm", "the bathroom door swings open and offers to close")
+	home.front_touch.action.call()
+	check(not home.front_door.is_open, "the front door stays shut tonight")
 	check(home.interactions.any(func(e): return e.label.begins_with("Khung cửa")), "the room keeps An's marks")
+	story.toggle_phone()
+	check(home.phone.app == "home", "the phone opens on its home screen")
+	home.phone._tap_app("camera", home.phone.badges["camera"].get_parent().get_child(0))
+	check(home.phone.app == "home", "other apps only wiggle")
+	story.toggle_phone()
+	story._bed()
+	check(story.step == "dreaming", "lying down starts the dream")
+	var moved := false
+	for i in range(600):
+		await process_frame
+		if current_scene != home and current_scene != null:
+			moved = true
+			break
+	check(moved and current_scene.scene_file_path == "res://scenes/school_runtime.tscn" and not has_meta("night_one"), "the dream is Night 0 at the school")
 	print("failures ", failures)
 	quit(failures)

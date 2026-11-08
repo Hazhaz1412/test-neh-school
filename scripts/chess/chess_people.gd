@@ -4,7 +4,7 @@ const OPPONENTS := {
 	"kid": {"name": "Tí Sún", "look": "Male_Child_01", "height": 1.3, "lift": 0.15, "level": "kid", "pay": 10, "minutes": 30, "rule": "Nó ăn gian. Bấm Bắt quả tang đúng lúc được phạt 5$.",
 		"open": "Anh chơi hông? Em thắng là anh mua kem nha!", "win": "Hông chơi nữa! Má em kêu về!", "lose": "Hehe, anh thua thằng con nít kìa.", "draw": "Huề là em thắng nha.",
 		"check": ["Ủa sao chiếu tướng em?", "Anh ăn gian!"], "taunt": ["Anh đi lẹ đi!", "Nước này em thấy rồi nha.", "Má em đánh còn hay hơn."]},
-	"mid": {"name": "Khoa", "look": "Male_Adult_08", "height": 1.7, "level": "mid", "pay": 60, "minutes": 60, "rule": "Cờ chớp: anh chỉ có 5 phút. Hết giờ là thua.",
+	"mid": {"name": "Bơ Tồ", "look": "Male_Adult_08", "height": 1.7, "level": "mid", "pay": 60, "minutes": 60, "rule": "Cờ chớp: anh chỉ có 5 phút. Hết giờ là thua.",
 		"open": "Ván chớp nha. Đồng hồ chạy rồi đó.", "win": "Được. Hôm nay mày gặp may thôi.", "lose": "Hết phim. Đưa đây sáu chục.", "draw": "Thôi huề, đi cà phê.",
 		"check": ["Ê khoan...", "Được đó."], "taunt": ["Nghĩ gì lâu dữ.", "Đồng hồ kìa.", "Tối nay mày qua bên kia cầu thiệt hả?"]},
 	"hard": {"name": "Thầy Khải", "look": "Male_Adult_14", "height": 1.66, "level": "hard", "pay": 140, "minutes": 60, "rule": "Có người đứng sau lưng anh. Một lần mỗi ván, hãy lắng nghe.",

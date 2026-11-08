@@ -242,7 +242,7 @@ func validate() -> void:
 	combat._physics_process(0.4)
 	check(not combat.busy() and not combat.limbs.visible and g.stun_remaining > 2, "Player regains movement while the stunned enemy is still recovering")
 	var stamina: float = p.stamina
-	check(p.MAX_STAMINA == 130 and combat.sprint_multiplier() * 23 == 11.5 and p.stamina == stamina, "Adrenaline halves consumption without refilling stamina or increasing its capacity")
+	check(p.MAX_STAMINA == 130 and combat.sprint_multiplier() * p.SPRINT_DRAIN == p.SPRINT_DRAIN * 0.5 and p.stamina == stamina, "Adrenaline halves consumption without refilling stamina or increasing its capacity")
 	combat._physics_process(8.1)
 	check(combat.sprint_multiplier() == 1 and not combat.heartbeat.playing, "Adrenaline expires and returns sprint drain to normal")
 	g._physics_process(3)
