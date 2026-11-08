@@ -8,6 +8,7 @@ var arms: Node3D
 var item_facing := {}
 var finger_gun := "" # "", "aim" or "fire" while the Ctrl+1 finger gun is up.
 var gesture := "" # One-off arm clip playing now (push, grab), or "".
+var raise := 0.0 # 0 camera at rest .. 1 camera at the eye (viewfinder open).
 const BASE_POSITION := Vector3(0.25, -0.27, -0.52)
 # The rig holds its hand about 0.3 m from the eye; reach further so items keep
 # the on-screen size they were tuned for at BASE_POSITION.
@@ -42,6 +43,10 @@ const TORCH_OFFSET := Vector3.ZERO
 # The beam starts at the eye, behind the hand: nothing held in view (arms,
 # torch, other items) may catch it, or the hand lights up instead of the room.
 const HELD_LAYER := 1 << 19
+# Right click lifts the camera to the eye; the viewfinder opens only once it gets there.
+const RAISE_SECONDS := 0.3
+const RAISED_POSITION := Vector3(0.10, -0.09, -0.27)
+const RAISED_TURN := 0.28 # Cancels the model's resting yaw so the lens faces forward.
 
 static func camera_model() -> Node3D:
 	var pivot := Node3D.new()
@@ -124,14 +129,18 @@ func _process(delta: float) -> void:
 	if world.get("survival") == null:
 		hide()
 		return
-	visible = player.enabled and not player.seized and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished
 	var kind: String = player.selected_item()
+	# At the eye the viewfinder replaces the hands and camera.
+	visible = player.enabled and not player.seized and player.health > 0 and not player.combat.busy() and not player.is_hidden() and not world.survival.opening.playing and not world.survival.finished and not camera_raised()
 	if kind != shown_kind:
 		# Switching slots puts the finger gun away too.
 		shown_kind = kind
+		raise = 0.0
 		_restore_item()
 	if not world.simulation_active():
 		return
+	var raise_target := 1.0 if kind == "camera" and player.camera_aiming else 0.0
+	raise = move_toward(raise, raise_target, delta / RAISE_SECONDS)
 	equip = maxf(0, equip - delta * 7)
 	var recoil: float = world.camera_flash.intensity if kind == "camera" else (player.crank_kick if kind == "crank" else 0.0)
 	position = BASE_POSITION + Vector3(0, -equip * 0.18 - recoil * 0.035, recoil * 0.06)
@@ -139,6 +148,13 @@ func _process(delta: float) -> void:
 	position += Vector3(0.03, -0.02, 0.10) * charge
 	rotation.x = -charge * 0.45
 	rotation.z = sin(player.step_time) * player.velocity.length() * 0.003
+	var lift := smoothstep(0.0, 1.0, raise)
+	position = position.lerp(RAISED_POSITION, lift)
+	rotation.y = RAISED_TURN * lift
+	rotation.z *= 1.0 - lift
+
+func camera_raised() -> bool:
+	return raise >= 1.0
 
 func _show(kind: String) -> void:
 	shown_kind = kind

@@ -96,6 +96,8 @@ var lean := 0.0
 var lean_offset := 0.0
 var jump_held := false # Jump on the press only, not while Space stays down after a QTE.
 var airborne_time := 0.0
+# Right click toggles the viewfinder; the shutter only fires through it.
+var camera_aiming := false
 @onready var camera: Camera3D = $Camera3D
 @onready var flashlight: SpotLight3D = $Camera3D/Flashlight
 
@@ -135,6 +137,7 @@ func select_slot(slot: int) -> void:
 		flashlight.hide()
 		saved_flashlight = false
 		crank_on = false
+		camera_aiming = false
 	selected_slot = slot
 
 # Number keys: pick a slot, or press the held slot's number again to put the
@@ -315,10 +318,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = clampf(camera.rotation.x - event.relative.y * LOOK_SENSITIVITY, -1.35, 1.35)
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and can_use_item():
 		if event.button_index == MOUSE_BUTTON_LEFT:
-			if not held_visual.fire_finger_gun():
+			if not held_visual.fire_finger_gun() and (selected_item() != "camera" or camera_aiming and held_visual.camera_raised()):
 				use_selected_item()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			if selected_item().is_empty() and not is_hidden():
+			if selected_item() == "camera":
+				camera_aiming = not camera_aiming and not is_hidden()
+			elif selected_item().is_empty() and not is_hidden():
 				held_visual.push_both_hands()
 			else:
 				pump_crank()
@@ -604,6 +609,7 @@ func reset_survival() -> void:
 	seized = false
 	selected_slot = 0
 	saved_flashlight = false
+	camera_aiming = false
 	get_parent().camera_flash.reset()
 	breath_exhausted = false
 	sprint_exhausted = false
@@ -629,6 +635,7 @@ func begin_hide(spot: Node3D) -> void:
 	lean = 0.0
 	lean_offset = 0.0
 	hidden_spot = spot
+	camera_aiming = false
 	# The spot sets its own capsule and eye height; leave the hiding place standing.
 	crouching = false
 	crouch_blend = 0.0

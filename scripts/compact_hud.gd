@@ -72,6 +72,9 @@ func _draw() -> void:
 		text_at("J", Vector2(30, 40), Color(ink, 0.65), 13)
 		if world.test_cheats.used_this_run:
 			text_at("TEST · ON" if world.test_cheats.enabled else "TEST · OFF", Vector2(56, 40), Color(0.91, 0.73, 0.40), 12)
+		# Looking through the viewfinder: the bag stays out of the frame.
+		if p.camera_aiming and p.held_visual.camera_raised():
+			return
 		# Six physical slots, compact icons, one label for the selected item.
 		var start := Vector2(width / 2 - 171, height - 66)
 		for i in range(p.BAG_SIZE):
