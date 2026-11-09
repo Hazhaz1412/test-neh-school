@@ -203,6 +203,10 @@ func push_both_hands() -> bool:
 		return false
 	return _play_gesture(arms.PUSH)
 
+# Shouldering a door open mid-run: both palms out whatever is in hand, put away meanwhile.
+func shove() -> bool:
+	return _play_gesture(arms.PUSH)
+
 # E: the right hand reaches out and grabs; a held item is put away meanwhile.
 func grab_with_right_hand() -> bool:
 	return _play_gesture(arms.GRAB)

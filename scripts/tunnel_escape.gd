@@ -8,9 +8,16 @@ extends Node3D
 # - He chases along the shortest way through the tunnels to the player.
 # - Twice he takes a door only he has the key to and steps out ahead (CUTOFFS): the player has to
 #   turn back and take the other way.
+# - Cracks run right across some corridors (CRACKS): jump them or drop into the pit.
+# - On the lower level a crack has eaten the foot of a service stair (STAIRS): jump across onto
+#   the stair and run up it to the higher tunnel.
+# - North of C a door on the left can be shouldered open (ROOM): a pump room through to the west
+#   tunnel, the other way out when he cuts the player off.
 # - The floor of one corridor gives way into a drain (corridor_chute.gd) down to the lower level.
-# - The last corridor opens on a drop into a flooded reservoir. With him coming, the player
-#   jumps, is dragged under, and wakes up at home.
+# - The last corridor opens on a ledge over a flooded reservoir and a broken walkway beyond the
+#   gap. A cutscene takes over: the player stops at the edge, looks down, turns to the guard
+#   coming, backs up and jumps, falls short onto a board sticking out of the walkway, and it
+#   snaps. Into the water, dragged under, and they wake up at home.
 const ORIGIN := Vector3(220, -300, 0)
 const WIDTH := 4.0
 const HEIGHT := 3.2
@@ -35,36 +42,58 @@ const LOWER := -14.0
 const WATER_DEPTH := 14.0
 const DROWN_SECONDS := 9.0
 const SINK_RATE := 0.7
+# How far the stair on the lower level climbs: the far end of the tunnels sits this much higher.
+const RISE := 2.4
 const NODES := {
 	"T": Vector3(0, 0, 12), "S": Vector3(0, 0, 0), "A": Vector3(0, 0, -34), "E": Vector3(24, 0, -34),
-	"B": Vector3(-30, 0, -34), "C": Vector3(-30, 0, -76), "D": Vector3(-30, 0, -108),
-	"G": Vector3(-64, 0, -76), "H": Vector3(-64, 0, -124),
+	"B": Vector3(-30, 0, -34), "C": Vector3(-30, 0, -76), "P1": Vector3(-30, 0, -90), "D": Vector3(-30, 0, -108),
+	"G": Vector3(-64, 0, -76), "P2": Vector3(-64, 0, -90), "H": Vector3(-64, 0, -124),
 	"L1": Vector3(-64, LOWER, -150), "L2": Vector3(-64, LOWER, -186), "L3": Vector3(-24, LOWER, -186),
-	"L4": Vector3(-24, LOWER, -230), "L5": Vector3(16, LOWER, -186), "X": Vector3(16, LOWER, -240),
+	"L4": Vector3(-24, LOWER, -230), "L5": Vector3(16, LOWER + RISE, -186), "X": Vector3(16, LOWER + RISE, -240),
 }
-const EDGES := [["T", "S"], ["S", "A"], ["A", "E"], ["A", "B"], ["B", "C"], ["C", "D"], ["C", "G"], ["G", "H"],
+const EDGES := [["T", "S"], ["S", "A"], ["A", "E"], ["A", "B"], ["B", "C"], ["C", "P1"], ["P1", "D"], ["C", "G"],
+	["G", "P2"], ["P2", "H"], ["P1", "P2"],
 	["L1", "L2"], ["L2", "L3"], ["L3", "L4"], ["L3", "L5"], ["L5", "X"]]
 # Edge, metres from its first node, kind, side (+1 right of travel, -1 left).
 const OBSTACLES := [
-	["S", "A", 12.0, "barrier", 0], ["S", "A", 23.0, "crates", 1],
+	["S", "A", 12.0, "barrier", 0], ["S", "A", 24.0, "crates", 1],
 	["A", "B", 14.0, "pipe", 0],
 	["B", "C", 10.0, "crates", -1], ["B", "C", 21.0, "barrier", 0], ["B", "C", 32.0, "cart", 1],
-	["C", "D", 14.0, "crates", 1],
+	["C", "P1", 10.0, "crates", 1],
 	["C", "G", 12.0, "pipe", 0], ["C", "G", 24.0, "crates", -1],
-	["G", "H", 10.0, "barrier", 0], ["G", "H", 20.0, "crates", 1],
-	["L1", "L2", 12.0, "crates", -1], ["L1", "L2", 24.0, "pipe", 0],
+	["G", "P2", 8.0, "barrier", 0], ["P2", "H", 6.0, "crates", 1],
+	["L1", "L2", 10.0, "crates", -1], ["L1", "L2", 19.0, "pipe", 0],
 	["L2", "L3", 10.0, "barrier", 0], ["L2", "L3", 20.0, "cart", -1], ["L2", "L3", 30.0, "crates", 1],
 	["L3", "L4", 16.0, "crates", -1],
-	["L3", "L5", 12.0, "pipe", 0], ["L3", "L5", 24.0, "crates", 1], ["L3", "L5", 33.0, "barrier", 0],
+	["L3", "L5", 22.0, "crates", 1], ["L3", "L5", 31.0, "barrier", 0],
 	["L5", "X", 12.0, "crates", -1], ["L5", "X", 22.0, "barrier", 0], ["L5", "X", 32.0, "pipe", 0], ["L5", "X", 42.0, "cart", 1],
 ]
+# Cracks right across the floor: edge, metres from its first node to the near lip, width.
+const CRACKS := [["S", "A", 17.0, 1.8], ["A", "B", 21.0, 1.9], ["L1", "L2", 28.0, 2.0]]
+const PIT_DEPTH := 6.0
+# The service stair: edge, near lip of the crack at its foot, crack width, length of the flight.
+# What is left of the flight starts STEP_UP above the floor, so the jump has to go up as well.
+const STAIRS := ["L3", "L5", 8.0, 1.6, 5.0]
+const STEP_UP := 0.6
+# The pump room between the two west tunnels, with a door to shoulder open at each end.
+const ROOM := ["P1", "P2"]
+const ROOM_WIDTH := 9.0
+const ROOM_HEIGHT := 3.8
+const DOOR_REACH := 0.95
+# The broken walkway past the ledge: the gap, how long the far piece is, the jump and the hang.
+const LEAP_GAP := 3.0
+const WALKWAY := 7.6
+# A scaffold board left sticking out of the walkway's broken end, toward the ledge.
+const PLANK_OUT := 1.3
+# The beats of the cutscene, in seconds.
+const BEATS := {"look_down": 1.6, "turn_back": 0.7, "watch": 1.5, "turn_front": 0.6, "back_up": 1.0, "run_up": 0.5, "leap": 0.6, "hang": 1.8}
 # Where he steps out ahead of the player through a door only he can open.
 const CUTOFFS := [
-	{"edge": ["C", "D"], "after": 7.0, "door": ["C", "D", 27.0, 1], "line": "Tao thuộc hết đường dưới này! Quay lại đâu cho kịp!"},
+	{"edge": ["C", "P1"], "after": 7.0, "door": ["P1", "D", 13.0, 1], "line": "Tao thuộc hết đường dưới này! Quay lại đâu cho kịp!"},
 	{"near": "L3", "reach": 7.0, "door": ["L3", "L4", 26.0, 1], "line": "Tưởng rơi xuống là thoát à? Tao đi đường tắt!"},
 ]
-# The floor of G→H gives way into the drain from here on.
-const HOLE := ["G", "H", 30.0]
+# The floor of P2→H gives way into the drain from here on.
+const HOLE := ["P2", "H", 16.0]
 const HOLE_LENGTH := 5.0
 # The east arm from A is shut by a chained grille this far along.
 const GRILLE := ["A", "E", 9.0]
@@ -75,7 +104,7 @@ const CHECKPOINTS := [
 	{"at": Vector3(0, 0, -3), "toward": "A", "guard": Vector3(0, 0, 12), "door": true, "cutoffs": [0, 1]},
 	{"at": Vector3(-64, 0, -79), "toward": "H", "guard": Vector3(-46, 0, -76), "cutoffs": [1]},
 	{"at": Vector3(-64, LOWER, -152), "toward": "L2", "guard": null, "cutoffs": [1]},
-	{"at": Vector3(16, LOWER, -189), "toward": "X", "guard": Vector3(0, LOWER, -186), "cutoffs": []},
+	{"at": Vector3(16, LOWER + RISE, -189), "toward": "X", "guard": Vector3(0, LOWER + RISE, -186), "cutoffs": []},
 ]
 var story: Node3D
 var world: Node3D
@@ -142,6 +171,24 @@ var splash_spray: CPUParticles3D
 var underside: MeshInstance3D
 var muffle_bus := -1
 var saved_fog := []
+# Every crack, the stair's included: near lip (local, on the floor), far lip, way across.
+var gaps: Array[Dictionary] = []
+var push_doors: Array[Dictionary] = []
+var pit_fall := false
+# The cutscene at the reservoir: which beat it is on, and how long it has been on it.
+var leap_beat := ""
+var beat_clock := 0.0
+var leap_from := Vector3.ZERO
+var leap_yaw := 0.0
+var hanging := false
+var climb_push := 0.0
+var fall_drift := -2.0
+var scripted_guard := false
+var cut_guard := Vector3.ZERO
+var plank: Node3D
+var plank_rest := Transform3D.IDENTITY
+var plank_tween: Tween
+var splinters: CPUParticles3D
 # Rippling water: two crossing swells in the vertices, finer ripples in the normals, and the
 # fresnel that makes the surface a mirror at a glance and see-through from above.
 const WATER_SHADER := preload("res://assets/materials/reservoir_water.gdshader")
@@ -228,10 +275,54 @@ func _build_overlay() -> void:
 func node_pos(id: String) -> Vector3:
 	return NODES[id]
 
+func flat_forward(a: String, b: String) -> Vector3:
+	var along := node_pos(b) - node_pos(a)
+	along.y = 0.0
+	return along.normalized()
+
+func edge_length(a: String, b: String) -> float:
+	var along := node_pos(b) - node_pos(a)
+	return Vector2(along.x, along.z).length()
+
+func is_edge(edge: Array, a: String, b: String) -> bool:
+	return edge[0] == a and edge[1] == b
+
+# How far the floor is above node a's level, `metres` along from a. Only the stair edge climbs.
+func lift(a: String, b: String, metres: float) -> float:
+	if is_edge(STAIRS, b, a):
+		return lift(b, a, edge_length(a, b) - metres) - RISE
+	if not is_edge(STAIRS, a, b): return 0.0
+	var foot: float = STAIRS[2] + STAIRS[3]
+	if metres < foot: return 0.0
+	return lerpf(STEP_UP, RISE, clampf((metres - foot) / float(STAIRS[4]), 0.0, 1.0))
+
 func edge_point(a: String, b: String, metres: float, side := 0.0) -> Vector3:
-	var from := node_pos(a)
-	var forward := (node_pos(b) - from).normalized()
-	return from + forward * metres + forward.cross(Vector3.UP) * side
+	var forward := flat_forward(a, b)
+	return node_pos(a) + forward * metres + forward.cross(Vector3.UP) * side + Vector3.UP * lift(a, b, metres)
+
+# The crack `at` is over, if any.
+func gap_at(at: Vector3, margin := 0.0) -> Dictionary:
+	for gap in gaps:
+		var rel: Vector3 = at - gap.near
+		var s: float = rel.dot(gap.forward)
+		if s > -margin and s < gap.width + margin and absf(rel.dot(gap.right)) < WIDTH * 0.5 and rel.y < 3.0 and rel.y > -PIT_DEPTH - 3.0:
+			return gap
+	return {}
+
+# The floor under `at` (local). Over a crack, the level of its near lip.
+func floor_under(at: Vector3) -> float:
+	var here := project(at)
+	if not here.has("a"): return at.y
+	var gap := gap_at(at)
+	if not gap.is_empty(): return gap.near.y
+	return node_pos(here.a).y + lift(here.a, here.b, here.t)
+
+# Where the guard's feet go: the floor, and over a crack the arc of his jump across it.
+func ground(at: Vector3) -> float:
+	var gap := gap_at(at)
+	if gap.is_empty(): return floor_under(at)
+	var s: float = clampf((at - gap.near).dot(gap.forward) / gap.width, 0.0, 1.0)
+	return lerpf(gap.near.y, gap.far.y, s) + sin(PI * s) * 0.8
 
 func _build_graph() -> void:
 	for id in NODES:
@@ -356,7 +447,6 @@ func build() -> void:
 	var pipe_mat := material(Color(0.32, 0.3, 0.28))
 	pipe_mat.metallic = 0.6
 	pipe_mat.roughness = 0.45
-	var hole: Array = HOLE
 	# Junction squares: walls on every side that has no corridor.
 	for id in NODES:
 		var at := node_pos(id)
@@ -369,37 +459,38 @@ func build() -> void:
 			if open.any(func(d): return d.dot(side) > 0.9): continue
 			box(self, at + side * (WIDTH * 0.5 + 0.1) + Vector3(0, HEIGHT * 0.5, 0), _axis_box(at, side.cross(Vector3.UP), WIDTH + 0.4, 0.2, HEIGHT), wall, true)
 		lamp_points.append(at + Vector3(0, HEIGHT - 0.1, 0))
+	var looks := {"wall": wall, "floor": floor_mat, "ceiling": ceiling, "lamp": lamp, "pipe": pipe_mat}
+	gaps.clear()
+	push_doors.clear()
 	for edge in EDGES:
 		var a := node_pos(edge[0])
-		var b := node_pos(edge[1])
-		var forward := (b - a).normalized()
+		var forward := flat_forward(edge[0], edge[1])
 		var right := forward.cross(Vector3.UP)
-		var length := a.distance_to(b) - WIDTH
-		var mid := (a + b) * 0.5
-		if edge[0] == hole[0] and edge[1] == hole[1]:
-			# The floor ends where it gave way; beyond the hole it carries on to a dead end.
-			var gap_from: float = hole[2] - WIDTH * 0.5
-			var before: float = gap_from
-			box(self, a + forward * (WIDTH * 0.5 + before * 0.5) + Vector3(0, -0.1, 0), _axis_box(a, forward, before, WIDTH, 0.2), floor_mat, true)
-			var after: float = length - before - HOLE_LENGTH
-			box(self, a + forward * (WIDTH * 0.5 + before + HOLE_LENGTH + after * 0.5) + Vector3(0, -0.1, 0), _axis_box(a, forward, after, WIDTH, 0.2), floor_mat, true)
-			_build_hole(a + forward * (WIDTH * 0.5 + before), forward, right)
-		else:
-			box(self, mid + Vector3(0, -0.1, 0), _axis_box(mid, forward, length, WIDTH, 0.2), floor_mat, true)
-		box(self, mid + Vector3(0, HEIGHT + 0.1, 0), _axis_box(mid, forward, length, WIDTH, 0.2), ceiling, true)
-		for side in [-1.0, 1.0]:
-			box(self, mid + right * side * (WIDTH * 0.5 + 0.1) + Vector3(0, HEIGHT * 0.5, 0), _axis_box(mid, forward, length, 0.2, HEIGHT), wall, true)
-		# Two pipes along one wall and a cable tray along the other, the whole way.
-		for k in range(2):
-			box(self, mid + right * (WIDTH * 0.5 - 0.18) + Vector3(0, 2.55 + k * 0.28, 0), _axis_box(mid, forward, length + WIDTH, 0.16, 0.16), pipe_mat)
-		box(self, mid - right * (WIDTH * 0.5 - 0.12) + Vector3(0, 2.75, 0), _axis_box(mid, forward, length + WIDTH, 0.22, 0.06), pipe_mat)
-		var z := 6.0
-		while z < a.distance_to(b) - 3.0:
-			var spot := a + forward * z
-			box(self, spot + Vector3(0, HEIGHT - 0.04, 0), _axis_box(spot, forward, 0.9, 0.22, 0.06), lamp)
-			lamp_points.append(spot + Vector3(0, HEIGHT - 0.2, 0))
-			z += 9.0
-		_doors_along(a, b, forward, right)
+		var total := edge_length(edge[0], edge[1])
+		var start := WIDTH * 0.5
+		var end := total - WIDTH * 0.5
+		if is_edge(edge, ROOM[0], ROOM[1]):
+			_build_room(a, forward, right, start, end, looks)
+			continue
+		if is_edge(edge, STAIRS[0], STAIRS[1]):
+			_build_stair_edge(a, forward, right, start, end, looks)
+			_doors_along(edge[0], edge[1])
+			continue
+		# The floor in pieces either side of the drain hole and the cracks.
+		var cuts: Array = []
+		if is_edge(HOLE, edge[0], edge[1]): cuts.append([HOLE[2], HOLE[2] + HOLE_LENGTH, "hole"])
+		for crack in CRACKS:
+			if is_edge(crack, edge[0], edge[1]): cuts.append([crack[2], crack[2] + crack[3], "crack"])
+		cuts.sort_custom(func(x, y): return x[0] < y[0])
+		var from := start
+		for cut in cuts:
+			_floor_piece(a, forward, from, cut[0], 0.0, floor_mat)
+			if cut[2] == "hole": _build_hole(a + forward * float(cut[0]), forward, right)
+			else: _build_crack(a, forward, right, cut[0], cut[1], 0.0, 0.0)
+			from = cut[1]
+		_floor_piece(a, forward, from, end, 0.0, floor_mat)
+		_shell(a, forward, right, start, end, 0.0, HEIGHT, 0.0, looks, true)
+		_doors_along(edge[0], edge[1])
 	for spec in OBSTACLES:
 		_build_obstacle(spec)
 	_build_grille()
@@ -421,21 +512,270 @@ func build() -> void:
 		lights.append(light)
 	chute.build()
 
-func _doors_along(a: Vector3, b: Vector3, forward: Vector3, right: Vector3) -> void:
+func _floor_piece(a: Vector3, forward: Vector3, from: float, to: float, level: float, mat: Material) -> void:
+	if to - from < 0.01: return
+	var at := a + forward * ((from + to) * 0.5)
+	box(self, at + Vector3(0, level - 0.1, 0), _axis_box(at, forward, to - from, WIDTH, 0.2), mat, true)
+
+# Ceiling, both walls, the pipes and cable tray, and the lamps of a stretch of corridor. The walls
+# run from `bottom` up to the ceiling at `top`; pipes and lamps hang off the floor at `level`.
+func _shell(a: Vector3, forward: Vector3, right: Vector3, from: float, to: float, bottom: float, top: float, level: float, looks: Dictionary, into_junctions: bool) -> void:
+	var length := to - from
+	var mid := a + forward * ((from + to) * 0.5)
+	box(self, mid + Vector3(0, top + 0.1, 0), _axis_box(mid, forward, length, WIDTH, 0.2), looks.ceiling, true)
+	for side in [-1.0, 1.0]:
+		box(self, mid + right * side * (WIDTH * 0.5 + 0.1) + Vector3(0, (bottom + top) * 0.5, 0), _axis_box(mid, forward, length, 0.2, top - bottom), looks.wall, true)
+	# Two pipes along one wall and a cable tray along the other, the whole way.
+	var run := length + (WIDTH if into_junctions else 0.0)
+	for k in range(2):
+		box(self, mid + right * (WIDTH * 0.5 - 0.18) + Vector3(0, level + 2.55 + k * 0.28, 0), _axis_box(mid, forward, run, 0.16, 0.16), looks.pipe)
+	box(self, mid - right * (WIDTH * 0.5 - 0.12) + Vector3(0, level + 2.75, 0), _axis_box(mid, forward, run, 0.22, 0.06), looks.pipe)
+	var z := from + 4.0
+	while z < to - 1.0:
+		var spot := a + forward * z + Vector3.UP * level
+		box(self, spot + Vector3(0, top - level - 0.04, 0), _axis_box(spot, forward, 0.9, 0.22, 0.06), looks.lamp)
+		lamp_points.append(spot + Vector3(0, top - level - 0.2, 0))
+		z += 9.0
+
+# A crack right across the corridor: a closed pit with broken lips, a hazard strip on each side and
+# a dull glow from the bottom so it reads from a distance in the dark.
+func _build_crack(a: Vector3, forward: Vector3, right: Vector3, from: float, to: float, near_level: float, far_level: float) -> void:
+	var width := to - from
+	var mid := a + forward * ((from + to) * 0.5)
+	var bottom := near_level - PIT_DEPTH
+	var rock := material(Color(0.2, 0.18, 0.17))
+	var raw := material(Color(0.36, 0.33, 0.31))
+	box(self, mid + Vector3(0, bottom - 0.1, 0), _axis_box(mid, forward, width + 0.4, WIDTH + 0.4, 0.2), material(Color(0.05, 0.04, 0.04)), true)
+	for side in [-1.0, 1.0]:
+		box(self, mid + right * side * (WIDTH * 0.5 + 0.1) + Vector3(0, (bottom + near_level) * 0.5, 0), _axis_box(mid, forward, width + 0.4, 0.2, near_level - bottom), rock, true)
+	var near := a + forward * from
+	var far := a + forward * to
+	box(self, near - forward * 0.1 + Vector3(0, (bottom + near_level) * 0.5 - 0.1, 0), _axis_box(near, forward, 0.2, WIDTH, near_level - bottom - 0.2), raw, true)
+	box(self, far + forward * 0.1 + Vector3(0, (bottom + far_level) * 0.5 - 0.1, 0), _axis_box(far, forward, 0.2, WIDTH, far_level - bottom - 0.2), raw, true)
+	var stripe := material(Color(0.95, 0.75, 0.1), true)
+	stripe.emission_energy_multiplier = 0.45
+	box(self, near - forward * 0.35 + Vector3(0, near_level + 0.005, 0), _axis_box(near, forward, 0.22, WIDTH - 0.2, 0.012), stripe)
+	box(self, far + forward * 0.35 + Vector3(0, far_level + 0.005, 0), _axis_box(far, forward, 0.22, WIDTH - 0.2, 0.012), stripe)
+	# Broken slab along both lips, and rubble down in the pit.
+	var dice := RandomNumberGenerator.new()
+	dice.seed = int(absf(mid.x) * 31.0 + absf(mid.z) * 7.0)
+	for lip_at in [[near, -1.0, near_level], [far, 1.0, far_level]]:
+		for i in range(5):
+			var piece: Vector3 = lip_at[0] + forward * float(lip_at[1]) * dice.randf_range(0.0, 0.25) + right * dice.randf_range(-1.7, 1.7)
+			var slab := box(self, piece + Vector3(0, float(lip_at[2]) - 0.12, 0), Vector3(dice.randf_range(0.3, 0.6), 0.16, dice.randf_range(0.3, 0.6)), raw)
+			slab.rotation = Vector3(dice.randf_range(-0.4, 0.4), dice.randf() * TAU, dice.randf_range(-0.4, 0.4))
+	for i in range(6):
+		var chunk := box(self, mid + forward * dice.randf_range(-width * 0.4, width * 0.4) + right * dice.randf_range(-1.5, 1.5) + Vector3(0, bottom + 0.25, 0), Vector3.ONE * dice.randf_range(0.3, 0.7), raw)
+		chunk.rotation = Vector3(dice.randf(), dice.randf(), dice.randf())
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(1.0, 0.42, 0.16)
+	glow.light_energy = 1.8
+	glow.omni_range = PIT_DEPTH + 1.5
+	glow.position = mid + Vector3(0, bottom + 0.8, 0)
+	add_child(glow)
+	gaps.append({"near": near + Vector3(0, near_level, 0), "far": far + Vector3(0, far_level, 0), "forward": forward, "right": right, "width": width})
+
+# The stair edge: level floor, the crack at the foot of the stair, what is left of the flight (a
+# ramp to walk on with steps drawn over it), and the corridor on at the top under a higher ceiling.
+func _build_stair_edge(a: Vector3, forward: Vector3, right: Vector3, start: float, end: float, looks: Dictionary) -> void:
+	var lip_near: float = STAIRS[2]
+	var foot: float = lip_near + float(STAIRS[3])
+	var top_at: float = foot + float(STAIRS[4])
+	_floor_piece(a, forward, start, lip_near, 0.0, looks.floor)
+	_build_crack(a, forward, right, lip_near, foot, 0.0, STEP_UP)
+	_floor_piece(a, forward, top_at, end, RISE, looks.floor)
+	_shell(a, forward, right, start, lip_near, 0.0, HEIGHT, 0.0, looks, false)
+	_shell(a, forward, right, lip_near, end, 0.0, RISE + HEIGHT, RISE, looks, false)
+	# Where the ceiling steps up over the stair.
+	var step_face := a + forward * lip_near
+	box(self, step_face + Vector3(0, HEIGHT + RISE * 0.5 + 0.1, 0), _axis_box(step_face, forward, 0.2, WIDTH, RISE), looks.wall, true)
+	# The ramp under the steps.
+	var rise_by := RISE - STEP_UP
+	var run: float = STAIRS[4]
+	var slope := Vector3(forward * run + Vector3.UP * rise_by)
+	var middle := a + forward * ((foot + top_at) * 0.5) + Vector3.UP * (STEP_UP + rise_by * 0.5)
+	var along := slope.normalized()
+	var up := right.cross(along).normalized()
+	if up.y < 0.0: up = -up
+	var ramp := StaticBody3D.new()
+	ramp.collision_layer = 0
+	ramp.collision_mask = 0
+	ramp.transform = Transform3D(Basis(right, up, -along), middle - up * 0.15)
+	var shape := CollisionShape3D.new()
+	var plank := BoxShape3D.new()
+	plank.size = Vector3(WIDTH, 0.3, slope.length() + 0.02)
+	shape.shape = plank
+	ramp.add_child(shape)
+	add_child(ramp)
+	bodies.append(ramp)
+	# Concrete steps, half a riser proud of the ramp so feet neither float nor sink far.
+	var concrete := _textured("res://assets/polyhaven_corridor/textures/concrete_floor_painted_diff.jpg", Color(0.5, 0.46, 0.43), 0.25)
+	var count := 6
+	for i in range(count):
+		var t0: float = foot + run * i / count
+		var t1: float = foot + run * (i + 1) / count
+		var tread: float = STEP_UP + rise_by * (i + 0.5) / count
+		var at := a + forward * ((t0 + t1) * 0.5)
+		box(self, at + Vector3(0, tread * 0.5, 0), _axis_box(at, forward, t1 - t0, WIDTH, tread), concrete)
+		var nosing := material(Color(0.95, 0.75, 0.1), true)
+		nosing.emission_energy_multiplier = 0.2
+		box(self, a + forward * (t0 + 0.04) + Vector3(0, tread + 0.004, 0), _axis_box(at, forward, 0.07, WIDTH - 0.3, 0.012), nosing)
+	# A handrail up one side, bent where the bottom of the flight fell in.
+	var rail := material(Color(0.3, 0.31, 0.3))
+	rail.metallic = 0.7
+	var rail_from := a + forward * foot + right * (WIDTH * 0.5 - 0.2) + Vector3.UP * (STEP_UP + 0.95)
+	var rail_to := a + forward * top_at + right * (WIDTH * 0.5 - 0.2) + Vector3.UP * (RISE + 0.95)
+	var bar := MeshInstance3D.new()
+	var tube := CylinderMesh.new()
+	tube.top_radius = 0.03
+	tube.bottom_radius = 0.03
+	tube.height = rail_from.distance_to(rail_to)
+	bar.mesh = tube
+	bar.material_override = rail
+	add_child(bar)
+	bar.look_at_from_position((rail_from + rail_to) * 0.5, rail_to, right)
+	bar.rotate_object_local(Vector3.RIGHT, PI / 2)
+	for k in range(3):
+		var post := rail_from.lerp(rail_to, k / 2.0)
+		box(self, post - Vector3(0, 0.47, 0), Vector3(0.05, 0.95, 0.05), rail)
+	var bent := box(self, a + forward * (foot - 0.5) + right * (WIDTH * 0.5 - 0.2) + Vector3(0, -0.2, 0), _axis_box(a, forward, 1.3, 0.05, 0.05), rail)
+	bent.rotation = Vector3(0.0, 0.0, 0.0)
+	bent.rotate(right, 0.7)
+
+# The pump room: wider and taller than the tunnels, two pumps, and a swing door at each end.
+func _build_room(a: Vector3, forward: Vector3, right: Vector3, start: float, end: float, looks: Dictionary) -> void:
+	var length := end - start
+	var mid := a + forward * ((start + end) * 0.5)
+	var tiles := _textured("res://assets/polyhaven_corridor/textures/concrete_floor_painted_diff.jpg", Color(0.36, 0.42, 0.4), 0.3)
+	box(self, mid + Vector3(0, -0.1, 0), _axis_box(mid, forward, length, ROOM_WIDTH, 0.2), tiles, true)
+	box(self, mid + Vector3(0, ROOM_HEIGHT + 0.1, 0), _axis_box(mid, forward, length, ROOM_WIDTH, 0.2), looks.ceiling, true)
+	for side in [-1.0, 1.0]:
+		box(self, mid + right * side * (ROOM_WIDTH * 0.5 + 0.1) + Vector3(0, ROOM_HEIGHT * 0.5, 0), _axis_box(mid, forward, length, 0.2, ROOM_HEIGHT), looks.wall, true)
+	# End walls in line with the tunnel walls, each with a doorway.
+	var leaf_half := 0.7
+	for end_at in [[start, -1.0], [end, 1.0]]:
+		var at: Vector3 = a + forward * (float(end_at[0]) - float(end_at[1]) * 0.1)
+		var side_width := ROOM_WIDTH * 0.5 - leaf_half + 0.2
+		for side in [-1.0, 1.0]:
+			box(self, at + right * side * (leaf_half + side_width * 0.5) + Vector3(0, ROOM_HEIGHT * 0.5, 0), _axis_box(at, forward, 0.2, side_width, ROOM_HEIGHT), looks.wall, true)
+		box(self, at + Vector3(0, (2.3 + ROOM_HEIGHT) * 0.5, 0), _axis_box(at, forward, 0.2, leaf_half * 2.0, ROOM_HEIGHT - 2.3), looks.wall, true)
+		var outward: Vector3 = forward * float(end_at[1])
+		push_doors.append(_push_door(at, forward, right, -outward))
+	# A sign and a green lamp over the first door, seen from the tunnel.
+	var entry := a + forward * (start - 0.25)
+	_sign("PHÒNG BƠM 2\nTHÔNG SANG HẦM TÂY", entry + Vector3(0, 2.75, 0), -forward, Color(0.55, 1.0, 0.6))
+	var green := OmniLight3D.new()
+	green.light_color = Color(0.4, 1.0, 0.5)
+	green.light_energy = 1.0
+	green.omni_range = 4.5
+	green.position = entry + Vector3(0, 2.5, 0) - forward * 0.4
+	add_child(green)
+	box(self, entry + Vector3(0, 2.42, 0), _axis_box(entry, forward, 0.05, 0.5, 0.12), material(Color(0.3, 1.0, 0.45), true))
+	# Two pumps on opposite sides, pipes up into the ceiling, lamps the length of the room.
+	var paint := material(Color(0.2, 0.32, 0.28))
+	paint.metallic = 0.5
+	paint.roughness = 0.5
+	for pump in [[start + 9.0, 1.0], [start + 20.0, -1.0]]:
+		var at: Vector3 = a + forward * float(pump[0]) + right * float(pump[1]) * 2.9
+		box(self, at + Vector3(0, 0.75, 0), _axis_box(at, forward, 2.4, 2.5, 1.5), paint, true)
+		var motor := MeshInstance3D.new()
+		var drum := CylinderMesh.new()
+		drum.top_radius = 0.45
+		drum.bottom_radius = 0.45
+		drum.height = 1.6
+		motor.mesh = drum
+		motor.material_override = looks.pipe
+		motor.position = at + Vector3(0, 1.95, 0)
+		motor.rotation = Vector3(0, 0, PI / 2) if absf(forward.x) > 0.5 else Vector3(PI / 2, 0, 0)
+		add_child(motor)
+		box(self, at + Vector3(0, (2.0 + ROOM_HEIGHT) * 0.5, 0) + right * float(pump[1]) * 0.6, Vector3(0.3, ROOM_HEIGHT - 2.0, 0.3), looks.pipe)
+	var z := start + 3.0
+	while z < end - 1.0:
+		var spot := a + forward * z
+		box(self, spot + Vector3(0, ROOM_HEIGHT - 0.04, 0), _axis_box(spot, forward, 0.9, 0.22, 0.06), looks.lamp)
+		lamp_points.append(spot + Vector3(0, ROOM_HEIGHT - 0.2, 0))
+		z += 8.0
+
+# A swing door across a doorway at `at`. Run into it and it bangs open away from whoever hit it.
+func _push_door(at: Vector3, forward: Vector3, right: Vector3, inward: Vector3) -> Dictionary:
+	var hinge := Node3D.new()
+	hinge.position = at - right * 0.66
+	add_child(hinge)
+	var size := _axis_box(at, forward, 0.06, 1.3, 2.25)
+	var leaf := MeshInstance3D.new()
+	var plate := BoxMesh.new()
+	plate.size = size
+	leaf.mesh = plate
+	leaf.material_override = material(Color(0.28, 0.36, 0.32))
+	leaf.position = right * 0.66 + Vector3(0, 1.13, 0)
+	hinge.add_child(leaf)
+	# Push bar on both faces and a wired window.
+	for face in [-1.0, 1.0]:
+		var bar := MeshInstance3D.new()
+		var bar_mesh := BoxMesh.new()
+		bar_mesh.size = _axis_box(at, forward, 0.05, 0.9, 0.06)
+		bar.mesh = bar_mesh
+		bar.material_override = material(Color(0.7, 0.68, 0.62))
+		bar.position = leaf.position + forward * face * 0.06 + Vector3(0, -0.13, 0)
+		hinge.add_child(bar)
+	var pane := MeshInstance3D.new()
+	var pane_mesh := BoxMesh.new()
+	pane_mesh.size = _axis_box(at, forward, 0.07, 0.4, 0.5)
+	pane.mesh = pane_mesh
+	pane.material_override = material(Color(0.05, 0.08, 0.08))
+	pane.position = leaf.position + Vector3(0, 0.5, 0)
+	hinge.add_child(pane)
+	var body := StaticBody3D.new()
+	body.collision_layer = 0
+	body.collision_mask = 0
+	body.position = leaf.position
+	var collider := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collider.shape = shape
+	body.add_child(collider)
+	hinge.add_child(body)
+	return {"hinge": hinge, "body": body, "at": at, "forward": forward, "right": right, "inward": inward, "open": false, "tween": null}
+
+func _shove(door: Dictionary, from: Vector3) -> void:
+	if door.open: return
+	door.open = true
+	door.body.collision_layer = 0
+	var side := signf((from - door.at).dot(door.forward))
+	if side == 0.0: side = 1.0
+	# Turning the hinge by +angle swings the leaf toward `turn`; it goes away from the pusher.
+	var turn := signf(Vector3.UP.cross(door.right).dot(door.forward))
+	if door.tween != null: door.tween.kill()
+	var swing := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	swing.tween_property(door.hinge, "rotation:y", -side * turn * 1.75, 0.3)
+	door.tween = swing
+	scares.impact(to_global(door.at + Vector3.UP), "door")
+
+func _close_push_doors() -> void:
+	for door in push_doors:
+		if door.tween != null: door.tween.kill()
+		door.tween = null
+		door.open = false
+		door.hinge.rotation.y = 0.0
+		door.body.collision_layer = 1 if active else 0
+
+func _doors_along(a_id: String, b_id: String) -> void:
 	var steel := material(Color(0.2, 0.22, 0.22))
+	var forward := flat_forward(a_id, b_id)
+	var right := forward.cross(Vector3.UP)
 	var z := 15.0
 	var side := 1.0
-	while z < a.distance_to(b) - 6.0:
-		var spot := a + forward * z + right * side * (WIDTH * 0.5 - 0.02)
-		box(self, spot + Vector3(0, 1.05, 0), _axis_box(spot, forward, 1.1, 0.06, 2.1), steel)
+	while z < edge_length(a_id, b_id) - 6.0:
+		var spot := edge_point(a_id, b_id, z) + right * side * (WIDTH * 0.5 - 0.02)
+		if gap_at(spot - right * side * 1.0, 1.0).is_empty():
+			box(self, spot + Vector3(0, 1.05, 0), _axis_box(spot, forward, 1.1, 0.06, 2.1), steel)
 		z += 17.0
 		side = -side
 
 func _build_obstacle(spec: Array) -> void:
-	var a := node_pos(spec[0])
-	var forward := (node_pos(spec[1]) - a).normalized()
+	var forward := flat_forward(spec[0], spec[1])
 	var right := forward.cross(Vector3.UP)
-	var at := a + forward * float(spec[2])
+	var at := edge_point(spec[0], spec[1], float(spec[2]))
 	var side := float(spec[4])
 	match spec[3]:
 		"barrier":
@@ -630,15 +970,23 @@ func _build_reservoir() -> void:
 	box(self, Vector3(x.x, x.y - 0.8, edge_z - 0.05), Vector3(WIDTH, 1.4, 0.1), rock)
 	water_y = x.y - WATER_DEPTH
 	var hall := Vector3(x.x, water_y, mouth_z - 23.0)
+	# A closed box of rock: from below the bed to above the roof, so no angle of the fall or of the
+	# sink looks out past it at the tunnels hanging in the dark.
+	var low := water_y - 9.0
+	var high := x.y + 10.0
+	var tall := high - low
+	var middle := (low + high) * 0.5
 	for side in [-1.0, 1.0]:
-		box(self, Vector3(x.x + side * 24.0, water_y + 9.0, hall.z), Vector3(0.6, 30.0, 46.0), rock)
-	box(self, Vector3(x.x, water_y + 9.0, mouth_z - 46.0), Vector3(48.0, 30.0, 0.6), rock)
-	box(self, Vector3(x.x, x.y + 9.0, hall.z), Vector3(48.0, 0.6, 46.0), rock)
-	# The cavern wall the tunnel opens out of: either side of the mouth, and above it.
+		box(self, Vector3(x.x + side * 24.0, middle, hall.z), Vector3(0.6, tall, 47.2), rock)
+	box(self, Vector3(x.x, middle, mouth_z - 46.0), Vector3(48.6, tall, 0.6), rock)
+	box(self, Vector3(x.x, x.y + 9.0, hall.z), Vector3(48.6, 0.6, 47.2), rock)
+	# The cavern wall the tunnel opens out of: either side of the mouth, above it and below it.
 	for side in [-1.0, 1.0]:
-		box(self, Vector3(x.x + side * (WIDTH * 0.5 + 11.0), water_y + 9.0, mouth_z + 0.2), Vector3(22.0, 30.0, 0.4), rock)
-	box(self, Vector3(x.x, x.y + HEIGHT + 3.0, mouth_z + 0.2), Vector3(WIDTH, 6.0, 0.4), rock)
-	box(self, Vector3(x.x, water_y - 8.0, hall.z), Vector3(48.0, 0.4, 46.0), material(Color(0.02, 0.03, 0.03)))
+		box(self, Vector3(x.x + side * (WIDTH * 0.5 + 11.0), middle, mouth_z + 0.2), Vector3(22.0, tall, 0.4), rock)
+	box(self, Vector3(x.x, (x.y + HEIGHT + high) * 0.5, mouth_z + 0.2), Vector3(WIDTH + 0.4, high - x.y - HEIGHT, 0.4), rock)
+	box(self, Vector3(x.x, (low + x.y - 0.2) * 0.5, mouth_z + 0.2), Vector3(WIDTH + 0.4, x.y - 0.2 - low, 0.4), rock)
+	box(self, Vector3(x.x, water_y - 8.0, hall.z), Vector3(48.6, 0.4, 47.2), material(Color(0.02, 0.03, 0.03)))
+	_build_walkway(rock)
 	surface = MeshInstance3D.new()
 	var sheet := PlaneMesh.new()
 	sheet.size = Vector2(48.0, 46.0)
@@ -694,6 +1042,8 @@ func _build_reservoir() -> void:
 	haze.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	haze.cull_mode = BaseMaterial3D.CULL_DISABLED
 	haze.albedo_color = Color(0.5, 0.65, 0.8, 0.016)
+	# Fogged, the faint cone turned into a solid pale wedge across the view.
+	haze.disable_fog = true
 	shaft.material_override = haze
 	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	shaft.position = Vector3(x.x + 2.0, water_y + cone.height * 0.5, mouth_z - 12.0)
@@ -768,6 +1118,87 @@ func _spray() -> CPUParticles3D:
 func ledge_z() -> float:
 	return node_pos("X").z - WIDTH * 0.5 - 2.4
 
+# The near end of the broken walkway across the gap.
+func far_z() -> float:
+	return ledge_z() - LEAP_GAP
+
+# Past the gap, what is left of a maintenance walkway runs on under the moonlit drain grate, where a
+# ladder goes up to it: the way out the player jumps for. Its near end is the slab that breaks off.
+func _build_walkway(rock: Material) -> void:
+	var x := node_pos("X")
+	var near := far_z()
+	var deck := _textured("res://assets/polyhaven_corridor/textures/concrete_floor_painted_diff.jpg", Color(0.4, 0.37, 0.35), 0.25)
+	var span := 2.6
+	var rest := WALKWAY
+	box(self, Vector3(x.x, x.y - 0.14, near - rest * 0.5), Vector3(span, 0.28, rest), deck)
+	# Jagged end where the rest of the walkway fell, and the board left hanging out of it.
+	var dice := RandomNumberGenerator.new()
+	dice.seed = 99
+	for i in range(5):
+		var chunk := box(self, Vector3(x.x + dice.randf_range(-1.1, 1.1), x.y - 0.2, near + dice.randf_range(-0.1, 0.15)), Vector3(dice.randf_range(0.3, 0.6), 0.2, dice.randf_range(0.2, 0.4)), deck)
+		chunk.rotation = Vector3(dice.randf_range(-0.5, 0.5), dice.randf() * TAU, dice.randf_range(-0.3, 0.3))
+	var wood := _textured("res://assets/polyhaven_kiting/wooden_crate_01/textures/wooden_crate_01_diff_1k.jpg", Color(0.62, 0.5, 0.38), 1.2)
+	# The board: a stub lying on the deck, and the part out over the gap that bends and snaps off
+	# at the edge (its pivot).
+	box(self, Vector3(x.x - 0.3, x.y + 0.03, near - 0.45), Vector3(0.32, 0.06, 0.9), wood)
+	plank = Node3D.new()
+	plank.position = Vector3(x.x - 0.3, x.y + 0.03, near)
+	add_child(plank)
+	plank_rest = plank.transform
+	var board := MeshInstance3D.new()
+	var board_mesh := BoxMesh.new()
+	board_mesh.size = Vector3(0.32, 0.06, PLANK_OUT)
+	board.mesh = board_mesh
+	board.material_override = wood
+	board.position = Vector3(0, 0, PLANK_OUT * 0.5)
+	plank.add_child(board)
+	var steel := material(Color(0.22, 0.22, 0.21))
+	steel.metallic = 0.7
+	for z in [near - 2.8, near - 6.8]:
+		box(self, Vector3(x.x, (water_y - 8.0 + x.y - 0.28) * 0.5, z), Vector3(0.7, x.y - 0.28 - water_y + 8.0, 0.7), rock)
+	for side in [-1.0, 1.0]:
+		for k in range(4):
+			box(self, Vector3(x.x + side * (span * 0.5 - 0.06), x.y + 0.5, near - 1.6 - k * 2.0), Vector3(0.05, 1.0, 0.05), steel)
+		box(self, Vector3(x.x + side * (span * 0.5 - 0.06), x.y + 1.0, near - 1.1 - rest * 0.5), Vector3(0.05, 0.05, rest), steel)
+	# The ladder up to the grate.
+	var foot_z := near - WALKWAY + 0.35
+	var climb := 8.7
+	for side in [-1.0, 1.0]:
+		box(self, Vector3(x.x + side * 0.28, x.y + climb * 0.5, foot_z), Vector3(0.06, climb, 0.06), steel)
+	for k in range(int(climb / 0.35)):
+		box(self, Vector3(x.x, x.y + 0.3 + k * 0.35, foot_z), Vector3(0.56, 0.04, 0.04), steel)
+	_sign("LỐI LÊN MẶT ĐẤT ↑", Vector3(x.x, x.y + 2.6, foot_z - 0.1), Vector3.BACK, Color(0.55, 1.0, 0.6))
+	var green := OmniLight3D.new()
+	green.light_color = Color(0.4, 1.0, 0.5)
+	green.light_energy = 1.4
+	green.omni_range = 6.0
+	green.position = Vector3(x.x, x.y + 2.2, foot_z + 0.6)
+	add_child(green)
+	reservoir_lamps.append(green)
+	splinters = CPUParticles3D.new()
+	splinters.emitting = false
+	splinters.one_shot = true
+	splinters.amount = 22
+	splinters.lifetime = 1.4
+	splinters.explosiveness = 0.9
+	splinters.direction = Vector3.DOWN
+	splinters.spread = 60.0
+	splinters.initial_velocity_min = 0.5
+	splinters.initial_velocity_max = 2.4
+	splinters.gravity = Vector3(0, -9.8, 0)
+	splinters.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	splinters.emission_box_extents = Vector3(0.16, 0.03, 0.1)
+	var grit := BoxMesh.new()
+	grit.size = Vector3(0.008, 0.008, 0.045)
+	var chip := material(Color(0.6, 0.48, 0.34))
+	# Right under the board a splinter would fill the screen: fade them out close to the eye.
+	chip.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_DITHER
+	chip.distance_fade_min_distance = 0.3
+	chip.distance_fade_max_distance = 0.9
+	grit.material = chip
+	splinters.mesh = grit
+	add_child(splinters)
+
 # --- Run ---
 
 func start() -> void:
@@ -776,6 +1207,7 @@ func start() -> void:
 	active = true
 	show()
 	for body in bodies: body.collision_layer = 1
+	_close_push_doors()
 	var p: CharacterBody3D = world.player
 	previous_flashlight = p.flashlight.visible
 	p.flashlight.show()
@@ -805,6 +1237,11 @@ func reset() -> void:
 	state_clock = 0.0
 	checkpoint = 0
 	at_ledge = false
+	pit_fall = false
+	hanging = false
+	climb_push = 0.0
+	fall_drift = -2.0
+	scripted_guard = false
 	guard_on = false
 	door_clock = -1.0
 	if guard != null: guard.vanish()
@@ -813,6 +1250,8 @@ func reset() -> void:
 		for body in bodies: body.collision_layer = 0
 		for door in doors: door.rotation.y = atan2(-0.0, -1.0) if door.name == "StairDoor" else door.rotation.y
 		_close_doors()
+		_close_push_doors()
+		_reset_plank()
 		ledge_light.hide()
 		bubble_cloud.emitting = false
 	if scares != null: scares.hide_all()
@@ -843,6 +1282,8 @@ func _restart_at(index: int) -> void:
 	checkpoint = index
 	cutoffs_left = spot.cutoffs.duplicate()
 	_close_doors()
+	_close_push_doors()
+	_reset_plank()
 	restore_pose()
 	p.global_position = to_global(spot.at + Vector3.UP * 0.05)
 	var toward: Vector3 = node_pos(spot.toward) - spot.at
@@ -856,6 +1297,10 @@ func _restart_at(index: int) -> void:
 	stumble_remaining = 0.0
 	state = "run"
 	at_ledge = false
+	pit_fall = false
+	hanging = false
+	scripted_guard = false
+	fall_drift = -2.0
 	hint.text = ""
 	if spot.guard == null:
 		_guard_off()
@@ -889,10 +1334,6 @@ func held(code: int) -> bool:
 func jump() -> bool:
 	if chute.active or state != "run" or not world.player.is_on_floor() or slide_remaining > 0: return false
 	world.player.velocity.y = JUMP_VELOCITY
-	if at_ledge:
-		# Off the edge, out over the water.
-		var p: CharacterBody3D = world.player
-		p.velocity += -p.global_basis.z * 4.0
 	return true
 
 func slide() -> bool:
@@ -954,6 +1395,10 @@ func tick(delta: float) -> void:
 		"fall":
 			_tick_fall(delta)
 			return
+		"leap":
+			_tick_leap(delta)
+			_tick_lights()
+			return
 	if chute.active:
 		chute.tick(delta)
 		return
@@ -1000,9 +1445,19 @@ func _move(delta: float) -> void:
 	p.camera.fov = move_toward(p.camera.fov, (84 if sprinting else 75) + clampf(1 - guard_gap / 10, 0, 1) * 10, delta * 22)
 	p.startle = maxf(0, p.startle - delta * 1.5)
 	var feet := to_local(p.global_position)
-	# Off the ledge: the drop to the water.
-	if feet.y < LOWER - 1.5 and feet.z < ledge_z():
-		_begin_fall()
+	# Running into a closed door bangs it open.
+	for door in push_doors:
+		if door.open: continue
+		var rel: Vector3 = feet - door.at
+		var toward := Vector3(p.velocity.x, 0, p.velocity.z).dot(-rel.normalized())
+		if absf(rel.y) < 1.5 and absf(rel.dot(door.right)) < 0.9 and absf(rel.dot(door.forward)) < DOOR_REACH and toward > 0.8:
+			_shove(door, feet)
+			p.held_visual.shove()
+			stumble_remaining = maxf(stumble_remaining, 0.12)
+	# Short of the far lip of a crack: down into the pit.
+	var gap := gap_at(feet, 0.3)
+	if not gap.is_empty() and feet.y < float(gap.near.y) - 1.0:
+		_fell()
 
 func _tick_story(delta: float) -> void:
 	var p: CharacterBody3D = world.player
@@ -1034,12 +1489,17 @@ func _tick_story(delta: float) -> void:
 			story.subtitle("Bác bảo vệ", cut.line, 2.6)
 			world.player.startle = 1.0
 			scares.shake = maxf(scares.shake, 0.6)
-	if checkpoint == 0 and feet.distance_to(node_pos("G")) < 5.0:
+	if checkpoint == 0 and (feet.distance_to(node_pos("G")) < 5.0 or feet.distance_to(node_pos("P2")) < 5.0):
 		checkpoint = 1
 	if checkpoint == 2 and feet.distance_to(node_pos("L5")) < 4.0:
 		checkpoint = 3
-	at_ledge = feet.y > LOWER - 0.5 and feet.distance_to(node_pos("X")) < 6.0 and feet.z < node_pos("X").z - 0.5
-	hint.text = "SPACE · NHẢY XUỐNG NƯỚC" if at_ledge else ""
+	# Near the mouth onto the reservoir the cutscene takes over.
+	var x := node_pos("X")
+	at_ledge = absf(feet.y - x.y) < 0.5 and Vector2(feet.x - x.x, feet.z - x.z).length() < 6.0 and feet.z < x.z + 1.0
+	if at_ledge:
+		_begin_leap()
+		return
+	hint.text = _hint_for(feet)
 
 func _tick_guard(delta: float) -> void:
 	var p: CharacterBody3D = world.player
@@ -1080,10 +1540,15 @@ func _tick_guard(delta: float) -> void:
 	# Round crates and carts on the side they leave open.
 	var dodge := 0.0
 	for spot in obstacle_spots:
-		if guard_pos.distance_to(spot.at) < 2.6: dodge = -float(spot.side) * 0.95
+		if Vector2(guard_pos.x - spot.at.x, guard_pos.z - spot.at.z).length() < 2.6 and absf(guard_pos.y - spot.at.y) < 3.0: dodge = -float(spot.side) * 0.95
 	guard_side = move_toward(guard_side, dodge, delta * 3.5)
 	var right := Vector3(cos(guard_yaw), 0, -sin(guard_yaw))
 	var body := guard_pos + right * guard_side
+	# Up the stair, and over the cracks in one stride.
+	body.y = ground(body)
+	for door in push_doors:
+		if not door.open and Vector2(body.x - door.at.x, body.z - door.at.z).length() < 1.5 and absf(body.y - door.at.y) < 1.5:
+			_shove(door, body)
 	guard.global_position = to_global(body)
 	guard.rotation.y = guard_yaw
 	var moving := guard_speed > 0.3
@@ -1098,7 +1563,7 @@ func _tick_guard(delta: float) -> void:
 		chase_steps.global_position = guard.global_position + Vector3.UP * 0.1
 		chase_steps.volume_db = -2.0
 		chase_steps.play()
-	if feet.distance_to(guard_pos) < CATCH and absf(feet.y - guard_pos.y) < 1.5:
+	if Vector2(feet.x - guard_pos.x, feet.z - guard_pos.z).length() < CATCH and absf(feet.y - body.y) < 1.5:
 		_caught()
 
 func _tick_lights() -> void:
@@ -1128,11 +1593,268 @@ func _caught() -> void:
 
 func _tick_fade(delta: float) -> void:
 	fade_clock = maxf(0.0, fade_clock - delta)
+	if pit_fall and not restarted:
+		var p: CharacterBody3D = world.player
+		p.velocity.y -= GRAVITY * delta
+		p.move_and_slide()
 	story.fear.fade = clampf(1.0 - absf(fade_clock - 0.5) / 0.5, 0, 1)
 	if fade_clock < 0.5 and not restarted:
 		restarted = true
 		_restart_at(checkpoint)
 	if fade_clock <= 0.0: story.fear.fade = 0.0
+
+func _hint_for(feet: Vector3) -> String:
+	var facing: Vector3 = -world.player.global_basis.z
+	facing.y = 0.0
+	facing = facing.normalized()
+	for gap in gaps:
+		var centre: Vector3 = gap.near + gap.forward * gap.width * 0.5
+		var rel: Vector3 = centre - feet
+		var ahead := rel.dot(facing)
+		if absf(rel.y) < 1.5 and ahead > 0.5 and ahead < 6.0 and absf(rel.dot(gap.right)) < WIDTH * 0.5 + 0.5 and absf(facing.dot(gap.forward)) > 0.5:
+			return "SPACE · NHẢY QUA KHE NỨT"
+	for door in push_doors:
+		if door.open: continue
+		var rel: Vector3 = door.at - feet
+		if absf(rel.y) < 1.5 and rel.length() < 5.0 and rel.normalized().dot(facing) > 0.6:
+			return "CHẠY THẲNG VÀO CỬA ĐỂ HÚC MỞ"
+	return ""
+
+# Short of the far lip: down into the pit, and back to the last checkpoint.
+func _fell() -> void:
+	if fade_clock > 0.0: return
+	fade_clock = 1.0
+	restarted = false
+	pit_fall = true
+	hint.text = ""
+	world.player.startle = 1.0
+	scares.impact(world.player.global_position, "topple")
+
+# --- The cutscene at the reservoir ---
+# Out to the edge and stop dead; look down at the water a long way below; turn round to him coming;
+# turn back, back up for a run, run and jump; fall short and catch the board sticking out of the
+# broken walkway; it bends, and snaps.
+
+func _begin_leap() -> void:
+	var p: CharacterBody3D = world.player
+	state = "leap"
+	leap_beat = "approach"
+	beat_clock = 0.0
+	hanging = false
+	climb_push = 0.0
+	hint.text = ""
+	leap_from = to_local(p.global_position)
+	leap_yaw = p.rotation.y
+	p.velocity = Vector3.ZERO
+	slide_remaining = 0.0
+	restore_pose()
+	p.global_position = to_global(leap_from)
+	p.rotation.y = leap_yaw
+	p.camera.far = 120
+	# He is taken off the chase and walked in by hand: in sight when the player turns, never close enough to catch.
+	var x := node_pos("X")
+	var behind: Vector3 = guard_pos if guard_on else x + Vector3(0, 0, 16)
+	cut_guard = Vector3(x.x + 0.4, x.y, clampf(behind.z, x.z + 9.0, x.z + 18.0))
+	if not guard_on: guard.appear(to_global(cut_guard), p.global_position)
+	guard_on = false
+	scripted_guard = true
+
+func _beat(next: String) -> void:
+	leap_beat = next
+	beat_clock = 0.0
+
+func plank_tip() -> Vector3:
+	return plank.transform * Vector3(0, 0, PLANK_OUT)
+
+func _tick_leap(delta: float) -> void:
+	var p: CharacterBody3D = world.player
+	var x := node_pos("X")
+	beat_clock += delta
+	var edge_spot := Vector3(x.x, x.y, ledge_z() + 0.45)
+	var run_from := Vector3(x.x, x.y, ledge_z() + 3.8)
+	var length: float = BEATS.get(leap_beat, 1.0)
+	var s := clampf(beat_clock / length, 0.0, 1.0)
+	var smooth := smoothstep(0.0, 1.0, s)
+	_tick_cut_guard(delta)
+	match leap_beat:
+		"approach":
+			var here := to_local(p.global_position)
+			var to := edge_spot - here
+			to.y = 0.0
+			var pace := clampf(to.length() * 3.0 + 1.5, 1.5, RUN_SPEED)
+			here += to.limit_length(pace * delta)
+			p.global_position = to_global(Vector3(here.x, x.y, here.z))
+			p.rotation.y = lerp_angle(p.rotation.y, 0.0, clampf(delta * 7.0, 0, 1))
+			p.camera.rotation.x = lerp_angle(p.camera.rotation.x, 0.0, clampf(delta * 5.0, 0, 1))
+			p.camera.position.y = 1.62 + sin(clock * 15) * 0.03
+			if to.length() < 0.05:
+				p.rotation.y = 0.0
+				p.startle = 0.7
+				scares.shake = maxf(scares.shake, 0.3)
+				world.soundscape.cue("paper", -12)
+				_beat("look_down")
+		"look_down":
+			# Black water a long way down, and the gap to the broken walkway.
+			p.camera.rotation.x = lerp_angle(p.camera.rotation.x, -1.0, clampf(delta * 3.0, 0, 1))
+			p.camera.position.y = 1.62
+			if s >= 1.0:
+				story.subtitle("Bác bảo vệ", "Hết đường rồi! Đứng yên đó cho tao!", 2.4)
+				_beat("turn_back")
+		"turn_back":
+			p.rotation.y = PI * smooth
+			p.camera.rotation.x = lerpf(-1.0, -0.05, smooth)
+			if s >= 1.0: _beat("watch")
+		"watch":
+			p.rotation.y = PI
+			breathing.volume_db = move_toward(breathing.volume_db, -2.0, delta * 20.0)
+			if s >= 1.0: _beat("turn_front")
+		"turn_front":
+			p.rotation.y = PI + PI * smooth
+			p.camera.rotation.x = lerpf(-0.05, -0.12, smooth)
+			if s >= 1.0:
+				p.rotation.y = 0.0
+				_beat("back_up")
+		"back_up":
+			# A few steps back from the edge to get a run at it.
+			p.global_position = to_global(edge_spot.lerp(run_from, smooth))
+			p.camera.position.y = 1.62 + sin(beat_clock * 9.0) * 0.02
+			if s >= 1.0:
+				story.subtitle("", "Phải nhảy thôi...", 1.2)
+				_beat("run_up")
+		"run_up":
+			var takeoff := Vector3(x.x, x.y, ledge_z() + 0.1)
+			p.global_position = to_global(run_from.lerp(takeoff, s * s * 0.4 + s * 0.6))
+			p.camera.position.y = 1.62 + sin(beat_clock * 22.0) * 0.045
+			p.camera.fov = move_toward(p.camera.fov, 86.0, delta * 30.0)
+			if s >= 1.0:
+				world.soundscape.cue("paper", -10)
+				_beat("leap")
+		"leap":
+			# Out over the gap, short of the walkway: down onto the end of the board.
+			var takeoff := Vector3(x.x, x.y, ledge_z() + 0.1)
+			var grab := _hang_spot()
+			var at := takeoff.lerp(grab, s)
+			at.y = lerpf(takeoff.y, grab.y, s * s) + sin(PI * s) * 0.75
+			p.global_position = to_global(at)
+			p.camera.rotation.x = lerp_angle(-0.12, _hang_pitch(), smooth)
+			p.camera.fov = move_toward(p.camera.fov, 78.0, delta * 20.0)
+			if s >= 1.0:
+				hanging = true
+				p.startle = 1.0
+				scares.impact(to_global(plank_tip()), "topple")
+				scares.shake = maxf(scares.shake, 0.8)
+				splinters.position = plank_tip()
+				splinters.restart()
+				splinters.emitting = true
+				plank.rotation.x = 0.06
+				p.held_visual.grab_with_right_hand()
+				# His torch from the edge on the board and the hand on it.
+				var torch_at := Vector3(x.x + 0.7, x.y + 1.5, ledge_z() + 1.2)
+				ledge_light.look_at_from_position(to_global(torch_at), to_global(plank_tip()), Vector3.UP)
+				ledge_light.light_energy = 4.0
+				ledge_light.show()
+				story.subtitle("Bác bảo vệ", "Đừng! Tấm ván đó mục rồi!", 2.0)
+				_beat("hang")
+		"hang":
+			climb_push = move_toward(climb_push, 0.0, delta * 1.8)
+			plank.rotation.x = 0.06 + beat_clock * 0.14 + sin(beat_clock * 31.0) * 0.012 * minf(1.0, beat_clock * 2.0)
+			p.global_position = to_global(_hang_spot() + Vector3.UP * climb_push * 0.22)
+			p.rotation.y = 0.0
+			p.camera.rotation.x = lerp_angle(p.camera.rotation.x, _hang_pitch(), clampf(delta * 6.0, 0, 1))
+			_hold_grip(true)
+			hint.text = "SPACE · TRÈO LÊN!" if beat_clock < length - 0.3 else ""
+			for creak in [0.55, 1.2]:
+				if beat_clock >= creak and beat_clock - delta < creak:
+					world.soundscape.cue("chair_impact", -14)
+					scares.shake = maxf(scares.shake, 0.35)
+					splinters.position = plank.transform * Vector3(0, 0, 0.05)
+					splinters.restart()
+					splinters.emitting = true
+			if s >= 1.0: _snap_plank()
+
+# Hanging off the end of the board, chin at the wood: the eye is put where the grab clip's hand,
+# held at full reach, closes on the board's end, looking a little up along it to the walkway.
+const HANG_EYE := Vector3(-0.07, -0.04, 0.35)
+const HANG_PITCH := 0.32
+const GRIP_HOLD := 0.45
+
+func _hang_spot() -> Vector3:
+	return plank_tip() + HANG_EYE - Vector3(0, 1.62, 0)
+
+func _hang_pitch() -> float:
+	return HANG_PITCH - plank.rotation.x
+
+# Keeps the right hand closed on the board: the grab clip is held near its end until the board
+# goes, then let run out so the flashlight comes back.
+func _hold_grip(hold: bool) -> void:
+	var arms: Node3D = world.player.held_visual.arms
+	var player: AnimationPlayer = arms.animation
+	if player.assigned_animation != arms.GRAB: return
+	if not hold:
+		if not player.is_playing(): player.play()
+		return
+	if player.is_playing() and player.current_animation_position >= player.current_animation_length * GRIP_HOLD:
+		player.pause()
+
+func climb_kick() -> void:
+	if not hanging: return
+	climb_push = minf(1.0, climb_push + 0.45)
+	world.player.startle = maxf(world.player.startle, 0.3)
+
+func _snap_plank() -> void:
+	var p: CharacterBody3D = world.player
+	hanging = false
+	hint.text = ""
+	_hold_grip(false)
+	splinters.position = plank.transform * Vector3(0, 0, 0.05)
+	splinters.restart()
+	splinters.emitting = true
+	scares.impact(to_global(plank.position), "topple")
+	scares.shake = maxf(scares.shake, 0.9)
+	if plank_tween != null: plank_tween.kill()
+	plank_tween = create_tween().set_parallel()
+	plank_tween.tween_property(plank, "position:y", plank.position.y - WATER_DEPTH - 3.0, 1.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	plank_tween.tween_property(plank, "rotation:x", 2.4, 1.6)
+	plank_tween.chain().tween_callback(plank.hide)
+	p.velocity = Vector3(0, -0.5, 0.6)
+	fall_drift = 0.3
+	_begin_fall()
+
+func _reset_plank() -> void:
+	if plank == null: return
+	if plank_tween != null: plank_tween.kill()
+	plank_tween = null
+	plank.transform = plank_rest
+	plank.show()
+	if splinters != null: splinters.emitting = false
+
+# He comes in along the tunnel and stops a few metres off, torch on the player; when they hang
+# he comes on to the edge.
+func _tick_cut_guard(delta: float) -> void:
+	var x := node_pos("X")
+	var stop := Vector3(x.x + 0.4, x.y, x.z + 3.0)
+	if leap_beat in ["leap", "hang"]: stop = Vector3(x.x + 0.7, x.y, ledge_z() + 1.4)
+	var to := stop - cut_guard
+	to.y = 0.0
+	var pace := 4.6 if leap_beat in ["approach", "look_down", "turn_back"] else 3.6
+	var moving := to.length() > 0.08
+	cut_guard += to.limit_length(pace * delta)
+	cut_guard.y = x.y
+	var p: CharacterBody3D = world.player
+	var look := to_local(p.global_position) - cut_guard
+	guard_yaw = lerp_angle(guard_yaw, atan2(-look.x, -look.z), clampf(delta * 8.0, 0, 1))
+	guard.global_position = to_global(cut_guard)
+	guard.rotation.y = guard_yaw
+	guard.model.animation.play("sprint" if moving else "idle")
+	guard.model.animation.speed_scale = pace / CLIP_PACE if moving else 1.0
+	guard.model.head_pitch = 0.05
+	guard.model.hand_target = p.camera.global_position
+	guard.torch.rotation = Vector3(-0.1, 0, 0)
+	stride -= (pace if moving else 0.0) * delta
+	if moving and stride <= 0.0:
+		stride = RUN_STRIDE
+		chase_steps.global_position = guard.global_position + Vector3.UP * 0.1
+		chase_steps.play()
 
 # --- The drop and the water ---
 
@@ -1141,15 +1863,17 @@ func _begin_fall() -> void:
 	state_clock = 0.0
 	hint.text = ""
 	# He reaches the edge and puts his torch on the water.
-	if guard_on:
+	if guard_on or scripted_guard:
 		guard_on = false
-		var edge := Vector3(node_pos("X").x + 0.8, LOWER, ledge_z() + 0.6)
+		scripted_guard = false
+		var edge := Vector3(node_pos("X").x + 0.8, node_pos("X").y, ledge_z() + 0.6)
 		guard.global_position = to_global(edge)
 		guard.rotation.y = 0.0
 		guard.model.animation.play("idle")
 		guard.model.animation.speed_scale = 1.0
 		ledge_light.position = edge + Vector3(0.2, 1.4, -0.4)
-		ledge_light.look_at_from_position(ledge_light.position, ledge_light.position + Vector3(0, -1.0, -0.6))
+		ledge_light.look_at_from_position(to_global(ledge_light.position), to_global(ledge_light.position + Vector3(0, -1.0, -0.6)))
+		ledge_light.light_energy = 6.0
 		ledge_light.show()
 		story.subtitle("Bác bảo vệ", "Ê!... Trời đất ơi!", 2.0)
 
@@ -1158,7 +1882,7 @@ func _tick_fall(delta: float) -> void:
 	state_clock += delta
 	p.velocity.y -= GRAVITY * delta
 	p.velocity.x = move_toward(p.velocity.x, 0.0, delta * 2.0)
-	p.velocity.z = move_toward(p.velocity.z, -2.0, delta * 2.0)
+	p.velocity.z = move_toward(p.velocity.z, fall_drift, delta * 2.0)
 	p.global_position += p.velocity * delta
 	# The water rushes up: the eye goes to it.
 	p.camera.rotation.x = lerp_angle(p.camera.rotation.x, -0.75, clampf(delta * 2.2, 0, 1))
@@ -1284,7 +2008,8 @@ func look(relative: Vector2) -> void:
 	if chute.active:
 		chute.look(relative)
 		return
-	if state not in ["run", "drown", "fall"]: return
+	if state == "leap" and not hanging: return
+	if state not in ["run", "drown", "fall", "leap"]: return
 	p.rotate_y(-relative.x * p.LOOK_SENSITIVITY)
 	p.camera.rotation.x = clampf(p.camera.rotation.x - relative.y * p.LOOK_SENSITIVITY, -1.2, 1.2)
 
@@ -1297,6 +2022,7 @@ func _input(event: InputEvent) -> void:
 			if event.pressed and not event.echo and world.simulation_active():
 				if code == KEY_SPACE:
 					if state == "drown": swim_stroke()
+					elif state == "leap": climb_kick()
 					else: jump()
 				if code == KEY_CTRL: slide()
 			get_viewport().set_input_as_handled()
