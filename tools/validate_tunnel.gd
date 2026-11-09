@@ -142,7 +142,7 @@ func validate() -> void:
 	# Real mouse and keys over the window would steer the bot.
 	if shots: tunnel.set_process_input(false)
 	var p: CharacterBody3D = school.player
-	check(tunnel.active and not school.spirit_enabled, "The dream starts in the service tunnels")
+	check(tunnel.active, "The dream starts in the service tunnels")
 	var bodies_before: Array = tunnel.bodies.map(func(b): return b.global_position)
 	check(tunnel.OBSTACLES.size() >= 20 and tunnel.bodies.all(func(b): return b.collision_layer == 1), "%d obstacles are lying there from the start" % tunnel.OBSTACLES.size())
 	check(tunnel.EDGES.size() >= 12 and tunnel.CUTOFFS.size() == 2, "Corridors with junctions, dead ends and two cut-offs")

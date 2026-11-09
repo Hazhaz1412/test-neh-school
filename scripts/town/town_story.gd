@@ -15,10 +15,10 @@ const CAST := {
 }
 const SMALL_TALK := {
 	"hoa": [["Cô Hoa", "Bưu điện mở tới năm giờ chiều nhé cậu."]],
-	"sau": [["Con sáo", "Ăn cơm chưa? Ăn cơm chưa?"], ["Bà Sáu", "Kệ nó. Đồ trị ma thì bà không bán đâu. Thử vô Hẻm 5 phía Lò Than, chỗ có cái lồng đèn đỏ."]],
+	"sau": [["Con sáo", "Ăn cơm chưa? Ăn cơm chưa?"], ["Bà Sáu", "Kệ nó. Đèn pin với pin thì bà không bán đâu. Thử vô Hẻm 5 phía Lò Than, chỗ có cái lồng đèn đỏ."]],
 	"luc": [["Bác Lực", "Trà đá hai ngàn. Qua cầu này chỉ có đi lạc hoặc đi tìm chuyện."]],
 	"phuc": [["Anh Phúc", "Vui bốn chục, buồn hai lăm, thất tình miễn phí nếu kể đủ ba chi tiết."]],
-	"mai": [["Chị Mai", "Chuối đây em. Đêm qua lại thấy đèn trường bật. Ông già Hẻm 5 mua muối đồng của chị hoài, chả biết để làm gì."]],
+	"mai": [["Chị Mai", "Chuối đây em. Đêm qua lại thấy đèn trường bật. Trường đóng cửa mấy năm rồi, ai còn vô đó làm gì?"]],
 	"khoa": [["Bơ Tồ", "Mày sống rồi à. Có gì tối tính, bên kia cầu vắng lắm."]],
 }
 var world: Node3D

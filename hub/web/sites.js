@@ -69,10 +69,10 @@ function search(url, results) {
   return page(`${query} - Tìm trên Gaaglu`, `<main style="margin-top:20px">${box}${list}</main>`);
 }
 
-async function devicePage(lensUrl) {
-  const code = await QRCode.toString(lensUrl, { type: 'svg', margin: 1, width: 320 });
-  return page('Ghép điện thoại', `<main style="text-align:center"><h2 style="margin-top:40px">Quét để mở ống kính</h2><div style="width:320px;margin:0 auto">${code}</div>
-<p class="meta">${escape(lensUrl)}</p><p>Điện thoại phải dùng cùng Wi-Fi với máy này.</p></main>`);
+async function devicePage(phoneUrl) {
+  const code = await QRCode.toString(phoneUrl, { type: 'svg', margin: 1, width: 320 });
+  return page('Ghép điện thoại', `<main style="text-align:center"><h2 style="margin-top:40px">Quét để ghép điện thoại</h2><div style="width:320px;margin:0 auto">${code}</div>
+<p class="meta">${escape(phoneUrl)}</p><p>Điện thoại phải dùng cùng Wi-Fi với máy này.</p></main>`);
 }
 
 function offline(host) {

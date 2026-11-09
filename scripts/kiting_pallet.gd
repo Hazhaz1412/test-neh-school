@@ -74,7 +74,7 @@ func drop(by: Node3D) -> bool:
 	down_body = course.solid(self, Vector3(0, down_size.y * 0.5, 0), down_size)
 	crash.play()
 	world.emit_noise(global_position, DROP_NOISE, "pallet")
-	var guard: Node3D = world.envy.demon if world.envy != null else null
+	var guard: Node3D = world.hunt.hunter if world.hunt != null else null
 	if guard != null and absf(to_local(guard.global_position).z) < STUN_REACH and absf(to_local(guard.global_position).x) < GAP:
 		guard.knock_back(STUN_SECONDS, self)
 		if by == world.player:

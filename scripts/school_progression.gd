@@ -1,6 +1,6 @@
 extends Node3D
 
-enum Stage { ROOM_LURE, NOISE_UPSTAIRS, CABINET_SCARE, MIRROR_FOUND, HIDE, STEALTH, PHOTO_EVIDENCE, ESCAPE_RUN, GATE_BREAK, BASEMENT_DESCENT, CORRIDOR_RUN, INVESTIGATE_AN, COMFORT_AN, SURVIVE_DAWN, COMPLETE }
+enum Stage { ROOM_LURE, NOISE_UPSTAIRS, CABINET_SCARE, MIRROR_FOUND, HIDE, STEALTH, PHOTO_EVIDENCE, ESCAPE_RUN, GATE_BREAK, BASEMENT_DESCENT, CORRIDOR_RUN, SURVIVE_NIGHT, COMPLETE }
 const MIRROR_TO_CALL := 0.4
 const DESCENT_SECONDS := 1.8
 const CLIP_SPOT := Vector3(14.2, 0.05, 3.3)
@@ -20,8 +20,6 @@ var subtitle_label: Label
 var subtitle_clock := 0.0
 var escape: Node3D
 var fear: CanvasLayer
-var uneasy_music: AudioStreamPlayer
-var laughter_echo: AudioStreamPlayer3D
 var stage_time := 0.0
 var blink_time := 0.0
 var blackout := false
@@ -33,10 +31,6 @@ var heading: Label
 var body_text: Label
 var options: VBoxContainer
 var panel_kind := ""
-var laugh: AudioStreamPlayer
-var static_sound: AudioStreamPlayer
-var interference: ColorRect
-var interference_material: ShaderMaterial
 
 func setup(school: Node3D) -> void:
 	world = school
@@ -69,35 +63,6 @@ func setup(school: Node3D) -> void:
 	crash_sound.max_distance = 70
 	crash_sound.volume_db = 2
 	add_child(crash_sound)
-	laugh = AudioStreamPlayer.new()
-	laugh.stream = loop_wav("res://assets/audio/haunting_laughter.wav")
-	laugh.volume_db = -13
-	add_child(laugh)
-	laughter_echo = AudioStreamPlayer3D.new()
-	laughter_echo.stream = loop_wav("res://assets/audio/haunting_laughter.wav")
-	laughter_echo.position = Vector3(-14.5, 2.3, 7.5)
-	laughter_echo.unit_size = 20
-	laughter_echo.max_distance = 90
-	laughter_echo.pitch_scale = 0.86
-	laughter_echo.volume_db = -10
-	add_child(laughter_echo)
-	uneasy_music = AudioStreamPlayer.new()
-	uneasy_music.stream = loop_wav("res://assets/audio/eerie_lullaby.wav")
-	add_child(uneasy_music)
-	static_sound = AudioStreamPlayer.new()
-	static_sound.stream = loop_wav("res://assets/audio/gate_static.wav")
-	static_sound.volume_db = -12
-	add_child(static_sound)
-	interference = ColorRect.new()
-	interference.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	interference.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	interference_material = ShaderMaterial.new()
-	interference_material.shader = preload("res://assets/materials/gate_interference.gdshader")
-	interference.material = interference_material
-	var layer := CanvasLayer.new()
-	layer.layer = 8
-	add_child(layer)
-	layer.add_child(interference)
 	runner = preload("res://scripts/tunnel_escape.gd").new()
 	add_child(runner)
 	runner.setup(self)
@@ -121,12 +86,10 @@ func _clear_lure_room() -> void:
 		for batch in world.get_node("RuntimeGeometry").get_children():
 			if batch.get_meta("realm_category", -1) != 2: continue
 			var poses: Array[Transform3D] = batch.multimesh.placements.duplicate()
-			var cursed: Array = batch.get_meta("realm_placements", []).duplicate()
 			var changed := false
 			for i in range(poses.size()):
 				if not in_lure_room(batch.global_transform * poses[i].origin): continue
 				poses[i].basis = Basis.from_scale(Vector3.ZERO)
-				if not cursed.is_empty(): cursed[i] = poses[i]
 				changed = true
 			if changed:
 				var clean := preload("res://scripts/static_multimesh.gd").new()
@@ -135,9 +98,6 @@ func _clear_lure_room() -> void:
 				clean.custom_aabb = batch.multimesh.custom_aabb
 				clean.placements = poses
 				batch.multimesh = clean
-				batch.set_meta("realm_placements", cursed)
-				for entry in world.realm_scenery.visuals:
-					if entry.node == batch: entry.placements = cursed
 	else:
 		for item in world.get_node("Furniture").get_children():
 			if in_lure_room(item.global_position): item.hide()
@@ -171,7 +131,7 @@ func narrative_paused() -> bool:
 	return false
 
 func tutorial_active() -> bool:
-	return world.survival.active and stage < Stage.INVESTIGATE_AN
+	return world.survival.active and stage < Stage.SURVIVE_NIGHT
 
 # In the restroom and on the tail a flash would give the player away; only the papers in B-302
 # are worth that.
@@ -191,9 +151,6 @@ func door_locked(_room_number: int) -> bool:
 func sector_accessible(_feet: Vector3) -> bool:
 	return true
 
-func ready_for_rescue() -> bool:
-	return briefing_complete
-
 func can_cross_midnight() -> bool:
 	return stage == Stage.BASEMENT_DESCENT and stage_time >= DESCENT_SECONDS or briefing_complete
 
@@ -210,8 +167,7 @@ func current_goal() -> String:
 		Stage.GATE_BREAK: return "Cổng khóa · Phá cửa phòng kỹ thuật trước khi bác ấy xuống tới nơi"
 		Stage.BASEMENT_DESCENT: return "Chạy xuống hầm kỹ thuật"
 		Stage.CORRIDOR_RUN: return "CHẠY! · WASD di chuyển · SHIFT chạy · SPACE nhảy · CTRL trượt khi lấy đà"
-		Stage.INVESTIGATE_AN, Stage.COMFORT_AN: return "Sống sót tới bình minh"
-		Stage.SURVIVE_DAWN: return "An đã được giải thoát · Oán niệm suy yếu · Sống tới bình minh"
+		Stage.SURVIVE_NIGHT: return "Trụ tới 06:00 · Đừng để bác bảo vệ bắt cả nhóm"
 	return "Bình minh · Đêm 1 kết thúc"
 
 func journal_context() -> String:
@@ -247,17 +203,9 @@ func reset() -> void:
 	window_lure.reset()
 	restroom.reset()
 	crash_sound.stop()
-	uneasy_music.stop()
-	laugh.stop()
-	laughter_echo.stop()
-	static_sound.stop()
-	static_sound.volume_db = -12
-	interference.hide()
-	interference_material.set_shader_parameter("strength", 0.0)
 
 func record_evidence(index: int, silent := false) -> void:
-	world.soul_quest.found[index] = true
-	world.soul_quest.selected_page = index
+	world.journal.record(index)
 	if not silent: world.soundscape.cue("memory")
 
 func interact_with(item: Node3D) -> bool:
@@ -351,10 +299,6 @@ func begin_first_chase() -> void:
 	preload("res://scripts/game_progress.gd").mark("corridor")
 	stage = Stage.CORRIDOR_RUN
 	stage_time = 0
-	laugh.stop()
-	laughter_echo.stop()
-	static_sound.stop()
-	interference.hide()
 	runner.start()
 
 # The jump into the reservoir was the end of the dream: Peter wakes up at home.
@@ -384,11 +328,9 @@ func begin_night_one() -> void:
 	world.survival.begin_midnight()
 	world.collect_master_key()
 	world.notice_time = 0
-	var quest: Node3D = world.soul_quest
-	# The Intro's clues were carried out of the school; the rest are still inside.
-	for i in range(quest.memories.size()):
-		if quest.memories[i].get("source", "") == "opening":
-			quest.found[i] = true
+	# The prologue's evidence was carried out of the school and stays in the journal.
+	for i in range(world.journal.entries.size()):
+		world.journal.record(i)
 
 func bypass_for_test() -> void:
 	close()
@@ -406,19 +348,14 @@ func bypass_for_test() -> void:
 	stairs_open = true
 	blackout = false
 	power_surge = false
-	stage = Stage.COMFORT_AN
+	stage = Stage.SURVIVE_NIGHT
 	evidence["clip"] = true
 	evidence["mirror"] = true
 	evidence["photo"] = true
 	clip.set_available(false)
 	restroom.hand_mirror.set_available(false)
 	lure_light.hide()
-	laugh.stop()
-	laughter_echo.stop()
 	crash_sound.stop()
-	uneasy_music.stop()
-	static_sound.stop()
-	interference.hide()
 	runner.restore_pose()
 
 func tick_player(delta: float) -> void:
@@ -445,16 +382,13 @@ func _physics_process(delta: float) -> void:
 		if stage_time >= DESCENT_SECONDS:
 			fear.fade = 0.0
 			world.survival.begin_midnight()
-	if world.survival.soul_rescued: stage = Stage.SURVIVE_DAWN
 
 func _process(delta: float) -> void:
 	var paused: bool = not world.simulation_active()
 	if subtitle_clock > 0.0 and not paused:
 		subtitle_clock -= delta
 		if subtitle_clock <= 0.0: subtitle_label.hide()
-	for audio in [crash_sound, laugh, laughter_echo, static_sound, uneasy_music]: audio.stream_paused = paused
-	if laughter_echo.playing:
-		laughter_echo.global_position = Vector3(-14.5+sin(stage_time*0.16)*9, 2.3, 30+absf(sin(stage_time*0.1))*30)
+	crash_sound.stream_paused = paused
 	if world.survival.finished: stage = Stage.COMPLETE
 
 func _input(event: InputEvent) -> void:
@@ -464,11 +398,10 @@ func _input(event: InputEvent) -> void:
 
 func _exit_tree() -> void:
 	if restroom != null: restroom.stop_audio()
-	for audio in [crash_sound, laugh, laughter_echo, static_sound, uneasy_music]:
-		if audio != null:
-			audio.stream_paused = false
-			audio.stop()
-			audio.stream = null
+	if crash_sound != null:
+		crash_sound.stream_paused = false
+		crash_sound.stop()
+		crash_sound.stream = null
 
 func _build_ui() -> void:
 	panel = PanelContainer.new()
@@ -509,7 +442,7 @@ func _build_ui() -> void:
 	world.get_node("HUD").get_child(0).add_child(subtitle_label)
 
 func show_panel(kind: String, title: String, text: String) -> void:
-	world.soul_quest.close()
+	world.journal.close()
 	world.map_panel.hide()
 	world.player.cancel_chalk_charge()
 	panel_kind = kind

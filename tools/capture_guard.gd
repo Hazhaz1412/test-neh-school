@@ -139,10 +139,6 @@ func validate() -> void:
 	for i in range(240):
 		story.runner.tick(1.0 / 60.0)
 		await process_frame
-	story.runner.ghost_distance = story.runner.travel_distance - 5.0
-	for i in range(30):
-		story.runner.tick(1.0 / 60.0)
-		await process_frame
 	school.player.camera.rotation.y = PI
 	await shot("guard-tunnel")
 	print("RESULT / ", checks, " checks, ", failures, " failures")

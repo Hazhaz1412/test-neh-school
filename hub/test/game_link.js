@@ -37,7 +37,7 @@ function check(ok, description) {
   const exit = new Promise((resolve) => godot.on('exit', resolve));
 
   check(await waitFor(() => stack.story.game), 'stack sees the game connect');
-  check(await waitFor(() => stack.story.evidence.includes('bear')), 'stack receives the bear pickup');
+  check(await waitFor(() => stack.story.evidence.includes('clip')), 'stack receives the hair clip pickup');
   check(stack.story.stage === 'ROOM_LURE', `stage name arrives (${stack.story.stage})`);
 
   check(stack.sendToGame({ type: 'door_bang' }), 'stack sends an event to the game');

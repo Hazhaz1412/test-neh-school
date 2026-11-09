@@ -46,16 +46,16 @@
 
 Scene gốc giữ các instance GLB để chỉnh sửa. Scene runtime tối ưu dùng lại mesh/vật liệu của chúng trong MultiMesh theo ô không gian; metadata `source_asset` trên pivot Furniture/Landscape giữ đường dẫn về asset gốc. File nguồn và giấy phép giữ nguyên.
 
-## Poly Haven — Texture cho thế giới linh hồn
+## Poly Haven — Texture bê tông nứt
 
-- **Cracked Concrete**, Dimitrios Savva: https://polyhaven.com/a/cracked_concrete — diffuse JPG 1K, dùng cho sàn nứt.
+- **Cracked Concrete**, Dimitrios Savva: https://polyhaven.com/a/cracked_concrete — diffuse JPG 1K, dùng cho sàn và vách nứt trong đường hầm.
 - **Concrete Wall 003**, Dimitrios Savva / Rico Cilliers: https://polyhaven.com/a/concrete_wall_003 — diffuse JPG 1K, dùng cho tường mục và lớp bẩn trên đồ vật.
 - Hai asset **CC0 1.0**: https://polyhaven.com/license ; https://creativecommons.org/publicdomain/zero/1.0/ .
-- File gốc giữ nguyên trong `assets/polyhaven_horror/`; `sources.json` lưu URL tải, kích thước và SHA-256. Tổng hai JPG khoảng 1,1 MB. Shader chiếu texture theo tọa độ thế giới và thêm vết oán khí; không dùng normal/displacement map.
+- File gốc giữ nguyên trong `assets/polyhaven_horror/`; `sources.json` lưu URL tải, kích thước và SHA-256. Tổng hai JPG khoảng 1,1 MB. Shader chiếu texture theo tọa độ thế giới; không dùng normal/displacement map.
 
 ## Âm thanh tổng hợp trong project
 
-`assets/audio/spirit_ambience.wav` và `threat_heartbeat.wav` là hai loop mono 16 kHz do `tools/build_horror_audio.py` tổng hợp từ sóng sin và noise seed cố định. Các WAV này không dùng bản ghi giọng người; nhạc nền CC0 riêng được ghi bên dưới. Hai loop khoảng 288 KB; phát bằng AudioStreamPlayer, không tổng hợp mỗi frame. `ghost_snarl.wav` (0,85 giây) và `ghost_step.wav` (0,15 giây) cũng được script này tổng hợp, thêm khoảng 32 KB, phát định hướng bằng AudioStreamPlayer3D. Không dùng giọng người bên ngoài.
+`assets/audio/threat_heartbeat.wav` là loop mono 16 kHz do `tools/build_night_audio.py` tổng hợp từ sóng sin và noise seed cố định, không dùng bản ghi giọng người.
 
 Các assets trên được lấy ngày 2026-10-03. Không cần tải thêm để mở project.
 
@@ -64,13 +64,9 @@ Các assets trên được lấy ngày 2026-10-03. Không cần tải thêm đ�
 - Ritsumeikan University, Biwako Kusatsu Campus Tricea, Yasui Architects: https://www.yasui-archi.co.jp/en/works/detail/621124/index.html — tham khảo quan hệ giữa sân trong, dãy nhà và hành lang mở nhiều tầng.
 - Các ảnh trường học Nhật tìm qua image search dùng để tham khảo nhịp cột, cửa sổ dài và sân trường; không tải ảnh vào assets.
 
-Khu A chữ U ngược và khu B nối bằng hành lang là bố cục hư cấu theo yêu cầu, không phải bản sao một trường thực tế hay asset lấy từ anime. Kiến trúc, hành lang kín, tường/cửa sổ và cửa lớp trượt có collider được ghép bằng mesh trong Godot. Sky đêm/trăng đỏ, shader mặt sân và màn hình oán khí, cầu thang, tay vịn, gậy và hiệu ứng nước/tro là code trong project; cây, nội thất, đài phun nước và nhân vật dùng model bên ngoài nêu ở trên.
+Khu A chữ U ngược và khu B nối bằng hành lang là bố cục hư cấu theo yêu cầu, không phải bản sao một trường thực tế hay asset lấy từ anime. Kiến trúc, hành lang kín, tường/cửa sổ và cửa lớp trượt có collider được ghép bằng mesh trong Godot. Sky đêm/trăng, shader mặt sân và hiệu ứng màn hình, cầu thang, tay vịn và hiệu ứng nước là code trong project; cây, nội thất, đài phun nước và nhân vật dùng model bên ngoài nêu ở trên.
 
 Chỗ nấp dưới bàn dùng lại `assets/kenney_furniture/desk.glb`, đổi tỷ lệ và thêm collider mặt/chân riêng để gầm trống. Tủ dụng cụ có khe nhìn được ghép bằng BoxMesh theo hình khối sẵn của trường; collider và vùng tương tác do Godot tạo. Không thêm texture/model tải ngoài cho đợt này.
-
-## Thực thể và lượt sinh tồn
-
-Ba archetype dùng rig/animation `Suit_Male.fbx` Quaternius CC0: Kẻ Dò Tiếng thêm băng che mặt/tai bằng mesh nhỏ; Kẻ Rỉ Tai dùng lại mesh đầu thành ba mặt; Kẻ Chặn Lối đổi tỷ lệ và thêm cặp/đai bằng mesh. Không chỉnh file FBX nguồn. Đồ tiếp tế và phấn dùng BoxMesh nhỏ; các âm `whisper_chorus.wav`, `school_bell.wav`, `player_breath.wav` cũng do `tools/build_horror_audio.py` tổng hợp sẵn từ sin/noise, không dùng giọng người hoặc nhạc thu ngoài. Bộ ba âm mới tổng khoảng 250 KB mono 16 kHz.
 
 ## Mở đầu không lời và tường bao cũ
 
@@ -83,7 +79,7 @@ Bảng điều tra dùng sáu ảnh chụp chính map demo trong `docs/`, đặt
 
 [Lost in a bad place (horror ambience loop)](https://opengameart.org/content/lost-in-a-bad-place-horror-ambience-loop) của **congusbongus**, CC0, tải 2026-10-04. File gốc `assets/music/lost.ogg`; nguồn và SHA-256 trong `assets/music/sources.json`. Chạy loop ở âm lượng thấp, điều chỉnh theo trạng thái đêm/nguy hiểm/giải cứu.
 
-`footstep`, `torch`, `door`, `lock`, `pickup`, `paper`, `hurt`, `memory`, `rescue` trong `assets/audio/*.wav` là SFX nguyên bản tổng hợp sẵn bởi `tools/build_horror_audio.py` (sin/noise seed cố định). Không sinh mỗi frame. Bốn voice 3D dùng chung cho tiếng chân/cửa, giới hạn 24 m; một voice 2D cho tương tác. Không thêm đèn realtime cho vật chứng. Model An dùng lại Casual_Female Quaternius CC0; vở/hộp/thiết bị dùng Kenney Furniture CC0 có sẵn.
+`footstep`, `torch`, `door`, `lock`, `pickup`, `paper`, `hurt`, `memory`, `camera`, `school_bell`, `midnight_bell`, `player_breath`, `arrival_*` trong `assets/audio/` là SFX nguyên bản tổng hợp sẵn bởi `tools/build_night_audio.py` (sin/noise seed cố định). Không sinh mỗi frame.
 
 ## Máy ảnh — Poly by Google
 
@@ -91,20 +87,6 @@ Bảng điều tra dùng sáu ảnh chụp chính map demo trong `docs/`, đặt
 - GLB nguồn giữ nguyên tại `assets/models/camera/camera.glb`; URL tải/hash trong `sources.json`, ghi công trong `CREDITS.md` cùng thư mục. Godot chuẩn hóa tỷ lệ/hướng, đặt vào tay và dùng vật liệu unshaded cho model cầm để nhìn rõ trong đêm. Camera rơi xuống sàn giữ vật liệu gốc.
 - `camera.wav`: màn trập cơ khí + tụ flash sạc, SFX tổng hợp nguyên bản bằng `tools/build_horror_audio.py`, mono 16 kHz, 0,65 giây.
 - Cú chớp thay ánh nền/trăng/sương tạm thời và một uniform màn hình; không thêm đèn realtime hay shadow map. Icon túi được vẽ bằng Godot.
-
-## QTE phản công
-
-Tay và giày góc nhìn thứ nhất lấy từ mesh `Casual_Male.fbx` Quaternius CC0 đã có trong dự án, giữ silhouette/vertex color và tách các tam giác theo bone weights, cache một lần. Phản công và gậy tiếp tục dùng cùng rig/clip Punch, bổ sung pose bằng script. Không có pack/model mới cần tải. Ba SFX `counter_grab.wav`, `counter_punch.wav`, `counter_kick.wav` do `tools/build_horror_audio.py` sinh từ sin/noise seed cố định; tim adrenaline dùng lại `threat_heartbeat.wav`. Bụi trúng đòn dùng CPUParticles ít hạt, không thêm đèn/shadow realtime.
-
-### Tiếng khóc định vị của An
-
-[Girl Crying — mvVoiceActing](https://freesound.org/people/mvVoiceActing/sounds/218184/) · CC0 1.0. Bản preview công khai được cắt đoạn 5–15 giây, lọc nhẹ, fade và chuyển mono Ogg 24 kHz. Metadata và SHA-256: `assets/audio/an_cry-source.json`. Phát từ sân thượng, vọng qua hai miệng thông cầu thang; dừng khi An được cứu.
-
-## Flow gấu bông và hành lang linh hồn
-
-Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được ghép bằng mesh Godot. Vật cản hành lang dùng nội thất Kenney CC0. Lan dùng rig Casual_Female Quaternius có sẵn; nhóm ma dùng model hiện tượng học sinh có sẵn. Bổ sung hai model nội thất trong mục bên dưới, không thêm texture ngoài.
-
-`corridor_chase.wav`, `strange_knock.wav`, `door_jumpscare.wav`, `gate_static.wav` là âm/nhạc nguyên bản tổng hợp bằng `tools/build_story_audio.py` (sin, bass, percussion và noise seed cố định). Nhạc chạy loop, không dùng bản ghi nhạc bên ngoài. Tiếng cười dùng asset `teasing_giggle.ogg` có nguồn/giấy phép trong `assets/audio/teasing_giggle-source.json`; tiếng chân/gầm dùng các WAV tổng hợp đã có.
 
 ## Âm nước và tiếng giày bác bảo vệ (tải 2026-11-08)
 
@@ -115,24 +97,13 @@ Gấu bông, vở, gậy dính máu, hành lang dài và phòng trú được gh
 - `assets/audio/guard_steps/stone_*.ogg`: bước chân trên nền đá trong [Fantozzi's Footsteps](https://opengameart.org/content/fantozzis-footsteps-grasssand-stone), CC0 (gốc từ freesound.org).
 - URL tải và SHA-256 của file gốc lẫn file trong dự án: `assets/audio/water/sources.json`, `assets/audio/guard_steps/sources.json`.
 
-`eerie_lullaby.wav`, `ghost_shriek.wav`, `door_bang.wav`, `heartbeat_single.wav` là âm nguyên bản tổng hợp bằng `tools/build_night1_audio.py` (seed cố định), không dùng bản ghi ngoài.
+`door_bang.wav`, `heartbeat_single.wav` là âm nguyên bản tổng hợp bằng `tools/build_night1_audio.py` (seed cố định), không dùng bản ghi ngoài. `corridor_chase.wav` (nhạc rượt đuổi) do `tools/build_chase_music.py` tổng hợp. `lamp_pop.wav`, `chair_scrape.wav`, `chair_impact.wav` do `tools/build_prop_audio.py` tổng hợp. `guard_rattle.wav` (bác bảo vệ lay tủ khi nghe) do `tools/build_rattle_audio.py` tổng hợp.
 
 ## Nội thất hành lang — cập nhật 2026-10-11
 
 - Tải thêm `table.glb` và `bookcaseClosedWide.glb` từ [Kenney Furniture Kit](https://kenney.nl/assets/furniture-kit), **CC0 1.0**. URL archive, SHA-256 và kích thước trong `assets/kenney_furniture/chase_sources.json`; giấy phép gốc tiếp tục lưu ở `License.txt`.
 - GLB nguồn giữ nguyên. Bản bàn runtime loại bỏ các tam giác của thanh giằng thấp, giữ mặt bàn và bốn chân ở mép: khoảng giữa nhìn xuyên qua và trượt qua được. Tủ sách xếp phía trên khiến khe thấp là đường bắt buộc. Collider mặt/chân tách riêng; khoảng trống khoảng 0,94 m, ánh lạnh phía sau gợi đường đi.
-- Tủ kín cao dùng để né, ghế dài Kenney đã có dùng để nhảy. Collider khớp kích thước vật cản nhìn thấy, tránh vùng chắn vô hình ở cạnh tủ. Bóng nữ và Lan dùng Casual_Female Quaternius CC0 có sẵn. Chữ viết tay/vở và màn hình ngột ngạt được vẽ bằng Godot, không dùng ảnh hoặc font tải ngoài.
-
-## Chân dung visual novel
-
-Lan và An dùng bản portrait riêng của rig Casual_Female Quaternius CC0 đã có, render trong SubViewport trong suốt. Lan mặc tím; An mặc xanh và nhỏ hơn. Khung, chữ hiện dần và lựa chọn dựng bằng Control của Godot; không tải thêm ảnh/model/font. Kịch bản hỏi/đáp ở `data/night1_dialogue.json`.
-
-## Microsoft Rocketbox — học sinh ma
-
-- Nguồn: https://github.com/microsoft/Microsoft-Rocketbox
-- Giấy phép: MIT, bản gốc ở `assets/rocketbox/LICENSE.txt`.
-- Dùng avatar `Male_Child_01` và các clip `m_idle_neutral_01`, `m_walk_bruised`, `m_run_injured`, `m_run_fast_01`, `m_walk_slow_01`.
-- Texture trong `assets/rocketbox/textures/` là bản vẽ lại bằng `tools/build_student_textures.gd`: đổi quần áo thành đồng phục bẩn, xóa nét mặt, thêm vết máu. Không lưu TGA gốc trong repo.
+- Tủ kín cao dùng để né, ghế dài Kenney đã có dùng để nhảy. Collider khớp kích thước vật cản nhìn thấy, tránh vùng chắn vô hình ở cạnh tủ. Màn hình ngột ngạt được vẽ bằng Godot, không dùng ảnh hoặc font tải ngoài.
 
 ## Poly Haven — vật liệu và đèn pin
 
@@ -145,9 +116,8 @@ Lan và An dùng bản portrait riêng của rig Casual_Female Quaternius CC0 đ
 - `assets/audio/steps/step_0*.ogg`: "Footsteps" trên OpenGameArt, CC0: https://opengameart.org/content/footsteps-0
 - `assets/audio/steps/footstep_wet_0*.ogg`, `switch_0*.ogg`: "100 CC0 SFX #2", CC0: https://opengameart.org/content/100-cc0-sfx-2
 
-## Ống kính điện thoại
+## Kênh ghép điện thoại
 
-- js-aruco2 (MIT): https://www.npmjs.com/package/js-aruco2, dò dấu ArUco trên điện thoại. `assets/lens/markers.json` sinh bằng `tools/build_lens_markers.js`.
 - selfsigned (MIT), qrcode (MIT): chứng chỉ LAN và mã QR.
 
 ## Khu phố ban ngày
@@ -156,17 +126,11 @@ URL tải và SHA-256 của từng file nằm ở `assets/town_sources.json`, t�
 
 - **Poly Haven (CC0):** texture trong `assets/polyhaven_town/textures/`, model trong `models/`, bầu trời HDRI Qwantani trong `sky/`. Giấy phép: https://polyhaven.com/license . Nhà ống, đường, cầu và dây điện là mesh sinh bằng code, chỉ dùng các texture này. `models/jacaranda_street.glb` là bản rút gọn từ `jacaranda_tree` của Poly Haven (CC0) bằng `tools/build_town_tree.py`. Bộ cờ `models/chess_set/` là `chess_set` của Poly Haven (CC0). `Male_Child_01` thuộc Microsoft Rocketbox (MIT), cùng bộ với người dân khu phố.
 - **Microsoft Rocketbox (MIT):** 9 avatar người lớn trong `assets/rocketbox/townsfolk/` và các clip `f_*`, `m_gestic_*`, `m_sit_*` trong `assets/rocketbox/animations/`. Texture được thu nhỏ còn 1024 JPG. Giấy phép: `assets/rocketbox/LICENSE.txt`.
-- **Nhân vật ban đêm (Rocketbox, MIT):** mọi nhân vật dùng `humanoid_model.gd` giờ là Rocketbox. Lan là `Female_Adult_11`, Minh là `Male_Adult_02`, bóng lớp 306 là `Female_Adult_05`. An là `Female_Child_01` đổi tên thành `An_Student`, áo được `tools/build_an_textures.gd` nhuộm thành áo trắng. Clip chạy và ngồi thụp của Lan: `f_run_fast_01`, `f_crouch_idle`. Riêng cánh tay góc nhìn thứ nhất (`combat_limbs.gd`) vẫn là Quaternius CC0.
+- **Nhân vật (Rocketbox, MIT):** mọi nhân vật dùng `humanoid_model.gd` là Rocketbox: bác bảo vệ `Security_Male_01`, nhóm bạn `Male_Child_01`, `Female_Child_01`, `Male_Adult_08`, dân phố các avatar `Female_Adult_*`, `Male_Adult_*`. Cánh tay góc nhìn thứ nhất là PSX arms.
 - **"low poly scooter", Thomas Saint Pierre (s1pierro), CC BY 3.0:** `assets/polypizza_town/low_poly_scooter.glb`. Trang model: https://poly.pizza/m/awXCP7LUcz6 ; giấy phép: https://creativecommons.org/licenses/by/3.0/ . Bắt buộc ghi công khi phân phối. Runtime đổi tỷ lệ và màu thân xe, không sửa file gốc.
 - **Âm thanh:** `town_engine.wav`, `town_horn.wav`, `town_street.wav` do `tools/build_town_audio.py` tổng hợp, không có bản ghi ngoài.
 
 Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và hẻm theo [Hẻm](https://en.wikipedia.org/wiki/H%E1%BA%BBm), [Vietnamese urban fabric, IIAS](https://iias.asia/the-newsletter/article/vietnamese-urban-fabric). Tên quán, đường và người trong khu phố đều hư cấu.
-
-## Quỷ Ghen Tị
-
-`assets/envy_demon/envy_demon.glb` do `tools/build_envy_demon.py` xuất từ Blender. Nguồn là avatar `Male_Adult_01` và các clip Rocketbox (MIT); script đổi tỉ lệ, phủ đen và thêm sừng, gai vai, vuốt, đuôi, áo dài, ba mắt, răng. Huy chương là mesh trong `scripts/envy_demon_model.gd`. Chạy lại: `blender --background --python tools/build_envy_demon.py`.
-
-`envy_step.wav`, `envy_clink.wav`, `envy_rattle.wav` do `tools/build_envy_audio.py` tổng hợp, không có bản ghi ngoài.
 
 ## Nhà của Peter
 

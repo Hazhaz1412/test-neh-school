@@ -1,6 +1,5 @@
 shader_type sky;
 
-uniform float spirit_amount = 0.0;
 uniform float dawn_amount = 0.0;
 uniform vec3 moon_direction = vec3(0.58, 0.40, -0.71);
 
@@ -30,9 +29,6 @@ void sky() {
 	vec2 cloud_uv = d.xz / max(0.15, d.y + 0.3) * 2.8;
 	float clouds = noise(cloud_uv) * 0.65 + noise(cloud_uv * 2.0) * 0.25;
 	color = mix(color, vec3(0.05, 0.07, 0.11), smoothstep(0.6, 0.82, clouds) * 0.40 * (1.0 - disc));
-	vec3 cursed = color * vec3(1.1, 0.45, 0.68) + vec3(0.027, 0.004, 0.018);
-	cursed = mix(cursed, vec3(0.69, 0.15, 0.12), disc * 0.85);
-	vec3 realm_color = mix(color, cursed, spirit_amount);
 	vec3 dawn = mix(vec3(0.38, 0.27, 0.26), vec3(0.16, 0.26, 0.38), smoothstep(0.0, 0.7, d.y));
-	COLOR = mix(realm_color, dawn, dawn_amount);
+	COLOR = mix(color, dawn, dawn_amount);
 }

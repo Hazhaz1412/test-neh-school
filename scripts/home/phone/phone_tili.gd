@@ -1,14 +1,14 @@
 extends Control
-# Tili: the chat app (team, landlady, Lan, the stranger). Messages either land in the open chat
+# Tili: the chat app. Messages either land in the open chat
 # or count as unread; the phone shell decides whether to show a notification.
 const Kit := preload("res://scripts/home/phone/phone_kit.gd")
+const Scroll := preload("res://scripts/home/phone/phone_scroll.gd")
 const ACCENT := Color(0.16, 0.53, 0.90)
 const MINE := Color(0.88, 0.98, 0.78)
 const THEIRS := Color.WHITE
 const WALL_TOP := Color(0.80, 0.87, 0.68)
 const WALL_BOTTOM := Color(0.62, 0.77, 0.60)
 const SENDER_COLOURS := [Color(0.86, 0.36, 0.24), Color(0.18, 0.52, 0.84), Color(0.25, 0.58, 0.28), Color(0.62, 0.34, 0.74)]
-const GLYPHS := "ⱠꝒʭɮꞀƕȹʬȸꜩƢƾʨʫȣɤ▓▒░╬╪┼∷⁂"
 const TOP_SPACE := 50
 const BOTTOM_SPACE := 22
 const BUBBLE_WIDTH := 250.0
@@ -27,13 +27,12 @@ var title_label: Label
 var status_label: Label
 var face_holder: HBoxContainer
 var messages: VBoxContainer
-var scroller: ScrollContainer
+var scroller: Control
+var list_scroll: Control
+var empty_note: Control
 var replies: VBoxContainer
 var input_hint: Label
 var typing_row: Control
-var scrambled: Array = []
-var scramble_clock := 0.0
-var rng := RandomNumberGenerator.new()
 
 func build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -78,15 +77,35 @@ func _build_list() -> void:
 	var hint := Kit.text("⌕  Tìm kiếm", 15, Kit.GREY, search)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(search)
-	var list_scroll := ScrollContainer.new()
+	list_scroll = Scroll.new()
 	list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	stack.add_child(list_scroll)
 	thread_rows = VBoxContainer.new()
 	thread_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	thread_rows.add_theme_constant_override("separation", 0)
-	list_scroll.add_child(thread_rows)
+	list_scroll.content.add_child(thread_rows)
+	empty_note = _empty_note()
+	list_scroll.content.add_child(empty_note)
 	stack.add_child(_tab_bar())
+
+# Shown while there is nobody to talk to yet.
+func _empty_note() -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var gap := Control.new()
+	gap.custom_minimum_size.y = 170
+	column.add_child(gap)
+	var bubble := Kit.Icon.new("tili", 64)
+	bubble.modulate.a = 0.35
+	var holder := CenterContainer.new()
+	holder.add_child(bubble)
+	column.add_child(holder)
+	var line := Kit.text("Chưa có đoạn chat nào", 17, Kit.INK, column, true)
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint := Kit.text("Tin nhắn mới sẽ hiện ở đây.", 14, Kit.GREY, column)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return column
 
 func _tab_bar() -> PanelContainer:
 	var bar := PanelContainer.new()
@@ -124,6 +143,7 @@ func unread_total() -> int:
 func refresh_list() -> void:
 	for child in thread_rows.get_children():
 		child.queue_free()
+	empty_note.visible = order.is_empty()
 	for id in order:
 		var thread: Dictionary = threads[id]
 		var row := Kit.plain_button(thread_rows)
@@ -154,7 +174,7 @@ func refresh_list() -> void:
 		var bottom := HBoxContainer.new()
 		bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		words.add_child(bottom)
-		var preview := Kit.text(_noise(16) if last.get("garbled", false) else last.get("text", ""), 14, Kit.GREY, bottom)
+		var preview := Kit.text(last.get("text", ""), 14, Kit.GREY, bottom)
 		preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		preview.clip_text = true
 		preview.custom_minimum_size.x = 180
@@ -232,15 +252,14 @@ func _build_chat() -> void:
 	face_holder.custom_minimum_size.x = 64
 	face_holder.alignment = BoxContainer.ALIGNMENT_END
 	row.add_child(face_holder)
-	scroller = ScrollContainer.new()
+	scroller = Scroll.new()
 	scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	stack.add_child(scroller)
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 10)
-	scroller.add_child(pad)
+	scroller.content.add_child(pad)
 	messages = VBoxContainer.new()
 	messages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	messages.add_theme_constant_override("separation", 6)
@@ -289,13 +308,12 @@ func open_thread(id: String) -> void:
 	for child in face_holder.get_children():
 		child.queue_free()
 	face_holder.add_child(Kit.avatar(thread.avatar, thread.initial, 38))
-	scrambled.clear()
 	typing_row = null
 	for child in messages.get_children():
 		child.queue_free()
 	for entry in thread.log:
 		_add_bubble(entry, false)
-	_to_bottom()
+	scroller.scroll_to_end(false)
 	unread_changed.emit()
 	thread_opened.emit(id)
 
@@ -303,14 +321,12 @@ func viewing(id: String) -> bool:
 	return open_id == id and chat_page.visible and is_visible_in_tree()
 
 func _to_bottom() -> void:
-	await get_tree().process_frame
-	await get_tree().process_frame
-	scroller.scroll_vertical = int(scroller.get_v_scroll_bar().max_value)
+	scroller.scroll_to_end()
 
 # True when it landed in the chat on screen; otherwise it waits as unread.
-func receive(id: String, text: String, garbled := false) -> bool:
+func receive(id: String, text: String) -> bool:
 	var thread: Dictionary = threads[id]
-	var entry := {"text": text, "mine": false, "garbled": garbled, "time": clock.call()}
+	var entry := {"text": text, "mine": false, "time": clock.call()}
 	thread.log.append(entry)
 	order.erase(id)
 	order.push_front(id)
@@ -323,7 +339,7 @@ func receive(id: String, text: String, garbled := false) -> bool:
 	return false
 
 func send_mine(id: String, text: String) -> void:
-	var entry := {"text": text, "mine": true, "garbled": false, "time": clock.call()}
+	var entry := {"text": text, "mine": true, "time": clock.call()}
 	threads[id].log.append(entry)
 	if open_id == id:
 		_add_bubble(entry, true)
@@ -338,15 +354,9 @@ func set_typing(on: bool) -> void:
 	status_label.text = "đang nhập…" if on else threads[open_id].status
 	status_label.add_theme_color_override("font_color", ACCENT if on else Kit.GREY)
 	if on:
-		typing_row = _bubble_row({"text": "• • •", "mine": false, "garbled": false})
+		typing_row = _bubble_row({"text": "• • •", "mine": false})
 		messages.add_child(typing_row)
 		_to_bottom()
-
-func _noise(length: int) -> String:
-	var result := ""
-	for i in range(length):
-		result += " " if rng.randf() < 0.14 else GLYPHS[rng.randi() % GLYPHS.length()]
-	return result
 
 # Group chats write "Name: text"; the name moves into the bubble, coloured per sender.
 func _split_sender(entry: Dictionary) -> Array:
@@ -362,8 +372,6 @@ func _bubble_row(entry: Dictionary) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 6)
 	var bubble := PanelContainer.new()
 	var style := Kit.box(MINE if entry.mine else THEIRS, 16)
-	if entry.garbled:
-		style.bg_color = Color(0.12, 0.13, 0.15)
 	if entry.mine:
 		style.corner_radius_bottom_right = 4
 	else:
@@ -383,7 +391,7 @@ func _bubble_row(entry: Dictionary) -> HBoxContainer:
 	if not parts[0].is_empty():
 		Kit.text(parts[0], 13, SENDER_COLOURS[absi(String(parts[0]).hash()) % SENDER_COLOURS.size()], column, true)
 	var words: String = parts[1]
-	var label := Kit.text(words, 15, Color(0.86, 0.84, 0.82) if entry.garbled else Kit.INK, column)
+	var label := Kit.text(words, 15, Kit.INK, column)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size.x = clampf(words.length() * 8.4 + 6.0, 64.0, BUBBLE_WIDTH)
 	var stamp: String = entry.get("time", "")
@@ -391,8 +399,6 @@ func _bubble_row(entry: Dictionary) -> HBoxContainer:
 		var time_label := Kit.text(stamp + ("  ✓✓" if entry.mine else ""), 11, Color(0.3, 0.6, 0.3) if entry.mine else Kit.GREY, column)
 		time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(bubble)
-	if entry.garbled:
-		scrambled.append({"label": label, "length": words.length()})
 	return row
 
 func _add_bubble(entry: Dictionary, animate: bool) -> void:
@@ -401,8 +407,10 @@ func _add_bubble(entry: Dictionary, animate: bool) -> void:
 	if typing_row != null:
 		messages.move_child(typing_row, -1)
 	if animate:
+		# Pops up from below like a fresh message.
 		row.modulate.a = 0.0
-		create_tween().tween_property(row, "modulate:a", 1.0, 0.2)
+		var tween := create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(row, "modulate:a", 1.0, 0.18)
 
 # Answers sit where the keyboard would, as the chat app's quick-reply buttons.
 func offer_replies(options: Array) -> void:
@@ -430,12 +438,3 @@ func clear_replies() -> void:
 	input_hint.text = "Tin nhắn"
 	for child in replies.get_children():
 		child.queue_free()
-
-func _process(delta: float) -> void:
-	scramble_clock -= delta
-	if scramble_clock > 0.0:
-		return
-	scramble_clock = 0.09
-	for item in scrambled:
-		if is_instance_valid(item.label):
-			item.label.text = _noise(item.length)

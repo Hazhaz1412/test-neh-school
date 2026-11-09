@@ -182,27 +182,3 @@ func validate_doors() -> void:
 	for i in range(40):
 		await physics_frame
 	check(door.slide < 0.01, "Closed leaf returns to the doorframe")
-	# A pursuing ghost reaches and opens a shut door, then enters the room.
-	school.set_spirit_world(true)
-	for i in range(20):
-		await physics_frame
-	for ghost in school.enemies:
-		ghost.set_physics_process(false)
-	var ghost: CharacterBody3D = school.enemies[0]
-	school.player.position = Vector3(28, 0.05, 25)
-	ghost.position = Vector3(23.5, 0.05, 25)
-	ghost.detection_range = 0.0
-	ghost.last_known = school.player.position
-	ghost.memory = 20.0
-	ghost.state = 1 # SEARCH: last known player was inside this classroom.
-	ghost.path_clock = 0.0
-	await physics_frame
-	await physics_frame
-	ghost.set_physics_process(true)
-	check(not ghost.has_line_of_sight(), "Closed door blocks a ghost's view into the classroom")
-	for i in range(200):
-		await physics_frame
-		if ghost.position.x > 26.0:
-			break
-	check(door.is_open and ghost.position.x > 26.0, "Pursuing ghost opens the door and follows into the classroom")
-	school.set_spirit_world(false)

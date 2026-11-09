@@ -1,5 +1,5 @@
 extends SceneTree
-# The evening Peter moves in: the landlady's messages, the house and its doors, and the bed that
+# The evening Peter moves in: an empty phone, the house and its doors, and the bed that
 # leads into the Night 0 dream.
 var failures := 0
 
@@ -21,7 +21,7 @@ func run() -> void:
 	story.begin_prologue()
 	check(not has_meta("prologue"), "the flag is spent")
 	check(story.step == "settle" and home.goal.text.contains("ngủ"), "the evening asks only for sleep")
-	check(home.phone.threads.has("sau") and home.phone.threads["sau"].log[0].text.contains("Số 14"), "the landlady gives the address")
+	check(home.phone.threads.is_empty(), "no old chats are waiting on the phone")
 	check(home.phone.fake_new == 0, "nothing on Fake pulls him in yet")
 	var labels: Array = home.interactions.map(func(e): return e.label)
 	check("Cửa chính" in labels and "Mở cửa phòng tắm" in labels and "Đóng cửa phòng ngủ" in labels, "the house has a front door, a bathroom door and an open bedroom door")

@@ -1,6 +1,6 @@
 {
   "name": "neh-hub",
-  "version": "0.1.0",
+  "version": "0.0.1-beta",
   "private": true,
   "description": "NEH School ARG hub: fake browser, local web stack and game link",
   "main": "main.js",

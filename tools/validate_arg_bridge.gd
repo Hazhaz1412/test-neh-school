@@ -24,6 +24,6 @@ func validate() -> void:
 	check(not bridge.is_processing(), "bridge stays off during validation runs")
 	bridge.set_process(true)
 	check(await wait_for(func(): return bridge.linked), "game links to the hub")
-	school.progression.evidence["bear"] = true
+	school.progression.evidence["clip"] = true
 	check(await wait_for(func(): return bridge.bang.playing), "web message makes the door bang in game")
 	quit(1 if failures else 0)

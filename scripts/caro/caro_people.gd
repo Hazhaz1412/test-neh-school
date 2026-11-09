@@ -55,12 +55,12 @@ const LINES := {
 static func with_siu(line: String) -> String:
 	return line if line.to_upper().contains("SIU") else (line + " " + SIU + "!").strip_edges()
 
-# Story text for Night 1, shown line by line after the player wins. DRAFT: awaiting review.
+# Story text for Night 1, shown line by line after the player wins. DRAFT: the story is being rewritten.
 const REVEAL := [
 	["Bảy Rô", "Năm 2009 tôi bán nước trước cổng NEH. Chiều nào cũng có con bé ngồi lại sân, xếp cờ một mình."],
 	["Bảy Rô", "Nó hay trốn lên sân thượng khu A. Bảo trên đó không ai giật đồ của nó."],
-	["Bảy Rô", "Mấy đứa bắt nạt nó đeo huy chương của nó lên cổ mà cười. Giờ đêm nào trong trường cũng có tiếng huy chương va nhau. Thứ đó thèm mọi thứ sáng như phần thưởng."],
-	["Bảy Rô", "Nếu nó dừng lại trước chỗ cậu trốn để nghe... thì nín thở. Đừng thở cho tới khi nó đi."],
+	["Bảy Rô", "Mấy đứa bắt nạt nó đeo huy chương của nó lên cổ mà cười. Thầy cô biết hết, rồi ai cũng im."],
+	["Bảy Rô", "Ông bảo vệ bây giờ đã gác ở đó từ hồi ấy. Đêm nào ổng cũng đi tuần. Ổng dừng trước chỗ cậu trốn để nghe thì nín thở, đợi ổng đi."],
 	["Bạn", "Sao chú biết mấy chuyện này?"],
 	["Bảy Rô", "Vì tôi đã thấy mà không dám nói, mười bảy năm rồi. Trường vẫn dạy, vẫn bảo an toàn. Đi đi, và đừng đi tay không."],
 ]

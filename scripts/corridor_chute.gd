@@ -389,8 +389,8 @@ func enter(index: int) -> void:
 	p.camera.position = Vector3(0, 0.52, 0)
 	run.looking_back = false
 	run.slide_remaining = 0.0
-	run.scares.flash.color = Color(0, 0, 0, 1)
-	run.scares.impact(p.global_position, "topple")
+	run.fx.flash.color = Color(0, 0, 0, 1)
+	run.fx.impact(p.global_position, "topple")
 	run.world.notify("Sàn sập! Nghiêng camera để lách qua khe hở, sát tường cũng không an toàn.")
 	slide_sound.play()
 	_place()
@@ -429,8 +429,8 @@ func _tick_gates(before: float) -> void:
 		if not gate.then.is_empty() and not gate.switched and lead < SWITCH_LEAD:
 			# The lining gives way right in front: the open gap slams shut and another opens.
 			gate.switched = true
-			run.scares.impact(run.to_global(frame(current, gate.at).origin), "topple")
-			run.scares.shake = maxf(run.scares.shake, 0.35)
+			run.fx.impact(run.to_global(frame(current, gate.at).origin), "topple")
+			run.fx.shake = maxf(run.fx.shake, 0.35)
 		var live: String = "then" if gate.switched else "closed"
 		for key in gate.sets:
 			var shown: bool = near and key == live
@@ -462,8 +462,8 @@ func _grabbed() -> void:
 	var p: CharacterBody3D = run.world.player
 	p.invulnerable_time = 0.0
 	p.take_damage(HIT_DAMAGE)
-	run.scares._flash(Color(0.7, 0.02, 0.0, 0.45))
-	run.scares.shake = maxf(run.scares.shake, 0.8)
+	run.fx._flash(Color(0.7, 0.02, 0.0, 0.45))
+	run.fx.shake = maxf(run.fx.shake, 0.8)
 
 func safe_arc(from: float) -> float:
 	for gate in gates[current]:

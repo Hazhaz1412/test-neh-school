@@ -22,12 +22,12 @@ func run() -> void:
 	current_scene = school
 	for i in range(300):
 		await physics_frame
-		if school.envy.started: break
-	var demon: CharacterBody3D = school.envy.demon
+		if school.hunt.started: break
+	var hunter: CharacterBody3D = school.hunt.hunter
 	var player: CharacterBody3D = school.player
 	var team: Node = school.team
-	school.envy.set_physics_process(false)
-	demon.set_physics_process(false)
+	school.hunt.set_physics_process(false)
+	hunter.set_physics_process(false)
 	for entry in team.members.slice(1):
 		entry.body.set_physics_process(false)
 	player.set_physics_process(false)
@@ -35,7 +35,7 @@ func run() -> void:
 	var loop: Node3D = school.kiting.get_child(3)
 	# The loop from its open end: crates in the middle, a window and a shelf in each wall.
 	look(player, loop.to_global(Vector3(10.5, 0.05, 1.5)), loop.to_global(Vector3(0, 1.0, 0)))
-	demon.global_position = loop.to_global(Vector3(-3, 0.05, -2.0))
+	hunter.global_position = loop.to_global(Vector3(-3, 0.05, -2.0))
 	for i in range(20): await process_frame
 	await shot("docs/night1-loop.png")
 	# A friend running the ring, the guard on the far side of the crates.
@@ -43,9 +43,9 @@ func run() -> void:
 	friend.global_position = loop.to_global(Vector3(3.6, 0.05, 1.9))
 	friend.rotation.y = loop.global_rotation.y + PI * 0.5
 	friend._animate("sprint", 1.0)
-	demon.global_position = loop.to_global(Vector3(-3.5, 0.05, -1.9))
-	demon.look_at(loop.global_position, Vector3.UP)
-	demon.model.move("stalk", 5.5 / 1.5)
+	hunter.global_position = loop.to_global(Vector3(-3.5, 0.05, -1.9))
+	hunter.look_at(loop.global_position, Vector3.UP)
+	hunter.model.move("stalk", 5.5 / 1.5)
 	look(player, loop.to_global(Vector3(7.5, 0.05, 2.0)), loop.to_global(Vector3(0, 1.0, 0)))
 	for i in range(20): await process_frame
 	await shot("docs/night1-loop-chase.png")
@@ -53,9 +53,9 @@ func run() -> void:
 	# Running out of the loop's open end, the guard a few metres behind.
 	player.set_process(false)
 	look(player, loop.to_global(Vector3(-10.0, 0.05, 0.4)), loop.to_global(Vector3(-25.0, 1.6, 0.4)))
-	demon.global_position = loop.to_global(Vector3(-5.5, 0.05, 0.0))
-	demon.rotation.y = loop.global_rotation.y + PI * 0.5
-	demon.model.move("stalk", 5.5 / 1.5)
+	hunter.global_position = loop.to_global(Vector3(-5.5, 0.05, 0.0))
+	hunter.rotation.y = loop.global_rotation.y + PI * 0.5
+	hunter.model.move("stalk", 5.5 / 1.5)
 	player.look_back = 0.5
 	player._pose_look_back()
 	for i in range(10): await process_frame
@@ -99,36 +99,36 @@ func run() -> void:
 		if node.is_in_group("kiting_vault"):
 			window = node
 			break
-	demon.global_position = window.to_global(Vector3(0, 0.05, 0.9))
-	demon._climb(window)
-	for i in range(int(demon.VAULT_SECONDS * 0.45 * 60.0)):
-		demon._cross(1.0 / 60.0)
+	hunter.global_position = window.to_global(Vector3(0, 0.05, 0.9))
+	hunter._climb(window)
+	for i in range(int(hunter.VAULT_SECONDS * 0.45 * 60.0)):
+		hunter._cross(1.0 / 60.0)
 	look(player, window.to_global(Vector3(1.5, 0.05, -4.5)), window.to_global(Vector3(0, 1.2, 0)))
 	for i in range(10): await process_frame
 	await shot("docs/night1-guard-vault.png")
 	# Dragged off: the struggle bar.
-	demon.cross_time = 0.0
+	hunter.cross_time = 0.0
 	player.flashlight.hide()
-	demon.global_position = Vector3(-46, 0.05, 15)
-	demon.rotation.y = 0.0
-	demon.target = player
-	demon._seize()
-	demon.grab_clock = 1.0
-	demon._carry_pose()
+	hunter.global_position = Vector3(-46, 0.05, 15)
+	hunter.rotation.y = 0.0
+	hunter.target = player
+	hunter._seize()
+	hunter.grab_clock = 1.0
+	hunter._carry_pose()
 	team.member(player).struggle = 0.42
 	for i in range(20): await process_frame
 	await shot("docs/night1-dragged.png")
 	# Locked in a room, free to pace it.
-	demon.set_physics_process(true)
-	school.envy.set_physics_process(true)
+	hunter.set_physics_process(true)
+	school.hunt.set_physics_process(true)
 	var waited := 0
 	while team.member(player).status != team.Status.JAILED and waited < 2400:
 		await physics_frame
 		waited += 1
 	print("jailed after ", waited, " frames: ", team.STATUS_TEXT[team.member(player).status])
 	var room: Node3D = team.member(player).jail
-	demon.global_position = Vector3(-50, 0.05, 60)
-	demon.set_physics_process(false)
+	hunter.global_position = Vector3(-50, 0.05, 60)
+	hunter.set_physics_process(false)
 	await physics_frame
 	room.snap(false)
 	look(player, team.inside(room, 1), room.global_position + Vector3.UP * 1.2)

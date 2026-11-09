@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 const sites = require('./sites');
 const news = require('./news');
-const lens = require('./lens');
+const phoneChannel = require('./phone');
 const soichi = require('./soichi');
 
 async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'), onProfile = () => {}, onInstall = () => {}, onGameGone = () => {}, searchWeb = async () => [] } = {}) {
@@ -26,13 +26,12 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
     return true;
   };
 
-  const phone = await lens.start({
-    onChange: (on) => sendToGame({ type: 'lens', on }),
-    onPhone: (update) => sendToGame({ type: 'lens_phone', ...update }),
+  const phone = await phoneChannel.start({
+    onChange: (on) => sendToGame({ type: 'phone', on }),
+    onPhone: (update) => sendToGame({ type: 'phone_input', ...update }),
   });
 
-  const receive = (message, text) => {
-    if (message?.type === 'lens_layout') phone.layout(text);
+  const receive = (message) => {
     if (message?.type === 'profile') onProfile(message.id);
     // The game sends this only after the player agreed to desktop changes.
     if (message?.type === 'install_gaaglu' && message.consent === true) onInstall();
@@ -85,12 +84,12 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
       gameSocket = ws;
       story.game = true;
       announce();
-      sendToGame({ type: 'lens', on: phone.connected() });
+      sendToGame({ type: 'phone', on: phone.connected() });
       if (pendingContact) {
         sendToGame({ type: 'contact', id: pendingContact });
         pendingContact = null;
       }
-      ws.on('message', (data, isBinary) => (isBinary ? phone.frame(data) : receive(parse(data), data.toString())));
+      ws.on('message', (data, isBinary) => { if (!isBinary) receive(parse(data)); });
       ws.on('close', () => {
         if (gameSocket !== ws) return;
         gameSocket = null;
@@ -110,7 +109,7 @@ async function start({ port = 0, token = crypto.randomBytes(24).toString('hex'),
         token,
         story,
         sendToGame,
-        lensUrl: phone.url,
+        phoneUrl: phone.url,
         close: () => {
           phone.close();
           for (const res of listeners) res.end();

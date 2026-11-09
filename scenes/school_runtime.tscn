@@ -19607,7 +19607,6 @@ size = Vector3(0.1, 0.28, 0.06)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gmx56"]
 shader = ExtResource("5_ug5ex")
-shader_parameter/spirit_amount = null
 shader_parameter/dawn_amount = null
 shader_parameter/moon_direction = null
 

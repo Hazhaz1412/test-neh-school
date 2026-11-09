@@ -19,7 +19,7 @@ const written = desktop.install({ launch: ['/bin/true', '--open'], icon });
 assert(written.length >= 3);
 pass('shortcut, note and icon are written');
 const note = path.join(process.env.NEH_DESKTOP_DIR, desktop.NOTE_NAME);
-assert.match(fs.readFileSync(note, 'utf8'), /thế giới bên kia/);
+assert.match(fs.readFileSync(note, "utf8"), /Gaaglu/);
 pass('the note carries the line');
 const shortcut = path.join(process.env.NEH_DESKTOP_DIR, 'Gaaglu.desktop');
 assert.match(fs.readFileSync(shortcut, 'utf8'), /Exec="\/bin\/true" "--open"/);

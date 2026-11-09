@@ -39,7 +39,7 @@ func run() -> void:
 	var team: Node = school.team
 	var story: Node3D = school.progression
 	check(school.survival.active and school.survival.phase == school.survival.Phase.NIGHT, "the night is running")
-	check(not school.spirit_enabled and school.guard_night, "the school stays the ordinary night school, as in Night 0")
+	check(school.guard_night, "Night 1 is a guard night")
 	check(story.journal_context().begins_with("ĐÊM 1\n"), "it is called just Night 1")
 	check(player.inventory[0] == "torch" and not player.inventory.has("crank"), "the Night 0 torch, no crank light")
 	check(player.max_stamina == school.HUNT_STAMINA and player.stamina == school.HUNT_STAMINA, "a longer breath for running")
@@ -69,10 +69,10 @@ func run() -> void:
 				buried.append(str(body.get_parent().name, " ", hit.collider.name))
 	check(buried.is_empty(), "no loop overlaps anything already in the yard " + str(buried.slice(0, 4)))
 	check(school.get_node("Navigation").navigation_mesh.resource_path.ends_with("hunt_navigation.tres"), "the guard's map knows the walls")
-	await until(func(): return school.envy.started, 6.0)
-	var demon: CharacterBody3D = school.envy.demon
-	check(demon != null and demon.model.get_script() == preload("res://scripts/guard_hunter_model.gd"), "the hunter wears the guard's body")
-	check(demon.CHASE_SPEED > player.RUN_SPEED, "the guard runs faster than a student")
+	await until(func(): return school.hunt.started, 6.0)
+	var hunter: CharacterBody3D = school.hunt.hunter
+	check(hunter != null and hunter.model.get_script() == preload("res://scripts/guard_hunter_model.gd"), "the hunter wears the guard's body")
+	check(hunter.CHASE_SPEED > player.RUN_SPEED, "the guard runs faster than a student")
 	var map: RID = school.get_world_3d().navigation_map
 	await until(func(): return NavigationServer3D.map_get_iteration_id(map) > 2, 5.0)
 
@@ -90,8 +90,8 @@ func run() -> void:
 	check(guard_way > student_way + 8.0, "the guard cannot follow under a low gap")
 	check(not player.can_fit(low.to_global(Vector3(0, 0.05, 0)), player.STAND_HEIGHT), "nobody stands up under the boards")
 	# Sprint, C: the slide carries the player right through.
-	demon.global_position = Vector3(-50, 0.05, 60)
-	demon.set_physics_process(false)
+	hunter.global_position = Vector3(-50, 0.05, 60)
+	hunter.set_physics_process(false)
 	player.global_position = low.to_global(Vector3(0, 0.05, 2.4))
 	player.rotation.y = low.global_rotation.y
 	player.camera.rotation = Vector3.ZERO
@@ -114,15 +114,15 @@ func run() -> void:
 	# He boards up a gap he saw used: crawling stops, E for five seconds or a slide at a cost.
 	var course: Node3D = school.kiting
 	course.seen_used[low] = true
-	demon.set_physics_process(true)
-	demon.state = demon.State.ROAM
-	demon.global_position = low.to_global(Vector3(0.6, 0.05, 1.9))
-	demon.agent.target_position = demon.global_position
+	hunter.set_physics_process(true)
+	hunter.state = hunter.State.ROAM
+	hunter.global_position = low.to_global(Vector3(0.6, 0.05, 1.9))
+	hunter.agent.target_position = hunter.global_position
 	player.global_position = Vector3(-30, 0.05, 66)
 	var boarded := await until(func(): return course.is_boarded(low), 5.0)
 	check(boarded, "passing a gap he saw used, he boards it up")
-	demon.global_position = Vector3(-50, 0.05, 60)
-	demon.set_physics_process(false)
+	hunter.global_position = Vector3(-50, 0.05, 60)
+	hunter.set_physics_process(false)
 	player.global_position = low.to_global(Vector3(0, 0.05, 2.0))
 	player.rotation.y = low.global_rotation.y
 	player.set_crouching(true, true)
@@ -154,8 +154,8 @@ func run() -> void:
 
 	# A real SPACE at a vault window: over and out the other side in half a second.
 	var window: Node3D = school.get_tree().get_nodes_in_group("kiting_vault")[0]
-	demon.global_position = Vector3(-50, 0.05, 60)
-	demon.set_physics_process(false)
+	hunter.global_position = Vector3(-50, 0.05, 60)
+	hunter.set_physics_process(false)
 	player.global_position = window.to_global(Vector3(0, 0.05, 1.0))
 	player.rotation.y = window.global_rotation.y
 	player.camera.rotation = Vector3.ZERO
@@ -169,36 +169,36 @@ func run() -> void:
 	player.global_position = window.to_global(Vector3(0, 0.05, -1.0))
 	player.rotation.y = window.global_rotation.y + PI
 	player._try_vault()
-	var early: bool = demon._out_of_reach(player)
+	var early: bool = hunter._out_of_reach(player)
 	for i in range(15):
 		player._tick_vault(1.0 / 60.0)
-	check(not early and demon._out_of_reach(player), "after 0.2 s of a climb the player cannot be caught")
+	check(not early and hunter._out_of_reach(player), "after 0.2 s of a climb the player cannot be caught")
 	while player.vault_time > 0.0:
 		player._tick_vault(1.0 / 60.0)
 	player.global_position = Vector3(-30, 0.05, 66)
 
 	# The guard is three times slower over the same sill.
-	demon.set_physics_process(true)
-	demon.global_position = window.to_global(Vector3(0, 0.05, 1.6))
-	demon.agent.target_position = window.to_global(Vector3(0, 0.05, -1.6))
-	demon.state = demon.State.REST
-	demon.rest_left = 6.0
-	var vaulted := await until(func(): return demon.cross_time > 0.0, 4.0)
+	hunter.set_physics_process(true)
+	hunter.global_position = window.to_global(Vector3(0, 0.05, 1.6))
+	hunter.agent.target_position = window.to_global(Vector3(0, 0.05, -1.6))
+	hunter.state = hunter.State.REST
+	hunter.rest_left = 6.0
+	var vaulted := await until(func(): return hunter.cross_time > 0.0, 4.0)
 	var took := 0.0
-	while demon.cross_time > 0.0 and took < 3.0:
+	while hunter.cross_time > 0.0 and took < 3.0:
 		await physics_frame
 		took += 1.0 / 60.0
 	check(vaulted and took > player.VAULT_SECONDS * 2.5, "the guard climbs over slowly: %.2f s" % took)
-	demon.chase_time = 12.0
-	demon._climb(window)
-	check(demon.chase_time == 0.0, "a climb winds his speed back down to the base")
-	demon.cross_time = 0.0
-	check(absf(demon.CHASE_SPEED / player.RUN_SPEED - 1.05) < 0.01, "his base speed is 5%% over a sprint")
+	hunter.chase_time = 12.0
+	hunter._climb(window)
+	check(hunter.chase_time == 0.0, "a climb winds his speed back down to the base")
+	hunter.cross_time = 0.0
+	check(absf(hunter.CHASE_SPEED / player.RUN_SPEED - 1.05) < 0.01, "his base speed is 5%% over a sprint")
 
 	# A shelf tipped into its gap: students vault it, the guard has to drag it clear.
 	var shelf: Node3D = school.get_tree().get_nodes_in_group("kiting_pallet")[0]
-	demon.state = demon.State.ROAM
-	demon.global_position = Vector3(-50, 0.05, 60)
+	hunter.state = hunter.State.ROAM
+	hunter.global_position = Vector3(-50, 0.05, 60)
 	player.global_position = shelf.to_global(Vector3(0, 0.05, 1.2 * shelf.inward))
 	player.rotation.y = shelf.global_rotation.y + (0.0 if shelf.inward > 0 else PI)
 	await physics_frame
@@ -212,25 +212,25 @@ func run() -> void:
 	var over: bool = player._try_vault()
 	await until(func(): return player.vault_time <= 0.0, 1.5)
 	check(over and signf(shelf.to_local(player.global_position).z) != signf(shelf.inward), "a student vaults the fallen shelf")
-	demon.global_position = shelf.to_global(Vector3(0, 0.05, 2.0 * shelf.inward))
-	demon.agent.target_position = shelf.to_global(Vector3(0, 0.05, -3.0 * shelf.inward))
-	demon.state = demon.State.REST
-	demon.rest_left = 10.0
-	var halted := await until(func(): return demon.clear_time > 0.0, 4.0)
+	hunter.global_position = shelf.to_global(Vector3(0, 0.05, 2.0 * shelf.inward))
+	hunter.agent.target_position = shelf.to_global(Vector3(0, 0.05, -3.0 * shelf.inward))
+	hunter.state = hunter.State.REST
+	hunter.rest_left = 10.0
+	var halted := await until(func(): return hunter.clear_time > 0.0, 4.0)
 	var cleared_in := 0.0
-	while demon.clear_time > 0.0 and cleared_in < 5.0:
+	while hunter.clear_time > 0.0 and cleared_in < 5.0:
 		await physics_frame
 		cleared_in += 1.0 / 60.0
 	check(halted and cleared_in > 2.0 and shelf.state == shelf.State.CLEARED, "the guard spends %.1f s dragging it clear" % cleared_in)
 	# Dropped on him, it knocks him back.
 	var second: Node3D = school.get_tree().get_nodes_in_group("kiting_pallet")[1]
-	demon.state = demon.State.CHASE
-	demon.target = player
-	demon.global_position = second.to_global(Vector3(0, 0.05, 0.4))
+	hunter.state = hunter.State.CHASE
+	hunter.target = player
+	hunter.global_position = second.to_global(Vector3(0, 0.05, 0.4))
 	second.drop(player)
-	check(demon.state == demon.State.STAGGER and demon.stunned, "a shelf dropped on him stuns him")
-	await until(func(): return not demon.stunned, 4.0)
-	check(demon.state == demon.State.CHASE, "and then he is straight back after you")
+	check(hunter.state == hunter.State.STAGGER and hunter.stunned, "a shelf dropped on him stuns him")
+	await until(func(): return not hunter.stunned, 4.0)
+	check(hunter.state == hunter.State.CHASE, "and then he is straight back after you")
 
 	# Right mouse held: the head turns back smoothly, not in one jump, and comes back the same way.
 	player.look_back = 0.0
@@ -251,8 +251,8 @@ func run() -> void:
 	check(absf(player.camera.rotation.y) < 0.001 and player.look_back_eased == 0.0, "and turns back the same way")
 
 	# Sprint, then C: a slide faster than running, paid for in breath.
-	demon.state = demon.State.ROAM
-	demon.global_position = Vector3(-50, 0.05, 60)
+	hunter.state = hunter.State.ROAM
+	hunter.global_position = Vector3(-50, 0.05, 60)
 	player.global_position = Vector3(-30, 0.05, 66)
 	player.rotation.y = PI * 0.5
 	player.velocity = -player.global_basis.z * player.RUN_SPEED
@@ -265,26 +265,26 @@ func run() -> void:
 	player.set_crouching(false, true)
 
 	# Fatigue: chased, each second and each breath won back slows the next one.
-	demon.target = player
-	demon.state = demon.State.CHASE
+	hunter.target = player
+	hunter.state = hunter.State.CHASE
 	player.fatigue = 0.0
 	for i in range(30):
 		player._tick_fatigue(1.0, 15.0)
 	check(player.fatigue > 0.6 and player.recovery() < 0.5, "thirty seconds of chase: fatigue %.2f, breath back at %d%%" % [player.fatigue, player.recovery() * 100])
-	demon.state = demon.State.SWEEP
+	hunter.state = hunter.State.SWEEP
 	for i in range(8):
 		player._tick_fatigue(1.0, 0.0)
 	check(player.fatigue < 0.05, "shaking him off clears it")
-	demon.state = demon.State.ROAM
+	hunter.state = hunter.State.ROAM
 
 	# He catches a friend: dragged off, locked in, a quarter of a life gone.
 	var friend: CharacterBody3D = team.members[1].body
 	friend.global_position = Vector3(30, 0.05, 66)
-	demon.global_position = friend.global_position + Vector3(1.0, 0, 0)
+	hunter.global_position = friend.global_position + Vector3(1.0, 0, 0)
 	player.global_position = Vector3(-30, 0.05, 66)
 	await physics_frame
-	demon.target = friend
-	demon._seize()
+	hunter.target = friend
+	hunter._seize()
 	check(friend.seized and team.member(friend).status == team.Status.CARRIED, "a catch is a grab, not a death")
 	# Lambdas copy locals, so the farthest point is kept in an array.
 	var carried_far := [0.0]
@@ -301,16 +301,16 @@ func run() -> void:
 	check(team.member(friend).life < left - 1.5, "the bar keeps draining while locked up")
 
 	# The other friends go and unlock it once he has walked off.
-	demon.fall_back(Vector3(-40, 0.05, -70), 40.0)
+	hunter.fall_back(Vector3(-40, 0.05, -70), 40.0)
 	var freed := await until(func(): return team.member(friend).status == team.Status.FREE, 90.0)
 	check(freed, "a friend comes and lets them out")
 	check(not friend.seized and not held_at.is_locked(), "free to run again, the door unlocked")
 
 	# The player is caught: dragged, unable to act, but still looking around.
-	demon.state = demon.State.ROAM
-	demon.global_position = player.global_position + Vector3(1.0, 0, 0)
-	demon.target = player
-	demon._seize()
+	hunter.state = hunter.State.ROAM
+	hunter.global_position = player.global_position + Vector3(1.0, 0, 0)
+	hunter.target = player
+	hunter._seize()
 	check(player.seized and player.captive and not player.can_use_item(), "caught, the player cannot do anything")
 	# A then D then A fights the grip; one key hammered does nothing.
 	var me = team.member(player)
@@ -327,14 +327,14 @@ func run() -> void:
 	press.call(KEY_D)
 	await physics_frame
 	await physics_frame
-	check(me.status == team.Status.FREE and not player.seized and demon.state == demon.State.STAGGER, "a full bar breaks his grip")
+	check(me.status == team.Status.FREE and not player.seized and hunter.state == hunter.State.STAGGER, "a full bar breaks his grip")
 	check(me.escapes == 1, "and the next struggle is harder")
-	demon.stunned = false
-	demon.state = demon.State.ROAM
+	hunter.stunned = false
+	hunter.state = hunter.State.ROAM
 	player.invulnerable_time = 0.0
-	demon.global_position = player.global_position + Vector3(1.0, 0, 0)
-	demon.target = player
-	demon._seize()
+	hunter.global_position = player.global_position + Vector3(1.0, 0, 0)
+	hunter.target = player
+	hunter._seize()
 	press.call(KEY_A)
 	check(absf(me.struggle - one_press / 1.5) < 0.002, "50%% harder after one escape: %.4f a press" % me.struggle)
 	jailed = await until(func(): return me.status == team.Status.JAILED, 60.0)
@@ -346,7 +346,7 @@ func run() -> void:
 	await physics_frame
 	var inside_now: float = my_room.to_local(player.global_position).z * float(my_room.get_meta("swing_side", 1.0))
 	check(inside_now > 0.3, "but not out through the doorway")
-	check(not team.is_free(player) and not demon._exposed(player), "the guard leaves a locked-up student alone")
+	check(not team.is_free(player) and not hunter._exposed(player), "the guard leaves a locked-up student alone")
 
 	# Hold E at a locked door to let a friend out (the real key, three seconds).
 	team._free_jail(my_room, team.members[2].body)
@@ -354,7 +354,7 @@ func run() -> void:
 	other.global_position = Vector3(30, 0.05, 66)
 	team.seize(other)
 	team.imprison(other, held_at)
-	demon.fall_back(Vector3(-40, 0.05, -70), 40.0)
+	hunter.fall_back(Vector3(-40, 0.05, -70), 40.0)
 	for entry in team.members.slice(1):
 		if entry.body != other:
 			entry.body.global_position = Vector3(-55, 0.05, -75)

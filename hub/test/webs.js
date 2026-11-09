@@ -1,5 +1,5 @@
 // The fake school site and registry over real HTTP: node hub/test/webs.js
-process.env.NEH_LENS_PORT ??= '0';
+process.env.NEH_PHONE_PORT ??= '0';
 const http = require('http');
 const assert = require('assert');
 const web = require('../web/server');
@@ -50,36 +50,31 @@ function ask(host, path, { method = 'GET', form, cookie } = {}) {
   assert.equal((await ask(GOV, '/xac-minh', { method: 'POST', form: { dap: 'cờ vua' }, cookie })).location, '/ho-so');
   assert.equal((await ask(GOV, '/dang-xuat', { method: 'POST', cookie })).location, '/');
   assert.equal((await ask(GOV, '/ho-so', { cookie })).status, 303, 'logging out closes the record');
-  assert.ok((await ask('langta.vn', '/')).text.includes('Tuấn Xe Ôm'), 'the feed shows posts');
+  // The old story's posts were cleared: the feeds still serve, empty, until the new story fills them.
+  assert.ok((await ask('langta.vn', '/')).text.includes('Chưa có bài viết nào'), 'the empty feed says so');
   assert.equal((await ask('langta.vn', '/nhom/cuu-hs-neh')).status, 200);
-  assert.ok((await ask('langta.vn', '/tim?q=truy%E1%BB%87n%20ma')).text.includes('Ngọc Ánh'), 'the feed can be searched');
-  assert.ok((await ask('gaaglu.com', '/search?q=truy%E1%BB%87n%20ma')).text.includes('langta.vn'), 'search finds the feed');
+  assert.ok(!(await ask('langta.vn', '/')).text.includes('Chuyện Ma'), 'no ghost-story groups are left');
+  assert.ok((await ask('gaaglu.com', '/search?q=l%C3%A0ng%20ta')).text.includes('langta.vn'), 'search finds the feed');
   const big = await ask(GOV, '/tra-cuu', { method: 'POST', form: { so: 'x'.repeat(9000) } }).catch(() => ({ status: 413 }));
   assert.equal(big.status, 413);
   assert.ok((await ask('gaaglu.com', '/search?q=tr%C6%B0%E1%BB%9Dng%20NEH')).text.includes(SCHOOL), 'search finds the school');
   assert.ok((await ask('gaaglu.com', '/search?q=tra%20c%E1%BB%A9u%20cccd')).text.includes(GOV), 'search finds the registry');
-  // Sợi Chỉ: the feed, Bảy Rô's reply, and the contact that reaches the game.
+  // Sợi Chỉ: an empty feed, no contacts to message, and the game still links and hears the phone channel.
   const SOICHI = 'soichi.vn';
-  assert.ok((await ask(SOICHI, '/')).text.includes('thuongthuong.neh'), 'Sợi Chỉ shows its feed');
-  const thread = (await ask(SOICHI, '/bai/nam-2009')).text;
-  assert.ok(thread.includes('Nếu muốn biết sự thật hãy ib tôi') && thread.includes('/nhan-tin/bayro'), 'Bảy Rô offers to talk');
-  const rope = (await ask(SOICHI, '/bai/day-thung')).text;
-  assert.ok(rope.includes('muoi.gio') && rope.includes('/nhan-tin/muoigio'), 'Mười Gió answers the rope post');
-  assert.equal((await ask(SOICHI, '/nhan-tin/ai-do')).status, 404, 'only known contacts can be messaged');
+  assert.ok((await ask(SOICHI, '/')).text.includes('Chưa có sợi nào'), 'Sợi Chỉ shows its empty feed');
+  assert.equal((await ask(SOICHI, '/nhan-tin/bayro')).status, 404, 'only known contacts can be messaged');
   assert.ok((await ask('gaaglu.com', '/search?q=s%E1%BB%A3i%20ch%E1%BB%89')).text.includes(SOICHI), 'search finds Sợi Chỉ');
   const WebSocket = require('ws');
-  // Asked while no game is connected: kept, then delivered once the game links.
-  assert.equal((await ask(SOICHI, '/nhan-tin/bayro')).status, 200);
   const game = new WebSocket(`ws://127.0.0.1:${stack.port}/game?token=${stack.token}`);
-  const contact = await new Promise((resolve, reject) => {
+  const paired = await new Promise((resolve, reject) => {
     game.on('message', (data) => {
       const message = JSON.parse(data.toString());
-      if (message.type === 'contact') resolve(message);
+      if (message.type === 'phone') resolve(message);
     });
     game.on('error', reject);
-    setTimeout(() => reject(new Error('no contact message')), 3000);
+    setTimeout(() => reject(new Error('no phone message')), 3000);
   });
-  assert.equal(contact.id, 'bayro', 'the game hears who to add on Tili');
+  assert.equal(paired.on, false, 'the game hears that no phone is paired');
   game.close();
   stack.close();
   console.log('webs OK');

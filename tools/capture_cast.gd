@@ -18,7 +18,7 @@ func run() -> void:
 	sun.rotation_degrees = Vector3(-35, 20, 0)
 	stage.add_child(sun)
 	var models := []
-	var looks := ["Female_Adult_11", "An_Student", "Male_Adult_02", "Male_Adult_08", "Male_Adult_06"]
+	var looks := ["Female_Adult_11", "Female_Child_01", "Male_Adult_02", "Male_Adult_08", "Male_Adult_06"]
 	var clips := ["sprint", "idle", "walk", "sprint", "crouch"]
 	for i in range(looks.size()):
 		var person: Node3D = preload("res://scripts/humanoid_model.gd").new()

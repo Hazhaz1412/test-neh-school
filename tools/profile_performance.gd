@@ -23,11 +23,8 @@ func profile() -> void:
 		["campus", Vector3(0, 0.05, 64), Vector3(0, 5, 10)],
 		["hallway", Vector3(-23.5, 0.05, 52), Vector3(-23.5, 1.6, 12)],
 		["library", Vector3(-21, 0.05, -44.5), Vector3(-21, 1.6, -59)]]
-	for spirit in [false, true]:
-		scene.set_spirit_world(spirit)
+	for pass_index in range(1):
 		scene.player.enabled = true
-		for ghost in scene.enemies:
-			ghost.set_physics_process(false)
 		for view in views:
 			scene.player.position = view[1]
 			scene.player.camera.look_at(view[2])
@@ -52,7 +49,7 @@ func profile() -> void:
 				primitives += Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
 				count += 1
 			frame_times.sort()
-			var sample := {"view": view[0], "spirit": spirit, "median_frame_ms": snappedf(frame_times[int(count * 0.5)], 0.01), "p95_frame_ms": snappedf(frame_times[int(count * 0.95)], 0.01), "cpu_ms": snappedf(cpu / count, 0.01), "physics_ms": snappedf(physics / count, 0.01), "draw_calls": int(draws / count), "primitives": int(primitives / count)}
+			var sample := {"view": view[0], "median_frame_ms": snappedf(frame_times[int(count * 0.5)], 0.01), "p95_frame_ms": snappedf(frame_times[int(count * 0.95)], 0.01), "cpu_ms": snappedf(cpu / count, 0.01), "physics_ms": snappedf(physics / count, 0.01), "draw_calls": int(draws / count), "primitives": int(primitives / count)}
 			results.samples.append(sample)
 			print(JSON.stringify(sample))
 	var output: String = args[0] if not args.is_empty() else "/tmp/neh-performance.json"

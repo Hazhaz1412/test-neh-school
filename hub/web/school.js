@@ -120,7 +120,7 @@ function study() {
 }
 
 function guestbook() {
-  const notes = [['Cựu HS K2003', '15/09/2009', 'Chúc thầy cô năm học mới mạnh khỏe!'], ['Phụ huynh lớp 11A3', '02/10/2009', 'Đề nghị nhà trường sửa đèn hành lang khu A.'], ['khách', '19/11/2009', 'Có ai đọc mấy cái này không ạ?'], ['BQT', '23/11/2009', 'Mục lưu bút tạm khóa.'], ['10A6', '<span class="date">không rõ ngày</span>', 'tên em đâu rồi']];
+  const notes = [['Cựu HS K2003', '15/09/2009', 'Chúc thầy cô năm học mới mạnh khỏe!'], ['Phụ huynh lớp 11A3', '02/10/2009', 'Đề nghị nhà trường sửa đèn hành lang khu A.'], ['khách', '19/11/2009', 'Có ai đọc mấy cái này không ạ?'], ['BQT', '23/11/2009', 'Mục lưu bút tạm khóa.'], ['Phụ huynh lớp 10A6', '21/11/2009', 'Nhà trường trả lời giúp phụ huynh về buổi họp lớp bị hoãn.']];
   return shell('/luu-but', 'Lưu bút', `<h1>Sổ lưu bút</h1>${notes.map(([who, date, text]) => `<div class="say"><b>${who}</b> <span class="date">${date}</span><br>${text}</div>`).join('')}<div class="note">Chức năng gửi lưu bút đã bị khóa.</div>`);
 }
 

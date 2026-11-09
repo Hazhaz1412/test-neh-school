@@ -1,14 +1,15 @@
 extends Control
-# Fake: the social app where Peter scrolls the town's rumours. Reaching the last post is
-# what the evening waits for, so the end of the feed is reported once.
+# Fake: the social app where Peter scrolls the town's posts (data/social_posts.json, shared with
+# the langta.vn site). Reaching the last post is reported once, for the story to wait on.
 const Kit := preload("res://scripts/home/phone/phone_kit.gd")
+const Scroll := preload("res://scripts/home/phone/phone_scroll.gd")
 const BRAND := Color(0.23, 0.35, 0.85)
 const PAGE := Color(0.89, 0.90, 0.92)
 const TOP_SPACE := 54
 const AUTHOR_COLOURS := [Color(0.85, 0.42, 0.28), Color(0.30, 0.55, 0.80), Color(0.45, 0.62, 0.35), Color(0.62, 0.40, 0.70), Color(0.80, 0.60, 0.25), Color(0.35, 0.60, 0.62)]
 signal feed_read
 var feed_list: VBoxContainer
-var feed_scroll: ScrollContainer
+var feed_scroll: Control
 var feed_finished := false
 var post_count := 0
 var width := 0.0
@@ -25,24 +26,24 @@ func build(screen_width: float) -> void:
 	stack.add_theme_constant_override("separation", 0)
 	add_child(stack)
 	stack.add_child(_header())
-	feed_scroll = ScrollContainer.new()
+	feed_scroll = Scroll.new()
 	feed_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	feed_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	feed_scroll.get_v_scroll_bar().value_changed.connect(_scrolled)
+	feed_scroll.scrolled.connect(_scrolled)
 	stack.add_child(feed_scroll)
-	feed_list = VBoxContainer.new()
-	feed_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	feed_list = feed_scroll.content
 	feed_list.add_theme_constant_override("separation", 8)
-	feed_scroll.add_child(feed_list)
 	feed_list.add_child(_composer())
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/social_posts.json"))
 	post_count = data.posts.size()
 	for post in data.posts:
 		var group: Dictionary = data.groups.filter(func(g): return g.slug == post.group)[0]
 		feed_list.add_child(_post(post, group.name))
+	if post_count == 0:
+		feed_list.add_child(_empty())
+		return
 	var tail := Kit.text("Bạn đã xem hết tin mới.", 13, Kit.GREY, feed_list)
 	tail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tail.custom_minimum_size.y = 70
+	tail.custom_minimum_size.y = 70 + 28
 
 func _header() -> PanelContainer:
 	var head := PanelContainer.new()
@@ -84,6 +85,24 @@ func _composer() -> PanelContainer:
 	row.add_child(field)
 	return card
 
+# Nothing posted yet: a quiet card instead of a blank page.
+func _empty() -> PanelContainer:
+	var card := _card()
+	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	card.add_child(column)
+	var spacer := Control.new()
+	spacer.custom_minimum_size.y = 40
+	column.add_child(spacer)
+	var mark := Kit.text("fake", 40, Color(BRAND, 0.25), column, true)
+	mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var line := Kit.text("Chưa có bài viết nào", 17, Kit.INK, column, true)
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint := Kit.wrapped("Khi bạn bè và các nhóm đăng bài, bài viết sẽ hiện ở đây.", 14, Kit.GREY, column, width - 60)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return card
+
 func _card() -> PanelContainer:
 	var card := PanelContainer.new()
 	var style := Kit.box(Color.WHITE)
@@ -109,7 +128,7 @@ func _post(post: Dictionary, group: String) -> PanelContainer:
 	Kit.wrapped(post.text, 15, Kit.INK, column, width - 26)
 	var counts := HBoxContainer.new()
 	column.add_child(counts)
-	var reactions := Kit.text("♥ %s   ☠ %s" % [_short(post.love), _short(post.fear)], 13, Kit.GREY, counts)
+	var reactions := Kit.text("♥ %s" % _short(post.love), 13, Kit.GREY, counts)
 	reactions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Kit.text("%d bình luận" % post.comments.size(), 13, Kit.GREY, counts)
 	var rule := ColorRect.new()
@@ -148,9 +167,8 @@ func _comment(who: String, words: String) -> HBoxContainer:
 static func _short(count: int) -> String:
 	return "%.1fK" % (count / 1000.0) if count >= 1000 else str(count)
 
-func _scrolled(value: float) -> void:
-	var bar := feed_scroll.get_v_scroll_bar()
-	if value + bar.page >= bar.max_value - 4.0:
+func _scrolled(_value: float) -> void:
+	if feed_scroll.at_end():
 		finish_feed()
 
 func finish_feed() -> void:

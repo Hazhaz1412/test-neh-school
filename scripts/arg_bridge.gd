@@ -9,19 +9,13 @@ var linked := false
 var last_state := ""
 var clock := 0.0
 var bang: AudioStreamPlayer
-var lens: Node
+# Whether a phone is paired with the hub over the LAN channel (hub/web/phone.js).
+var phone_paired := false
 
 func _ready() -> void:
 	bang = AudioStreamPlayer.new()
 	bang.stream = load("res://assets/audio/door_bang.wav")
 	add_child(bang)
-	# The lens renders the school; the daytime town only reports story state.
-	if not world.has_method("hub_state"):
-		lens = preload("res://scripts/phone_lens.gd").new()
-		lens.name = "PhoneLens"
-		lens.world = world
-		lens.bridge = self
-		add_child(lens)
 	set_process(not OS.get_cmdline_args().has("--script"))
 
 func _process(delta: float) -> void:
@@ -45,8 +39,7 @@ func _process(delta: float) -> void:
 		WebSocketPeer.STATE_CLOSED:
 			socket = null
 			linked = false
-			if lens != null:
-				lens.set_active(false)
+			phone_paired = false
 			clock = RETRY_SECONDS
 
 func _connect() -> void:
@@ -83,24 +76,14 @@ func _receive(text: String) -> void:
 		return
 	if message.get("type") == "door_bang":
 		bang.play()
-		if lens != null:
+		if world.get("progression") != null:
 			world.progression.fear.beat()
+	if message.get("type") == "phone":
+		phone_paired = message.get("on") == true
 	if world.has_method("on_hub_message"):
 		world.on_hub_message(message)
-	if lens == null:
-		return
-	if message.get("type") == "lens":
-		lens.set_active(message.get("on") == true)
-	if message.get("type") == "lens_phone":
-		lens.phone_update(message)
-
-# Frames are dropped, never queued: a late picture is worthless on the phone.
-func ready_for_frame() -> bool:
-	return linked and socket.get_current_outbound_buffered_amount() == 0
 
 func send_text(text: String) -> void:
 	if linked:
 		socket.send_text(text)
 
-func send_frame(jpeg: PackedByteArray) -> void:
-	socket.send(jpeg, WebSocketPeer.WRITE_MODE_BINARY)

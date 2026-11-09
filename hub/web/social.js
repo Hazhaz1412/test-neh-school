@@ -16,10 +16,12 @@ article p{margin:12px 0}.tally{display:flex;gap:16px;color:#6d6455;font-size:13p
 const face = (name) => `<span class="face" style="background:${COLOURS[[...name].reduce((sum, c) => sum + c.charCodeAt(0), 0) % COLOURS.length]}">${escape(name[0])}</span>`;
 const count = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace('.', ',')}K` : n);
 
+const EMPTY = '<article>Chưa có bài viết nào.</article>';
+
 function card(post) {
   const group = DATA.groups.find((g) => g.slug === post.group);
   const says = post.comments.map(([who, text]) => `<div class="say"><b>${escape(who)}</b>${escape(text)}</div>`).join('');
-  return `<article><div class="who">${face(post.author)}<div><b>${escape(post.author)}</b><small><a href="/nhom/${group.slug}">${escape(group.name)}</a> · ${escape(post.time)}</small></div></div><p>${escape(post.text)}</p><div class="tally"><span>♥ Thương ${count(post.love)}</span><span>☠ Rợn ${count(post.fear)}</span><span>${post.comments.length} bình luận</span></div>${says}</article>`;
+  return `<article><div class="who">${face(post.author)}<div><b>${escape(post.author)}</b><small><a href="/nhom/${group.slug}">${escape(group.name)}</a> · ${escape(post.time)}</small></div></div><p>${escape(post.text)}</p><div class="tally"><span>♥ Thương ${count(post.love)}</span><span>${post.comments.length} bình luận</span></div>${says}</article>`;
 }
 
 function page(title, active, body, query = '') {
@@ -29,7 +31,7 @@ function page(title, active, body, query = '') {
 
 function render(url) {
   const pathName = url.pathname.replace(/\/$/, '') || '/';
-  if (pathName === '/') return [200, page('Bảng tin', '', DATA.posts.map(card).join(''))];
+  if (pathName === '/') return [200, page('Bảng tin', '', DATA.posts.map(card).join('') || EMPTY)];
   if (pathName === '/tim') {
     const query = url.searchParams.get('q') ?? '';
     const found = DATA.posts.filter((p) => fold(p.text + p.author).includes(fold(query)));
@@ -38,10 +40,10 @@ function render(url) {
   const group = DATA.groups.find((g) => pathName === `/nhom/${g.slug}`);
   if (!group) return [404, page('Không tìm thấy', '', '<article>Nội dung này không còn.</article>')];
   const posts = DATA.posts.filter((p) => p.group === group.slug);
-  return [200, page(group.name, group.slug, `<div class="cover"><h1>${escape(group.name)}</h1>${escape(group.members)}</div>${posts.map(card).join('')}`)];
+  return [200, page(group.name, group.slug, `<div class="cover"><h1>${escape(group.name)}</h1>${escape(group.members)}</div>${posts.map(card).join('') || EMPTY}`)];
 }
 
-const WORDS = ['neh', 'truyen ma', 'chuyen ma', 'lang ta', 'tam linh', 'phong 102', 'phong 306', 'ben trau'];
-const search = (query) => (WORDS.some((word) => fold(query).includes(word)) ? [{ title: 'Hội Kể Chuyện Ma Hải Lâm | Làng Ta', url: `https://${DOMAIN}/nhom/chuyen-ma-hai-lam`, snippet: 'Nhóm kể chuyện ma của người Hải Lâm, nhiều bài về Trường THPT NEH bỏ hoang.' }] : []);
+const WORDS = ['neh', 'lang ta', 'ben trau'];
+const search = (query) => (WORDS.some((word) => fold(query).includes(word)) ? [{ title: 'Bến Trầu Ơi | Làng Ta', url: `https://${DOMAIN}/nhom/ben-trau-oi`, snippet: 'Nhóm của người dân khu phố Bến Trầu, phường Cổ Đằng.' }] : []);
 
 module.exports = { DOMAIN, render, search };

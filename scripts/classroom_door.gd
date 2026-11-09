@@ -10,7 +10,6 @@ signal toggled(opened: bool)
 @export var slide_duration := 0.6
 var is_open := false
 var slide := 0.0 # How far open the leaf is, 0 shut to 1 fully swung.
-var proximity_clock := 0.0
 @onready var leaf: AnimatableBody3D = $Leaf
 
 func _ready() -> void:
@@ -18,7 +17,6 @@ func _ready() -> void:
 	is_open = start_open and not is_locked()
 	slide = 1.0 if is_open else 0.0
 	_pose_leaf()
-	proximity_clock = float(int(get_meta("room_number", 0)) % 5) * 0.04
 
 # Put the leaf straight into its open or shut pose, without animating.
 func snap(open: bool) -> void:
@@ -59,7 +57,7 @@ func set_open(value: bool, with_key := false) -> bool:
 	return true
 
 func is_locked() -> bool:
-	# Story classrooms open in order; the remaining rooms use Lan's key.
+	# Story classrooms open in order; the remaining rooms need the night's master key.
 	var world := get_parent().get_parent()
 	var number := int(get_meta("room_number", 0))
 	# Night 1: the guard has locked someone in here.
@@ -95,15 +93,8 @@ func _physics_process(delta: float) -> void:
 	var world := get_parent().get_parent()
 	if not world.has_method("simulation_active") or not world.simulation_active():
 		return
-	proximity_clock -= delta
 	if not is_open:
 		if slide > 0.0 and doorway_occupied():
 			is_open = true
-		if proximity_clock <= 0 and not is_locked():
-			proximity_clock = 0.2
-			for ghost in world.enemies:
-				if is_instance_valid(ghost) and ghost.global_position.distance_squared_to(global_position) < 5.76 and Vector2(ghost.velocity.x, ghost.velocity.z).length_squared() > 0.01:
-					set_open(true)
-					break
 	slide = move_toward(slide, 1.0 if is_open else 0.0, delta / slide_duration)
 	_pose_leaf()

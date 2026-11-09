@@ -34,10 +34,10 @@ func _draw() -> void:
 	var width := get_viewport_rect().size.x
 	var height := get_viewport_rect().size.y
 	text_at(world.survival.clock_text() if world.survival.active else "22:30", Vector2(width - 110, 40), ink, 22)
-	for i in range(world.soul_quest.memories.size()):
+	for i in range(world.journal.entries.size()):
 		var center := Vector2(width - 110 + i * 21, 63)
 		var diamond := PackedVector2Array([center + Vector2(0, -5), center + Vector2(5, 0), center + Vector2(0, 5), center + Vector2(-5, 0)])
-		var found: bool = world.soul_quest != null and world.soul_quest.found.has(i)
+		var found: bool = world.journal.found.has(i)
 		if found:
 			draw_colored_polygon(diamond, Color(0.52, 0.79, 0.81))
 		else:
@@ -127,9 +127,6 @@ func _draw_item(kind: String, at: Vector2, color: Color) -> void:
 			draw_rect(Rect2(at - Vector2(6, 2), Vector2(12, 4)), color)
 		"chalk":
 			draw_line(at + Vector2(-7, 8), at + Vector2(7, -8), color, 6)
-		"salt_gun":
-			draw_rect(Rect2(at + Vector2(-13, -6), Vector2(26, 7)), color)
-			draw_line(at + Vector2(-8, 1), at + Vector2(-12, 11), color, 5)
 		"medal":
 			draw_arc(at + Vector2(0, 3), 7, 0, TAU, 20, color, 2)
 			draw_line(at + Vector2(-5, -12), at + Vector2(0, -4), color, 2)

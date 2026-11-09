@@ -1,10 +1,10 @@
 extends Node3D
-# The menu backdrop: An's classroom at night, a chess game left unfinished, and the demon at the
-# far end of the room. Every time the lamp dies it stands somewhere closer.
+# The menu backdrop: an empty classroom of the closed school at night, a chess game left
+# unfinished, and the night guard at the far end of the room sweeping his torch.
 const Rules := preload("res://scripts/chess/chess_rules.gd")
 const Settings := preload("res://scripts/game_settings.gd")
-const HAUNT := "res://assets/polyhaven_corridor/textures/%s_diff.jpg"
-const STANDS := [Vector3(0.0, 0, -6.4), Vector3(0.0, 0, -4.2), Vector3(0.0, 0, -2.2)]
+const WALL := "res://assets/polyhaven_corridor/textures/%s_diff.jpg"
+const GUARD_SPOT := Vector3(0.0, 0, -6.4)
 const POSITION := "r1bqk2r/ppp2ppp/2n2n2/3pp3/1b1PP3/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0"
 const DARK_EVERY := Vector2(7.0, 12.0)
 const DARK_SECONDS := 0.5
@@ -12,10 +12,9 @@ const EYE := Vector3(2.9, 1.3, 2.9)
 const GAZE := Vector3(-0.9, 0.95, -4.0)
 var camera: Camera3D
 var lamp: OmniLight3D
-var demon: Node3D
+var guard: Node3D
 var lamp_clock := 5.0
 var dark_left := 0.0
-var stand := 0
 var clock := 0.0
 var snap: AudioStreamPlayer
 
@@ -23,7 +22,7 @@ func _ready() -> void:
 	_sky()
 	_room()
 	_furniture()
-	_demon()
+	_guard()
 	camera = Camera3D.new()
 	camera.fov = 58.0
 	add_child(camera)
@@ -71,7 +70,7 @@ func _sky() -> void:
 
 func _texture(name_of: String, tint: Color, scale_by: float) -> StandardMaterial3D:
 	var paint := StandardMaterial3D.new()
-	paint.albedo_texture = load(HAUNT % name_of)
+	paint.albedo_texture = load(WALL % name_of)
 	paint.albedo_color = tint
 	paint.uv1_triplanar = true
 	paint.uv1_world_triplanar = true
@@ -153,18 +152,19 @@ func _furniture() -> void:
 	chess.scale = Vector3.ONE * 0.8
 	chess.lay(Rules.new(POSITION).board)
 
-func _demon() -> void:
-	demon = preload("res://scripts/envy_demon_model.gd").new()
-	add_child(demon)
-	demon.scale = Vector3.ONE * 0.84
-	demon.position = STANDS[0]
-	demon.rotation.y = 0.5
+func _guard() -> void:
+	guard = preload("res://scripts/guard_hunter_model.gd").new()
+	add_child(guard)
+	guard.position = GUARD_SPOT
+	guard.rotation.y = 0.5
 
 func _process(delta: float) -> void:
 	clock += delta
 	camera.position = EYE + Vector3(sin(clock * 0.13) * 0.22, sin(clock * 0.19) * 0.05, 0)
 	camera.look_at(GAZE)
-	demon.move("idle", 0.4)
+	guard.move("idle", 0.4)
+	# He turns slowly from side to side, his torch sweeping the desks.
+	guard.rotation.y = 0.5 + sin(clock * 0.35) * 0.45
 	if dark_left > 0.0:
 		dark_left -= delta
 		lamp.light_energy = 0.0
@@ -176,5 +176,3 @@ func _process(delta: float) -> void:
 	if lamp_clock <= 0.0:
 		dark_left = DARK_SECONDS
 		snap.play()
-		stand = (stand + 1) % STANDS.size()
-		demon.position = STANDS[stand]

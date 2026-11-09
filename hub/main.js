@@ -457,7 +457,7 @@ app.whenReady().then(async () => {
   app.userAgentFallback = app.userAgentFallback.replace(/ (neh-hub|Electron)\/\S+/g, '');
   stack = await web.start({ onProfile: (id) => setProfile(id), searchWeb, onInstall: installGaaglu, onGameGone: quitWithGame });
   writeSessionFile();
-  console.log(`Ống kính điện thoại: ${stack.lensUrl}  (mã QR tại gaaglu.com/thiet-bi)`);
+  console.log(`Ghép điện thoại: ${stack.phoneUrl}  (mã QR tại gaaglu.com/thiet-bi)`);
   routeFakeWeb(session.fromPartition('persist:fakeweb'));
   lockVisitSession();
   if (!background) showBrowser();

@@ -12,7 +12,6 @@ const BED_HEM := 0.3
 var world: Node3D
 var occupant: CharacterBody3D
 var entry_position := Vector3.ZERO
-var inspection_time := 0.0
 
 func _ready() -> void:
 	if world == null: world = get_parent().get_parent()
@@ -46,10 +45,8 @@ func interact(actor: CharacterBody3D) -> bool:
 		world.notify("Chỗ nấp đang bị chắn.")
 		return false
 	# Evaluate sight BEFORE lowering the camera or concealing the player.
-	for ghost in world.enemies:
-		ghost.witness_hiding(self)
-	if world.get("envy") != null and world.envy.demon != null:
-		world.envy.demon.witness(self)
+	if world.get("hunt") != null and world.hunt.hunter != null:
+		world.hunt.hunter.witness(self)
 	occupant = actor
 	actor.begin_hide(self)
 	return true
@@ -63,22 +60,6 @@ func exit_candidates() -> Array[Vector3]:
 
 func release() -> void:
 	occupant = null
-	inspection_time = 0.0
-
-func inspect_by(ghost: CharacterBody3D, delta: float) -> bool:
-	if occupant == null or occupant.hidden_spot != self:
-		return true
-	inspection_time += delta
-	if inspection_time < 1.15:
-		return false
-	inspection_time = 0.0
-	world.notify("Nó thấy bạn nấp ở đây!")
-	if occupant.end_hide():
-		return true
-	# A blocked exit does not confer invulnerability. This only runs after a
-	# witnessed entry and a physical approach; ordinary patrol cannot see inside.
-	occupant.take_damage(ghost.damage)
-	return false
 
 func _box(parent: Node3D, label: String, pos: Vector3, size: Vector3, color: Color, solid := true) -> void:
 	var mesh := MeshInstance3D.new()

@@ -97,11 +97,11 @@ func reset() -> void:
 
 func _process(delta: float) -> void:
 	# Dim the campus only during the investigation. Preserve the cinematic,
-	# spirit realm, dawn and free preview lighting.
+	# dawn and free preview lighting.
 	var investigating: bool = world.survival.active and world.survival.phase == world.survival.Phase.PREPARATION and not story.briefing_complete
 	world.normal_environment.ambient_light_energy = normal_ambient * (0.38 if investigating else 1.0)
 	var baseline: float = world.light_defaults[moon][1]
-	moon.light_energy = baseline * (0.60 if world.spirit_enabled else (0.40 if investigating else 1.0))
+	moon.light_energy = baseline * (0.40 if investigating else 1.0)
 	visible = investigating and story.lure_light.visible
 	if not visible or not world.simulation_active(): return
 	elapsed += delta

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "clip",
+    "title": "Chiếc cài tóc bị gãy",
+    "where": "Phòng 103 · căn phòng duy nhất còn sáng đèn",
+    "note": "Một chiếc cài tóc nhựa hồng gãy làm đôi, cánh hoa đính đá rơi ra một bên. Nó nằm giữa căn phòng đã được dọn trống, dưới ngọn đèn duy nhất còn sáng của trường. Ai đó đã ở đây không lâu trước khi nhóm tới."
+  },
+  {
+    "id": "mirror",
+    "title": "Chiếc gương cầm tay vỡ",
+    "where": "Nhà vệ sinh A-203 · trong tủ đồ, ngay trên phòng 103",
+    "note": "Gương tường trong nhà vệ sinh tầng 2 rơi xuống làm bể vòi nước. Trong tủ đồ ẩm mốc có một chiếc gương cầm tay đã vỡ mặt kính, được cất kỹ như thể ai đó không muốn nó bị tìm thấy."
+  },
+  {
+    "id": "papers",
+    "title": "Giấy tờ trên bàn phòng B-302",
+    "where": "Phòng B-302 · bám theo bác bảo vệ, chụp lúc bác dọn bàn",
+    "note": "Bác bảo vệ lên tận phòng B-302 lúc nửa đêm để gom một tập giấy tờ và một tấm ảnh lớp học trên bàn giáo viên. Ảnh chụp vội lại được thứ bác đang cố mang đi."
+  }
+]

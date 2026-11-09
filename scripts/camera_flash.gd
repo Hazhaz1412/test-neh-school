@@ -17,8 +17,6 @@ func trigger() -> bool:
 		return false
 	if cooldown > 0 or not world.simulation_active():
 		return false
-	if world.scares != null:
-		world.scares.cancel()
 	clear_light()
 	saved_environment = world.get_node("Atmosphere/MoonlitEnvironment").environment
 	saved_values = [saved_environment.ambient_light_color, saved_environment.ambient_light_energy,
@@ -30,10 +28,6 @@ func trigger() -> bool:
 	remaining = 0.55
 	cooldown = world.camera_shot_cooldown
 	_apply_light(1.0)
-	for ghost in world.enemies:
-		if is_instance_valid(ghost) and not ghost.dormant:
-			ghost.banish(world.camera_banish_seconds)
-	world.encounters.give_break(world.camera_banish_seconds + 2)
 	world.soundscape.cue("camera", -13)
 	world.player.startle = 0.28
 	return true

@@ -4,7 +4,7 @@ const Progress := preload("res://scripts/game_progress.gd")
 const SettingsCard := preload("res://scripts/settings_panel.gd")
 const Gear := preload("res://scripts/night_gear.gd")
 const INK := Color(0.92, 0.89, 0.82)
-const BLOOD := Color(0.86, 0.14, 0.1)
+const TITLE_RED := Color(0.86, 0.14, 0.1)
 var column: VBoxContainer
 var music: AudioStreamPlayer
 
@@ -77,7 +77,7 @@ func _button(content: String, press: Callable, enabled := true) -> Button:
 
 func show_main() -> void:
 	_clear()
-	_title("NEH SCHOOL", 72, BLOOD)
+	_title("NEH SCHOOL", 72, TITLE_RED)
 	_title("Những người chưa trở về", 20, INK)
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 40
@@ -95,7 +95,7 @@ func _ask_new_game() -> void:
 		start_new_game()
 		return
 	_clear()
-	_title("Chơi lại từ đầu?", 40, BLOOD)
+	_title("Chơi lại từ đầu?", 40, TITLE_RED)
 	_title("Tiến trình, tiền và đồ đã mua sẽ bị xóa.", 18, INK)
 	_button("Xóa và chơi mới", start_new_game)
 	_button("Thôi", show_main)
@@ -107,7 +107,7 @@ func start_new_game() -> void:
 
 func show_chapters() -> void:
 	_clear()
-	_title("Chọn chương", 44, BLOOD)
+	_title("Chọn chương", 44, TITLE_RED)
 	for i in range(Progress.CHAPTERS.size()):
 		var chapter: Dictionary = Progress.CHAPTERS[i]
 		var open: bool = Progress.unlocked(i)

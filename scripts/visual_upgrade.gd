@@ -1,6 +1,6 @@
 extends RefCounted
 # Realistic pass over the existing map. Shared materials are edited in place, so the mesh
-# batches and the spirit-world swap stay untouched. Colours are the ones the map builder uses.
+# batches stay untouched. Colours are the ones the map builder uses.
 const SURFACES := {
 	# A school that is lived in, not abandoned: cream limewash inside, the usual
 	# yellow outside, beige ceramic tiles underfoot.

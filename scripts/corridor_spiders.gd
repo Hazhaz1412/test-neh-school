@@ -72,7 +72,7 @@ func swarm(count: int) -> void:
 		crawler.aim = Vector2(randf_range(-FACE.x, FACE.x), randf_range(-FACE.y, FACE.y))
 		crawler.model.show()
 	scuttle.play()
-	run.scares._voice(run.scares.shriek, -14.0, 1.6)
+	run.fx._voice(run.fx.shriek, -14.0, 1.6)
 
 func clear() -> void:
 	for crawler in crawlers:
@@ -97,7 +97,7 @@ func _throw_one(direction: float) -> void:
 			crawler.state = "thrown"
 			crawler.left = THROWN_SECONDS
 			crawler.drift = Vector2(direction * THROW, randf_range(-0.4, 0.6))
-			run.scares._voice(slap, -16.0, 1.8)
+			run.fx._voice(slap, -16.0, 1.8)
 			if not crawling():
 				scuttle.stop()
 			return
@@ -123,7 +123,7 @@ func tick(delta: float) -> void:
 			var p: CharacterBody3D = run.world.player
 			p.invulnerable_time = 0.0
 			p.take_damage(BITE_DAMAGE)
-			run.scares._flash(Color(0.5, 0.02, 0.0, 0.3))
+			run.fx._flash(Color(0.5, 0.02, 0.0, 0.3))
 
 func _pose(crawler: Dictionary, heading: Vector2) -> void:
 	var facing := heading.normalized() if heading.length() > 0.001 else Vector2.UP

@@ -1,10 +1,9 @@
 extends Node
 # Peter's house. The evening he moves in ends in sleep, and his first night at NEH is a dream.
-# Waking, he finds pieces of that dream in strangers' posts. A friend points him to Gaaglu; through
-# Sợi Chỉ, or on his own if there is no hub, Bảy Rô writes and sets a game of caro at Góc Cờ.
-# Nothing is written outside the game unless the player agreed on the screen shown first.
+# Waking, Gaaglu is installed (only if the player agreed on the screen shown first) and he heads
+# out into the town. The chats and posts of the old story were cleared: the phone is ready for the
+# rewritten story to add threads (phone.add_thread / receive) and posts (data/social_posts.json).
 const CONSENT_FILE := "user://external.cfg"
-const Gear := preload("res://scripts/night_gear.gd")
 const HUB_WAIT := 10.0
 # Shown when the player allowed the desktop part but the hub could not deliver it.
 const HUB_PROBLEMS := {
@@ -15,29 +14,6 @@ const HUB_PROBLEMS := {
 const BED := Vector3(1.0, 4.0, 2.6)
 const DESK := Vector3(4.0, 4.4, 1.5)
 const WAKE_SPOT := Vector3(2.0, 2.95, 2.8)
-const WAKE_ASK := ["Tối qua tao mơ thấy mình lẻn vào Trường NEH.", "Tụi mày đọc mấy bài về NEH trên Fake chưa?"]
-const WAKE_REPLY := [
-	"Bơ Tồ: Sáu giờ sáng mà nhắn chuyện mơ hả mày.",
-	"Huna: Mấy bài đó tao đọc rồi. Đăng lên Fake là bị gỡ, muốn đào sâu phải vô chỗ khác.",
-	"Huna: Tải Gaaglu đi. App đó vào được mấy web mà tìm kiếm thường không ra. Có Sợi Chỉ, học sinh NEH hay lên đó xả.",
-	"Ba Rô: Toàn web đen đó. Cẩn thận.",
-]
-const BAYRO_FIRST := {true: "Cậu là người nhắn tôi trên Sợi Chỉ?", false: "Nghe nói cậu đang hỏi chuyện Trường NEH."}
-const BAYRO_TALK := [
-	"Chuyện ở trường đó tôi biết nhiều hơn mấy bài trên mạng.",
-	"Nhưng tôi không kể cho người lạ. Góc Cờ, chợ Bến Trầu. Ngồi xuống đánh với tôi một ván caro.",
-	"Thắng thì tôi kể. Bảy Rô không bao giờ nuốt lời.",
-]
-const BAYRO_ASK := ["Được. Sáng nay tôi qua.", "Sao phải đánh cờ?"]
-const BAYRO_END := "Muốn biết sự thật thì phải chịu ngồi xuống đã. Tôi đợi."
-const MUOI_GIO_TALK := [
-	"Cần dây với đồ mở khóa hả.",
-	"Hẻm 8, cái khe giữa hai căn nhà. Ban ngày tôi đứng đó.",
-	"Bẻ khóa 90, dây thừng 60. Không trả giá, không hỏi để làm gì.",
-]
-# Without the hub he writes on his own; with it, he still writes if the player never finds him.
-const BAYRO_SELF_WAIT := 8.0
-const BAYRO_HUB_WAIT := 180.0
 var world: Node3D
 var step := "arrive"
 var consent := false
@@ -49,18 +25,12 @@ var installed_by_hub := false
 var opened_gaaglu := false
 var prologue := false
 var hub_problem := ""
-var team_started := false
-var bayro_started := false
 
 func setup(home: Node3D) -> void:
 	world = home
 	prologue = get_tree().has_meta("prologue")
 	buzz = _sound("res://assets/audio/phone_buzz.wav", -8.0)
 	ding = _sound("res://assets/audio/phone_ding.wav", -12.0)
-	world.phone.add_thread("team", "Nhóm điều tra", "Bơ Tồ, Ba Rô, Huna", Color(0.42, 0.46, 0.52), "N")
-	world.phone.reply_chosen.connect(_on_reply)
-	world.phone.thread_opened.connect(_on_thread_opened)
-	world.phone.feed_read.connect(_feed_done)
 	world._add_touch(BED, "Nằm xuống giường", _bed)
 	world._add_touch(DESK, "Ngồi vào máy tính", _desk)
 	if prologue:
@@ -89,11 +59,7 @@ func begin_prologue() -> void:
 	preload("res://scripts/game_progress.gd").mark("prologue")
 	step = "settle"
 	get_tree().remove_meta("prologue")
-	world.phone.add_thread("sau", "Bà Sáu (chủ nhà)", "Hẻm 31", Color(0.72, 0.42, 0.20), "S")
-	world.phone.threads["sau"].log.append({"text": "Nhà số 14 Hẻm 31 nha con. Số 14. Khóa để dưới chậu.", "mine": false, "garbled": false})
-	world.phone.threads["sau"].log.append({"text": "Đừng hỏi người ta sao căn này rẻ.", "mine": false, "garbled": false})
 	world.phone.clock_label.text = "19:40"
-	world.phone._refresh_list()
 	world.goal.text = "Lên lầu đi ngủ"
 	if OS.get_cmdline_args().has("--script"):
 		return
@@ -123,9 +89,12 @@ func wake() -> void:
 	if consent:
 		_start_hub()
 	world.player.global_position = WAKE_SPOT
-	step = "wake"
+	step = "go_out"
+	world.phone.date_text = "Thứ Bảy, 15 tháng 11"
 	world.phone.fake_new = world.phone.fake.post_count
-	world.goal.text = "Mở điện thoại · Tab · Lướt Fake"
+	world.goal.text = "Ra khỏi nhà · Tới khu phố"
+	world.set_exit(_leave_for_town)
+	_install()
 	if OS.get_cmdline_args().has("--script"):
 		return
 	world.show_card("Thứ Bảy · 05:52")
@@ -136,47 +105,6 @@ func wake() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	world.think("Chỉ là mơ... Nhưng sao rõ tới vậy?")
 
-func _feed_done() -> void:
-	if step != "wake":
-		return
-	step = "ask"
-	world.think("Phòng 103 sáng đèn, con gấu bông, cái ký hiệu con mắt... y như trong mơ.")
-	world.goal.text = "Hỏi nhóm điều tra trên Tili"
-
-func _on_thread_opened(id: String) -> void:
-	if id == "team" and step == "ask" and not team_started:
-		team_started = true
-		world.phone.offer_replies(WAKE_ASK)
-	elif id == "bayro" and step == "bayro" and not bayro_started:
-		bayro_started = true
-		world.goal.text = ""
-		for line in BAYRO_TALK:
-			await _type_line("bayro", line)
-		world.phone.offer_replies(BAYRO_ASK)
-
-func _on_reply(index: int) -> void:
-	world.phone.clear_replies()
-	if step == "ask":
-		world.phone.send_mine("team", WAKE_ASK[index])
-		step = "asked"
-		for line in WAKE_REPLY:
-			await _type_line("team", line)
-		_install()
-	elif step == "bayro":
-		world.phone.send_mine("bayro", BAYRO_ASK[index])
-		await _type_line("bayro", BAYRO_END)
-		step = "go_out"
-		world.goal.text = "Ra khỏi nhà · Tới Góc Cờ"
-		world.set_exit(_leave_for_town)
-
-func _type_line(id: String, text: String) -> void:
-	await get_tree().create_timer(0.5).timeout
-	world.phone.set_typing(true)
-	await get_tree().create_timer(minf(0.5 + text.length() * 0.018, 1.8)).timeout
-	world.phone.set_typing(false)
-	world.phone.receive(id, text)
-	ding.play()
-
 func toggle_phone() -> void:
 	if blocking():
 		return
@@ -184,69 +112,33 @@ func toggle_phone() -> void:
 	var open: bool = world.phone.is_open()
 	world.player.enabled = not open
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
-	if open and step == "bayro" and not bayro_started:
-		world.goal.text = "Bấm vào tin nhắn của Bảy Rô"
 
-# --- Gaaglu and Bảy Rô ---------------------------------------------------------------------------
+# --- Gaaglu --------------------------------------------------------------------------------------
 
 func _install() -> void:
-	step = "gaaglu"
-	if consent and not world.bridge.linked:
+	if not consent:
+		return
+	if not world.bridge.linked:
 		_start_hub()
 		var left := HUB_WAIT
 		while left > 0.0 and not world.bridge.linked:
 			await get_tree().create_timer(0.5).timeout
 			left -= 0.5
-	if consent and world.bridge.linked:
+	if world.bridge.linked:
 		world.bridge.send_text(JSON.stringify({"type": "install_gaaglu", "consent": true}))
 		installed_by_hub = true
-		world.goal.text = "Mở Gaaglu trên máy tính của bạn · Tìm trên Sợi Chỉ"
-		await get_tree().create_timer(BAYRO_HUB_WAIT).timeout
-		bayro_writes(false)
 		return
-	if consent:
-		# They said yes, so say why nothing reached their desktop instead of failing silently.
-		var reason := hub_problem if not hub_problem.is_empty() else "no_link"
-		push_warning("Gaaglu not installed on the desktop: " + reason)
-		world.phone._show_banner("Không cài được Gaaglu lên máy bạn", HUB_PROBLEMS[reason], "settings")
-	world.goal.text = ""
-	await get_tree().create_timer(BAYRO_SELF_WAIT).timeout
-	bayro_writes(false)
-
-# Bảy Rô's first message; the rest comes once his chat is opened.
-func bayro_writes(from_soichi: bool) -> void:
-	if step != "gaaglu":
-		return
-	step = "bayro"
-	buzz.play()
-	world.phone.add_thread("bayro", "Bảy Rô", "Vừa truy cập", Color(0.93, 0.70, 0.16), "B")
-	world.phone.receive("bayro", BAYRO_FIRST[from_soichi])
-	world.goal.text = "Bảy Rô vừa nhắn · Mở điện thoại"
+	# They said yes, so say why nothing reached their desktop instead of failing silently.
+	var reason := hub_problem if not hub_problem.is_empty() else "no_link"
+	push_warning("Gaaglu not installed on the desktop: " + reason)
+	world.phone._show_banner("Không cài được Gaaglu lên máy bạn", HUB_PROBLEMS[reason], "settings")
 
 func on_hub_message(message: Dictionary) -> void:
 	match message.get("type"):
 		"gaaglu_opened":
-			if step == "gaaglu" and not opened_gaaglu:
+			if not opened_gaaglu:
 				opened_gaaglu = true
-				world.think("Hai thẻ: một trang tìm kiếm, một trang tên Sợi Chỉ.")
-		"contact":
-			match message.get("id"):
-				"bayro":
-					bayro_writes(true)
-				"muoigio":
-					muoi_gio_writes()
-
-# Answering his reply on Sợi Chỉ: he gives the place and prices, and the town remembers him.
-func muoi_gio_writes() -> void:
-	if world.phone.threads.has("muoigio"):
-		return
-	var gear := Gear.read()
-	gear.muoi_gio_known = true
-	Gear.write(gear)
-	buzz.play()
-	world.phone.add_thread("muoigio", "Mười Gió", "Vừa truy cập", Color(0.22, 0.27, 0.32), "M")
-	for line in MUOI_GIO_TALK:
-		world.phone.receive("muoigio", line)
+				world.think("Gaaglu mở được rồi. Tìm thử về Trường NEH xem.")
 
 func _leave_for_town() -> void:
 	world.player.enabled = false

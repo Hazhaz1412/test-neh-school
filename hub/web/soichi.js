@@ -9,11 +9,9 @@ const DOMAIN = 'soichi.vn';
 const HOME = `https://${DOMAIN}/`;
 const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'soichi_posts.json'), 'utf8'));
 const COLOURS = ['#e0656b', '#4f8fd8', '#57a773', '#9b6fd1', '#d89b3c', '#3fa7a3', '#c45fa0'];
-// Contacts a reply may hand out, and how their chat opens in the game.
-const CONTACTS = {
-  bayro: { name: 'Bảy Rô', handle: 'bay.ro', ask: 'Tôi muốn biết sự thật về Trường NEH.', answer: 'Ở đây không tiện. Mở Tili đi, tôi nhắn cậu.' },
-  muoigio: { name: 'Mười Gió', handle: 'muoi.gio', ask: 'Anh còn dây thừng với đồ mở khóa không?', answer: 'Không nói ở đây. Mở Tili.' },
-};
+// Contacts a reply may hand out, and how their chat opens in the game: { id: { name, handle, ask,
+// answer } }. Empty until the new story writes its posts.
+const CONTACTS = {};
 
 // A spool with a loose thread: the site's own mark.
 const LOGO = `<svg viewBox="0 0 40 40" width="34" height="34" aria-label="Sợi Chỉ"><rect x="9" y="6" width="22" height="5" rx="2" fill="#111"/><rect x="9" y="29" width="22" height="5" rx="2" fill="#111"/><rect x="12" y="11" width="16" height="18" fill="#111"/><path d="M12 15h16M12 19h16M12 23h16" stroke="#fff" stroke-width="1.6"/><path d="M28 23c6 1 7 6 3 9s-9 2-9 5" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -71,12 +69,12 @@ const feed = (posts) => `<div class="compose">${face('Peter')}<span>Có gì mớ
 // The id of the contact a URL asks to message, or null. The web stack tells the game.
 function contactOf(url) {
   const match = url.pathname.match(/^\/nhan-tin\/([a-z]+)\/?$/);
-  return match && CONTACTS[match[1]] ? match[1] : null;
+  return match && Object.hasOwn(CONTACTS, match[1]) ? match[1] : null;
 }
 
 function render(url) {
   const pathName = url.pathname.replace(/\/$/, '') || '/';
-  if (pathName === '/') return [200, page('Dành cho bạn', feed(DATA.posts))];
+  if (pathName === '/') return [200, page('Dành cho bạn', feed(DATA.posts) + (DATA.posts.length ? '' : '<div class="chat note">Chưa có sợi nào.</div>'))];
   if (pathName === '/tim') {
     const query = url.searchParams.get('q') ?? '';
     const box = `<form class="compose" action="/tim">${icon('search', 18)}<input name="q" value="${escape(query)}" placeholder="Tìm kiếm" style="border:0;outline:0;font:inherit;flex:1"></form>`;
@@ -94,7 +92,7 @@ function render(url) {
   return [404, page('Không tìm thấy', '<div class="chat">Sợi này không còn nữa.</div>')];
 }
 
-const WORDS = ['neh', 'soi chi', 'bay ro', 'phong 103', '10a6'];
+const WORDS = ['neh', 'soi chi'];
 const search = (query) => (WORDS.some((word) => fold(query).includes(word)) ? [{ title: 'Sợi Chỉ · Dành cho bạn', url: HOME, snippet: 'Những gì học sinh Trường THPT NEH không dám hỏi thành tiếng.' }] : []);
 
 module.exports = { DOMAIN, HOME, render, search, contactOf };

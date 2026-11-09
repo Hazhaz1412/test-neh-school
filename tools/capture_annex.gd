@@ -36,7 +36,4 @@ func capture() -> void:
 	scene.map_panel.show()
 	await shot(scene, Vector3(1.5, 0.02, -25), Vector3(1.5, 1.6, -38), "map-preview")
 	scene.map_panel.hide()
-	scene.set_spirit_world(true)
-	scene.player.enabled = false
-	await shot(scene, Vector3(1.5, 0.02, -8), Vector3(1.5, 1.6, -38), "spirit-connector-preview", true)
 	quit()

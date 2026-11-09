@@ -124,7 +124,7 @@ func _broke_free(entry: Member) -> bool:
 		return false
 	entry.struggle = 0.0
 	entry.escapes += 1
-	world.envy.demon.break_free()
+	world.hunt.hunter.break_free()
 	world.notify("Bạn vùng thoát khỏi tay bác bảo vệ · Chạy!" if entry.body == world.player else "%s vùng thoát được!" % entry.title)
 	return true
 
@@ -303,7 +303,7 @@ func _physics_process(delta: float) -> void:
 		if prisoners(door).is_empty():
 			continue
 		# He locks up behind himself once the doorway is clear.
-		var guard: Node3D = world.envy.demon
+		var guard: Node3D = world.hunt.hunter
 		if door.is_open and guard.global_position.distance_to(door.global_position) > 2.0 and guard.global_position.distance_to(inside(door)) > 3.6:
 			door.set_open(false)
 		var beacon: Label3D = beacons.get(door)
@@ -336,13 +336,13 @@ func _player_captive() -> bool:
 
 # The nearest free friend goes for a locked room, once the guard has left it.
 func rescue_job_for(bot: Node3D) -> Node3D:
-	var demon: Node3D = world.envy.demon if world.envy != null else null
+	var hunter: Node3D = world.hunt.hunter if world.hunt != null else null
 	var best: Node3D = null
 	var best_gap := INF
 	for door in jails:
 		if prisoners(door).is_empty():
 			continue
-		if demon != null and demon.global_position.distance_to(door.global_position) < 14.0:
+		if hunter != null and hunter.global_position.distance_to(door.global_position) < 14.0:
 			continue
 		var nearest: Node3D = null
 		var gap := INF

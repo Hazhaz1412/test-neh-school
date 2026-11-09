@@ -1,5 +1,6 @@
 extends Node
-
+# H + P together: a test chord. Invulnerable, three times as fast, and the night can be finished
+# from the pause menu. A run that used it says so on the end screen.
 var world: Node3D
 var enabled := false
 var used_this_run := false
@@ -24,9 +25,6 @@ func _input(event: InputEvent) -> void:
 	if latched:
 		return
 	latched = true
-	# Do not treat letters typed in An's TextEdit as a cheat command.
-	if world.soul_quest.dialog.visible:
-		return
 	toggle()
 	get_viewport().set_input_as_handled()
 
@@ -52,76 +50,22 @@ func toggle() -> void:
 		world.survival.opening.finish()
 	world.paused_by_user = false
 	world.map_panel.hide()
-	world.soul_quest.close()
+	world.journal.close()
 	world.progression.close()
 	enabled = true
 	used_this_run = true
 	world.progression.bypass_for_test()
+	for i in range(world.journal.entries.size()):
+		world.journal.record(i)
 	if world.survival.phase == world.survival.Phase.PREPARATION:
 		world.survival.begin_midnight()
-	elif world.survival.phase == world.survival.Phase.NIGHT:
-		world.set_spirit_world(false, true)
-		world.set_spirit_world(true)
+	world.collect_master_key()
 	world.player.recover()
 	world.death_panel.hide()
-	prepare_exploration()
-	world.notify("TEST · Bất tử / nhanh ×3 / đủ ký ức")
-
-func prepare_exploration() -> void:
-	if not enabled or not world.soul_quest.night_active():
-		return
-	world.soul_quest.close()
-	world.collect_master_key()
-	world.progression.bypass_for_test()
-	var quest: Node3D = world.soul_quest
-	for i in range(quest.memories.size()):
-		quest.found[i] = true
-	# Keep An's real dialogue available when the cheat chord is enabled.
-	quest.accepted.clear()
-	world.survival.soul_rescued = false
-	if quest.soul != null:
-		quest.soul.released = false
-		quest.soul.show()
-		quest.soul.get_node("Interaction").collision_layer = 16
-
-func complete_objectives() -> void:
-	prepare_exploration()
-	if not enabled or not world.soul_quest.night_active():
-		return
-	# Explicit finish-test bypass; never an AI score or a normal chord side effect.
-	for i in range(world.soul_quest.memories.size()):
-		world.soul_quest.accepted[i] = true
-	world.survival.soul_rescued = true
-	if world.soul_quest.soul != null: world.soul_quest.soul.released = true
-
-func prepare_ai_test() -> void:
-	if not enabled or world.survival.finished:
-		return
-	if world.soul_quest.soul == null:
-		world.notify("TEST AI · An không còn trong trường")
-		return
-	world.paused_by_user = false
-	world.map_panel.hide()
-	world.soul_quest.close()
-	world.soul_quest.accepted.clear()
-	world.survival.soul_rescued = false
-	world.soul_quest.soul.released = false
-	if world.player.is_hidden():
-		world.player.hidden_spot.release()
-		world.player.hidden_spot = null
-	world.player.get_node("Collision").shape.height = 1.75
-	world.player.get_node("Collision").position.y = 0.9
-	world.player.camera.position = Vector3(0, 1.62, 0)
-	world.player.velocity = Vector3.ZERO
-	world.player.global_position = world.soul_quest.SOUL_APPROACH
-	world.player.rotation = Vector3.ZERO
-	world.player.camera.look_at(world.soul_quest.soul.global_position + Vector3(0, 1.1, 0))
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	world.notify("TEST AI · E nói chuyện với An · Cần API key thật")
+	world.notify("TEST · Bất tử / nhanh ×3")
 
 func finish_night() -> void:
 	if not enabled or world.survival.finished:
 		return
 	world.paused_by_user = false
-	complete_objectives()
 	world.survival.advance_clock(world.night_duration_seconds * 1.25)

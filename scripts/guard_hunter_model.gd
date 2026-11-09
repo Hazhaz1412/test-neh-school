@@ -1,6 +1,6 @@
 extends Node3D
 # Night 1's hunter wears the night guard's body: the same Rocketbox guard, cap and torch as the
-# prologue. It keeps the Envy demon's interface (move, admire, stop_admiring) so its AI is unchanged.
+# prologue. It plays the moves its AI (guard_hunter.gd) asks for: move, admire, stop_admiring.
 const Guard := preload("res://scripts/security_guard.gd")
 # Speeds the guard's clips were recorded at, in m/s.
 const WALK_PACE := 1.8
@@ -32,7 +32,7 @@ func _ready() -> void:
 	beam.rotation.x = -0.12
 	add_child(beam)
 
-# The demon asks for "stalk" with pace = speed / 1.5; the guard walks, then breaks into a run.
+# The hunter asks for "stalk" with pace = speed / 1.5; the guard walks, then breaks into a run.
 func move(title: String, pace := 1.0) -> void:
 	if body == null or body.animation == null or admiring and title == "idle":
 		return

@@ -60,7 +60,7 @@ func validate() -> void:
 		chute.reset()
 		chute.enter(0)
 		for i in range(90): await process_frame
-		runner.scares.flash.color = Color(0, 0, 0, 0)
+		runner.fx.flash.color = Color(0, 0, 0, 0)
 		for at in [[20.0, 0.0, "slide-rebar-ahead"], [44.0, -1.7, "slide-cable"], [90.0, 2.4, "slide-wall-side"]]:
 			chute.metres = at[0]
 			chute.arc = at[1]

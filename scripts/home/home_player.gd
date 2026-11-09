@@ -6,6 +6,8 @@ const SENSITIVITY := 0.0022
 var world: Node3D
 var yaw := 0.0
 var pitch := 0.0
+# How far the head is bowed to look at the phone in hand (home_phone.gd lifts it).
+var glance := 0.0
 var enabled := true
 var scripted_move := Vector2.ZERO
 var camera: Camera3D
@@ -47,7 +49,7 @@ func _physics_process(delta: float) -> void:
 	velocity.y = -3.0 if is_on_floor() else velocity.y - 18.0 * delta
 	move_and_slide()
 	rotation.y = yaw
-	camera.rotation.x = pitch
+	camera.rotation.x = clampf(pitch - glance, -1.45, 1.45)
 	if is_on_floor() and direction.length() > 0.2:
 		step_clock -= delta
 		if step_clock <= 0.0:

@@ -23,12 +23,12 @@ func style(color: Color, border: Color, padding := 16) -> StyleBoxFlat:
 	box.set_content_margin_all(padding)
 	return box
 
-# A custom actor replaces the Lan/An portrait; town NPCs use their own avatars.
+# Town NPCs bring their own avatar; without one a plain townsperson stands in.
 func setup(ui: Control, character: String, close_action: Callable, custom_actor: Node3D = null) -> void:
 	name = character+"Dialogue"
 	z_index = 40
 	leave = close_action
-	accent = Color(.76,.63,.47) if character=="Lan" else Color(.46,.76,.76)
+	accent = Color(.46,.76,.76)
 	ui.add_child(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -122,9 +122,9 @@ func _build_portrait(character: String, custom_actor: Node3D) -> void:
 	actor = custom_actor
 	if actor == null:
 		actor = preload("res://scripts/humanoid_model.gd").new()
-		actor.look = "Female_Adult_11" if character=="Lan" else "An_Student"
-		actor.target_height = 1.68 if character=="Lan" else 1.48
-		actor.head_pitch = .08 if character=="Lan" else .20
+		actor.look = "Female_Adult_11"
+		actor.target_height = 1.68
+		actor.head_pitch = .08
 	portrait_viewport.add_child(actor)
 	actor.rotation.y = -.12
 	var light := DirectionalLight3D.new()
@@ -136,7 +136,7 @@ func _build_portrait(character: String, custom_actor: Node3D) -> void:
 	portrait_viewport.add_child(camera)
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 1.5
-	camera.position = Vector3(0,1.17 if character=="Lan" else 1.0,3)
+	camera.position = Vector3(0,1.17,3)
 	camera.look_at(Vector3(0,camera.position.y,0))
 	camera.current = true
 	portrait = TextureRect.new()

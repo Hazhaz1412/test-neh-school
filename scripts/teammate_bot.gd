@@ -117,7 +117,7 @@ func end_hide() -> bool:
 	return true
 
 func _guard() -> CharacterBody3D:
-	return world.envy.demon if world.envy != null else null
+	return world.hunt.hunter if world.hunt != null else null
 
 func _physics_process(delta: float) -> void:
 	if not world.simulation_active() and not team._player_captive():

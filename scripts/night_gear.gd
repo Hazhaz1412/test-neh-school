@@ -10,9 +10,8 @@ const BOOST_CARE := 0.1
 # What a pawned item costs to buy back.
 const VALUE := {"camera": 100}
 const STOCK := [
-	{"kind": "salt_gun", "name": "Súng muối", "price": 180, "text": "Một phát. Bắn lúc đang bị lôi đi: bác buông bạn ra và mất dấu một lúc."},
 	{"kind": "battery", "name": "Pin", "price": 30, "text": "Thêm 50% pin cho đèn và máy ảnh."},
-	{"kind": "medicine", "name": "Sơ cứu", "price": 40, "text": "Hồi 30 máu."},
+	{"kind": "medicine", "name": "Sơ cứu", "price": 40, "text": "Hồi 30 sức khỏe."},
 	{"kind": "chalk", "name": "Phấn", "price": 10, "text": "Ném ra để dụ tiếng động."},
 ]
 
@@ -115,15 +114,16 @@ static func loadout(state: Dictionary) -> Array:
 		slots.append("")
 	return slots
 
-# Only a survived night counts, so a retry never punishes twice. What it took turns up at the shop.
-static func finish_night(state: Dictionary, inventory: Array, stolen: Array) -> void:
+# Only a survived night counts, so a retry never punishes twice. What the guard confiscated turns
+# up at the shop.
+static func finish_night(state: Dictionary, inventory: Array, confiscated: Array) -> void:
 	var kept: Array = []
 	for kind in inventory:
 		if not kind in ["", "torch", "crank", "camera", "chalk"]:
 			kept.append(kind)
 	state.bag = kept.slice(0, BAG_ROOM)
 	state.camera = inventory.has("camera")
-	state.pawned.append_array(stolen)
+	state.pawned.append_array(confiscated)
 	state.money += NIGHT_PAY
 	state.boosts = 0
 	state.minutes = 420

@@ -10,7 +10,7 @@ func bake() -> void:
 	for property in school.get_property_list():
 		if property.usage & PROPERTY_USAGE_EDITOR and property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			exported_settings[property.name] = school.get(property.name)
-	# Bake without starting the HUD or spirit-world gameplay.
+	# Bake without starting the HUD or night gameplay.
 	school.set_script(null)
 	school.get_node("Player").set_script(null)
 	root.add_child(school)

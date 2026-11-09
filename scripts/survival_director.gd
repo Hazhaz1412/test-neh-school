@@ -2,22 +2,19 @@ extends Node3D
 
 enum Phase { IDLE, INTRO, PREPARATION, NIGHT, DAWN }
 signal midnight_started
-signal dawn_reached(rescued: bool)
+signal dawn_reached
 var world: Node3D
 var active := false
 var won := false
 var finished := false
 var phase: Phase = Phase.IDLE
 var preparation_time := 0.0
-var soul_rescued := false
-var glimpse_on := false
 var opening: Node3D
 var run_time := 0.0
 var hunt_remaining := 0.0
 var bell_clock := 45.0
 var fear_clock := 0.0
 var fear_pressure := 0.0
-var panic_damage_clock := 0.0
 var warning_time := 0.0
 var warning_text := ""
 var status_label: Label
@@ -84,7 +81,6 @@ func setup(school: Node3D) -> void:
 	end_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.hide()
 	warning_label.hide()
-	world.master_key_collected.connect(_on_key)
 
 func start_run(with_opening := true) -> void:
 	if active and not finished and world.player.health > 0:
@@ -96,22 +92,16 @@ func start_run(with_opening := true) -> void:
 	won = false
 	finished = false
 	phase = Phase.IDLE
-	world.set_spirit_world(false)
-	if world.scares != null:
-		world.scares.reset()
 	world.paused_by_user = false
 	world.map_panel.hide()
 	end_panel.hide()
 	world.death_panel.hide()
-	if world.soul_quest != null:
-		world.soul_quest.reset()
+	if world.journal != null:
+		world.journal.reset()
 	world.player.reset_survival()
 	if world.progression != null:
 		world.progression.reset()
 	world.has_master_key = false
-	world.master_key.collected = false
-	world.master_key.hide()
-	world.master_key.get_node("Interaction").collision_layer = 0
 	for door in world.get_node("Architecture").get_children():
 		if door.has_method("request_toggle"):
 			door.snap(false)
@@ -122,17 +112,13 @@ func start_run(with_opening := true) -> void:
 			child.queue_free()
 	run_time = 0
 	preparation_time = 0
-	soul_rescued = false
-	glimpse_on = false
 	bell.stop()
 	midnight_bell.stop()
 	breathing_audio.stop()
 	warning_time = 0
-	for environment in [world.normal_environment, world.cursed_environment]:
-		environment.sky.sky_material.set_shader_parameter("dawn_amount", 0.0)
+	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 0.0)
 	hunt_remaining = 0
 	bell_clock = 45
-	panic_damage_clock = 0
 	fear_pressure = 0
 	active = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -144,7 +130,6 @@ func start_run(with_opening := true) -> void:
 
 func complete_opening() -> void:
 	phase = Phase.PREPARATION
-	world.set_spirit_world(false, true)
 	world.player.global_position = Vector3(12, 0.05, 75.2)
 	world.player.rotation = Vector3.ZERO
 	world.player.camera.rotation = Vector3.ZERO
@@ -167,27 +152,12 @@ func begin_midnight() -> void:
 		return
 	phase = Phase.NIGHT
 	run_time = 0
-	glimpse_on = false
-	# This legacy hook now commits the gate transition, independently of the clock.
-	# The corridor owns its pursuers; campus enemies resume only after Lan.
-	world.set_spirit_world(false, true)
-	# The prologue runs into the service tunnels of the real school; only later nights use the realm.
-	if world.progression.briefing_complete and not world.guard_night:
-		world.set_spirit_world(true)
+	# Commits the gate transition, independently of the clock: the prologue runs into the
+	# service tunnels under the school.
 	opening.remove_companions()
 	if not world.progression.briefing_complete:
 		world.progression.begin_first_chase()
 	midnight_started.emit()
-
-# With An gone from the rooftop there is nobody to free: reaching dawn alive is the night.
-func rescue_needed() -> bool:
-	return world.soul_quest != null and world.soul_quest.soul != null
-
-func mark_soul_rescued() -> bool:
-	if not active or phase != Phase.NIGHT or finished or soul_rescued or world.soul_quest == null or not world.soul_quest.ready_for_rescue():
-		return false
-	soul_rescued = true
-	return true
 
 func advance_clock(delta: float) -> void:
 	if not active or not world.simulation_active():
@@ -203,22 +173,21 @@ func clock_reached_dawn() -> bool:
 	return (preparation_time + run_time) * 360.0 / world.night_duration_seconds >= 450.0
 
 func _finish_dawn() -> void:
-	world.soul_quest.close()
+	world.journal.close()
 	if world.progression != null:
 		world.progression.close()
 	phase = Phase.DAWN
 	finished = true
-	won = (soul_rescued or not rescue_needed()) and world.player.health > 0
+	won = world.player.health > 0
 	if world.team != null:
 		won = world.team.standing() > 0
-	world.set_spirit_world(false, true)
 	world.normal_environment.sky.sky_material.set_shader_parameter("dawn_amount", 1.0)
 	world.player.enabled = false
 	world.player.velocity = Vector3.ZERO
-	var survived := "06:00 · HOÀN THÀNH ĐÊM 1\nAn đã được giải thoát. Nhóm thoát khỏi thế giới linh hồn.\n\nLời nguyền vẫn còn. Đêm tiếp theo, một bi kịch khác đang chờ." if rescue_needed() else "06:00 · HOÀN THÀNH ĐÊM 1\nBạn đã trụ được tới sáng."
+	var survived := "06:00 · HOÀN THÀNH ĐÊM 1\nBạn đã trụ được tới sáng."
 	if world.team != null:
 		survived = "06:00 · HOÀN THÀNH ĐÊM 1\nTrời sáng, bác bảo vệ mở cổng. %d/%d người trong nhóm còn trụ được." % [world.team.remaining(), world.team.members.size()]
-	end_text.text = (survived if won else ("06:00 · AN VẪN MẮC KẸT\nBạn chưa hoàn thành Đêm 1. Lời nguyền chưa suy yếu." if rescue_needed() else "06:00 · ĐÊM 1 THẤT BẠI")) + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
+	end_text.text = (survived if won else "06:00 · ĐÊM 1 THẤT BẠI") + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
 	end_panel.show()
@@ -226,13 +195,13 @@ func _finish_dawn() -> void:
 	midnight_bell.stop()
 	breathing_audio.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	dawn_reached.emit(soul_rescued)
+	dawn_reached.emit()
 
 # Night 1: everyone left is caught at the same moment.
 func team_lost() -> void:
 	if finished:
 		return
-	world.soul_quest.close()
+	world.journal.close()
 	if world.progression != null:
 		world.progression.close()
 	finished = true
@@ -246,7 +215,7 @@ func team_lost() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func win() -> void:
-	if active and phase == Phase.NIGHT and clock_reached_dawn() and (soul_rescued or not rescue_needed()) and world.simulation_active():
+	if active and phase == Phase.NIGHT and clock_reached_dawn() and world.simulation_active():
 		_finish_dawn()
 
 func hearing_multiplier() -> float:
@@ -261,12 +230,7 @@ func trigger_hunt() -> void:
 		return
 	hunt_remaining = 12
 	bell.play()
-	world.notify("Chuông truy đuổi · chúng nghe xa hơn trong 12 giây. Cắt đường nhìn, đi nhẹ và tìm chỗ nấp.")
-
-func _on_key() -> void:
-	if active and not world.progression.tutorial_active():
-		trigger_hunt()
-		warn("ĐÃ LẤY CHÌA · Các phòng đã mở được · Sống tới 06:00 và tìm linh hồn học sinh", 8)
+	world.notify("Chuông báo động · bác bảo vệ nghe xa hơn trong 12 giây. Cắt đường nhìn, đi nhẹ và tìm chỗ nấp.")
 
 func _physics_process(delta: float) -> void:
 	bell.stream_paused = not world.simulation_active()
@@ -287,16 +251,10 @@ func _physics_process(delta: float) -> void:
 			trigger_hunt()
 			bell_clock = 55 if run_time < 180 else 38
 	fear_clock -= delta
-	if world.is_soul_sanctuary(world.player.global_position):
-		fear_pressure = 0
-		panic_damage_clock = 0
 	if fear_clock <= 0:
 		fear_clock = 0.25
-		fear_pressure = 0
-		for ghost in world.enemies:
-			var distance: float = ghost.global_position.distance_to(world.player.global_position)
-			if not world.is_soul_sanctuary(world.player.global_position) and ghost.active and distance < 12 and (ghost.has_line_of_sight() or ghost.suspected_spot == world.player.hidden_spot and world.player.is_hidden()):
-				fear_pressure = maxf(fear_pressure, 12 * (1 - distance / 12))
+		# Fear rises while the guard is close on your trail.
+		fear_pressure = 12.0 * world.threat
 	world.player.fear = clampf(world.player.fear + (fear_pressure - (7.0 if world.player.is_hidden() else 4.0)) * delta, 0, 100)
 	world.player.tick_survival(delta, Input.is_physical_key_pressed(KEY_SPACE))
 	if world.player.fear > 25 and not world.player.holding_breath:
@@ -306,16 +264,9 @@ func _physics_process(delta: float) -> void:
 		breathing_audio.pitch_scale = 1 + world.player.fear * 0.0025
 	else:
 		breathing_audio.stop()
-	if active and world.player.fear >= 98 and not world.is_soul_sanctuary(world.player.global_position):
-		panic_damage_clock += delta
-		if panic_damage_clock > 1:
-			panic_damage_clock = 0
-			world.player.take_damage(5)
-	else:
-		panic_damage_clock = 0
 
 func _process(_delta: float) -> void:
 	status_label.visible = false
 	status_label.text = "PIN %d%%   ·   HOẢNG LOẠN %d%%   ·   HƠI THỞ %d%%   ·   PHẤN %d" % [world.player.battery, world.player.fear, world.player.breath, world.player.chalk]
 	warning_label.visible = false
-	warning_label.text = warning_text if warning_time > 0 else "CHUÔNG TRUY ĐUỔI · %.0f giây · Chúng đang lắng nghe" % hunt_remaining
+	warning_label.text = warning_text if warning_time > 0 else "CHUÔNG BÁO ĐỘNG · %.0f giây · Bác bảo vệ đang lắng nghe" % hunt_remaining

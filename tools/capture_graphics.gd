@@ -29,24 +29,24 @@ func run() -> void:
 	await shot("corridor")
 	view(Vector3(0, 0.05, 60), Vector3(0, 6, 0))
 	await shot("courtyard")
-	var ghost: Node3D = load("res://scripts/chase_apparition.gd").new()
-	school.add_child(ghost)
+	var guard: Node3D = load("res://scripts/chase_guard.gd").new()
+	school.add_child(guard)
 	var spot := Vector3(-20, 7.85, 6.3)
 	await process_frame
-	ghost.global_position = spot + Vector3(-3.2, 0, 0)
-	ghost.show()
-	ghost.look_at(spot + Vector3.UP * 0.01)
-	ghost.model.set_process(true)
-	ghost.model.animation.speed_scale = 1.0
-	ghost.model.animation.play("walk")
+	guard.global_position = spot + Vector3(-3.2, 0, 0)
+	guard.show()
+	guard.look_at(spot + Vector3.UP * 0.01)
+	guard.model.set_process(true)
+	guard.model.animation.speed_scale = 1.0
+	guard.model.animation.play("walk")
 	view(spot, spot + Vector3(-3.2, 1.3, 0))
-	await shot("ghost")
-	ghost.model.animation.play("sprint")
-	await shot("ghost-run")
-	ghost.model.animation.play("idle")
-	ghost.model.melee_swing = 0.45
-	await shot("ghost-attack")
-	ghost.model.melee_swing = -1.0
+	await shot("guard")
+	guard.model.animation.play("sprint")
+	await shot("guard-run")
+	guard.model.animation.play("idle")
+	guard.model.melee_swing = 0.45
+	await shot("guard-attack")
+	guard.model.melee_swing = -1.0
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
 	view(Vector3(0, 0.05, 60), Vector3(0, 6, 0))

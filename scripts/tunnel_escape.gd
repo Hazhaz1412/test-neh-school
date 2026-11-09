@@ -1,6 +1,6 @@
 extends Node3D
 
-# Night 0 ends in a dream: the service tunnels under the school. No ghosts and no Lan, just the
+# Night 0 ends in a dream: the service tunnels under the school. Nobody but the
 # guard, who knows these tunnels and the doors between them far better than the player does.
 # - The tunnels are a small network of corridors with junctions and dead ends (NODES, EDGES).
 #   Obstacles are already lying there (OBSTACLES): barriers to jump, pipes to slide under, crates
@@ -152,7 +152,7 @@ var swim_push := 0.0
 var reservoir_lamps: Array[Light3D] = []
 var at_ledge := false
 var chute: Node3D
-var scares: Node
+var fx: Node
 var music: AudioStreamPlayer
 var music_bed: AudioStreamPlayer
 var breathing: AudioStreamPlayer
@@ -225,13 +225,13 @@ func setup(owner_story: Node3D) -> void:
 	splash = AudioStreamPlayer.new()
 	splash.stream = load("res://assets/audio/water/ocean_splash.ogg")
 	add_child(splash)
-	scares = preload("res://scripts/tunnel_fx.gd").new()
-	add_child(scares)
-	scares.setup(self)
+	fx = preload("res://scripts/tunnel_fx.gd").new()
+	add_child(fx)
+	fx.setup(self)
 	chute = preload("res://scripts/corridor_chute.gd").new()
 	add_child(chute)
 	chute.setup(self)
-	guard = preload("res://scripts/chase_apparition.gd").new()
+	guard = preload("res://scripts/chase_guard.gd").new()
 	add_child(guard)
 	_build_graph()
 	_build_overlay()
@@ -749,7 +749,7 @@ func _shove(door: Dictionary, from: Vector3) -> void:
 	var swing := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	swing.tween_property(door.hinge, "rotation:y", -side * turn * 1.75, 0.3)
 	door.tween = swing
-	scares.impact(to_global(door.at + Vector3.UP), "door")
+	fx.impact(to_global(door.at + Vector3.UP), "door")
 
 func _close_push_doors() -> void:
 	for door in push_doors:
@@ -1254,7 +1254,7 @@ func reset() -> void:
 		_reset_plank()
 		ledge_light.hide()
 		bubble_cloud.emitting = false
-	if scares != null: scares.hide_all()
+	if fx != null: fx.hide_all()
 	_go_under(false)
 	if water_tint != null:
 		water_tint.hide()
@@ -1274,7 +1274,7 @@ func _open_door(index: int) -> void:
 	if not door.has_meta("open_from"): door.set_meta("open_from", door.rotation.y)
 	var swing := -1.6 * float(door.get_meta("side", 1.0))
 	create_tween().tween_property(door, "rotation:y", float(door.get_meta("open_from")) + swing, 0.25)
-	scares.impact(to_global(door.position + Vector3.UP), "door")
+	fx.impact(to_global(door.position + Vector3.UP), "door")
 
 func _restart_at(index: int) -> void:
 	var p: CharacterBody3D = world.player
@@ -1377,14 +1377,14 @@ func chute_landed(_index: int) -> void:
 	p.velocity = -p.global_basis.z * WALK_SPEED
 	checkpoint = 2
 	cutoffs_left = spot.cutoffs.duplicate()
-	scares.flash.color = Color(0, 0, 0, 1)
-	scares.impact(p.global_position, "topple")
+	fx.flash.color = Color(0, 0, 0, 1)
+	fx.impact(p.global_position, "topple")
 	story.subtitle("Bác bảo vệ", "Tao biết ống đó chảy xuống đâu! Đợi đấy!", 2.6)
 
 func tick(delta: float) -> void:
 	if not active or not world.simulation_active(): return
 	clock += delta
-	scares.tick(delta)
+	fx.tick(delta)
 	if fade_clock > 0.0:
 		_tick_fade(delta)
 		return
@@ -1488,7 +1488,7 @@ func _tick_story(delta: float) -> void:
 			_guard_at(edge_point(door[0], door[1], door[2], float(door[3]) * (WIDTH * 0.5 - 0.6)), 0.7)
 			story.subtitle("Bác bảo vệ", cut.line, 2.6)
 			world.player.startle = 1.0
-			scares.shake = maxf(scares.shake, 0.6)
+			fx.shake = maxf(fx.shake, 0.6)
 	if checkpoint == 0 and (feet.distance_to(node_pos("G")) < 5.0 or feet.distance_to(node_pos("P2")) < 5.0):
 		checkpoint = 1
 	if checkpoint == 2 and feet.distance_to(node_pos("L5")) < 4.0:
@@ -1628,7 +1628,7 @@ func _fell() -> void:
 	pit_fall = true
 	hint.text = ""
 	world.player.startle = 1.0
-	scares.impact(world.player.global_position, "topple")
+	fx.impact(world.player.global_position, "topple")
 
 # --- The cutscene at the reservoir ---
 # Out to the edge and stop dead; look down at the water a long way below; turn round to him coming;
@@ -1690,7 +1690,7 @@ func _tick_leap(delta: float) -> void:
 			if to.length() < 0.05:
 				p.rotation.y = 0.0
 				p.startle = 0.7
-				scares.shake = maxf(scares.shake, 0.3)
+				fx.shake = maxf(fx.shake, 0.3)
 				world.soundscape.cue("paper", -12)
 				_beat("look_down")
 		"look_down":
@@ -1741,8 +1741,8 @@ func _tick_leap(delta: float) -> void:
 			if s >= 1.0:
 				hanging = true
 				p.startle = 1.0
-				scares.impact(to_global(plank_tip()), "topple")
-				scares.shake = maxf(scares.shake, 0.8)
+				fx.impact(to_global(plank_tip()), "topple")
+				fx.shake = maxf(fx.shake, 0.8)
 				splinters.position = plank_tip()
 				splinters.restart()
 				splinters.emitting = true
@@ -1766,7 +1766,7 @@ func _tick_leap(delta: float) -> void:
 			for creak in [0.55, 1.2]:
 				if beat_clock >= creak and beat_clock - delta < creak:
 					world.soundscape.cue("chair_impact", -14)
-					scares.shake = maxf(scares.shake, 0.35)
+					fx.shake = maxf(fx.shake, 0.35)
 					splinters.position = plank.transform * Vector3(0, 0, 0.05)
 					splinters.restart()
 					splinters.emitting = true
@@ -1809,8 +1809,8 @@ func _snap_plank() -> void:
 	splinters.position = plank.transform * Vector3(0, 0, 0.05)
 	splinters.restart()
 	splinters.emitting = true
-	scares.impact(to_global(plank.position), "topple")
-	scares.shake = maxf(scares.shake, 0.9)
+	fx.impact(to_global(plank.position), "topple")
+	fx.shake = maxf(fx.shake, 0.9)
 	if plank_tween != null: plank_tween.kill()
 	plank_tween = create_tween().set_parallel()
 	plank_tween.tween_property(plank, "position:y", plank.position.y - WATER_DEPTH - 3.0, 1.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -1915,8 +1915,8 @@ func _begin_drown() -> void:
 	bubbles.play()
 	water_tint.show()
 	water_tint.color.a = 0.15
-	scares.flash.color = Color(0.85, 0.95, 1.0, 0.85)
-	scares.shake = 0.8
+	fx.flash.color = Color(0.85, 0.95, 1.0, 0.85)
+	fx.shake = 0.8
 	bubble_cloud.emitting = true
 	hint.text = "SPACE · BƠI LÊN"
 

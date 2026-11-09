@@ -36,7 +36,7 @@ function page(title, body, active = 'tra-cuu') {
 <footer class="foot"><div class="wrap"><p><b>Trung tâm Dữ liệu và Chuyển đổi số tỉnh Hải Lâm</b></p><p>Số 01 đường Cầu Mây, thành phố Hải Lâm · Tổng đài hỗ trợ: 0000 111 222</p><p class="muted" style="color:#8ea1b5">Trang hư cấu trong trò chơi NEH School. Không nhập số giấy tờ thật của bạn.</p></div></footer></body></html>`;
 }
 
-const side = `<aside class="card"><h2>Lưu ý khi tra cứu</h2><ul class="side"><li>Số định danh gồm đúng 12 chữ số.</li><li>Công dân tự đặt câu hỏi xác minh khi đăng ký.</li><li>Sai câu trả lời không khóa hồ sơ.</li><li>Hồ sơ đã đóng chỉ còn phần được phép công khai.</li></ul></aside>`;
+const side = `<aside class="card"><h2>Lưu ý khi tra cứu</h2><ul class="side"><li>Số định danh gồm đúng 12 chữ số.</li><li>Công dân tự đặt câu hỏi xác minh khi đăng ký.</li><li>Sai câu trả lời không khóa hồ sơ.</li><li>Hồ sơ đã chuyển đi chỉ còn phần được phép công khai.</li></ul></aside>`;
 const steps = (current) => `<div class="steps">${['1. Nhập số định danh', '2. Câu hỏi xác minh', '3. Xem hồ sơ'].map((text, i) => `<span${i === current ? ' class="on"' : ''}>${text}</span>`).join('')}</div>`;
 
 function home(message = '') {
@@ -55,9 +55,9 @@ const row = (name, value) => `<tr><th>${name}</th><td>${value}</td></tr>`;
 function record() {
   return page('Hồ sơ công dân', `<section class="card"><h1>Hồ sơ công dân</h1>${steps(2)}<div class="ok">Xác minh thành công. Phiên làm việc sẽ tự đóng khi bạn đăng xuất.</div>
 <table><caption>I. Thông tin nhân thân</caption>
-${row('Họ và tên', 'NGUYỄN BÌNH AN')}${row('Ngày sinh', '14/03/1993')}${row('Giới tính', 'Nữ')}${row('Số định danh', AN_ID)}${row('Quê quán', 'Xã Đồng Muối, tỉnh Hải Lâm')}${row('Nơi thường trú', 'Số 14, Hẻm 31, khu phố Bến Trầu, phường Cổ Đằng')}${row('Trạng thái hồ sơ', '<span class="warn">ĐÃ ĐÓNG · 22/11/2009</span>')}${row('Lý do đóng hồ sơ', '<span class="hidden">được giữ kín theo yêu cầu</span> <span class="muted">(bị ẩn theo công văn 118/CV)</span>')}</table>
+${row('Họ và tên', 'NGUYỄN BÌNH AN')}${row('Ngày sinh', '14/03/1993')}${row('Giới tính', 'Nữ')}${row('Số định danh', AN_ID)}${row('Quê quán', 'Xã Đồng Muối, tỉnh Hải Lâm')}${row('Nơi thường trú', 'Số 14, Hẻm 31, khu phố Bến Trầu, phường Cổ Đằng')}${row('Trạng thái hồ sơ', '<span class="warn">CHUYỂN ĐI · 22/11/2009</span>')}${row('Nơi chuyển đến', '<span class="hidden">được giữ kín theo yêu cầu</span> <span class="muted">(bị ẩn theo công văn 118/CV)</span>')}</table>
 <table><caption>II. Thành viên hộ gia đình</caption>
-${row('Mẹ', 'Trần Thị Mận, sinh 1968. Chuyển khỏi địa bàn tháng 01/2010, chưa cập nhật nơi ở mới.')}${row('Cha', 'Nguyễn Văn Bình, sinh 1965. Đã mất năm 2003.')}${row('Người liên hệ khác', 'Cô Lê Thị Thanh Hoa, giáo viên chủ nhiệm lớp 10A6, Trường THPT NEH')}</table>
+${row('Mẹ', 'Trần Thị Mận, sinh 1968. Chuyển khỏi địa bàn tháng 01/2010, chưa cập nhật nơi ở mới.')}${row('Cha', 'Nguyễn Văn Bình, sinh 1965. Làm việc xa, không cùng hộ khẩu từ năm 2003.')}${row('Người liên hệ khác', 'Cô Lê Thị Thanh Hoa, giáo viên chủ nhiệm lớp 10A6, Trường THPT NEH')}</table>
 <table><caption>III. Ghi chú liên quan từ cơ quan địa phương</caption>
 ${row('07/09/2009', 'Bà Trần Thị Mận đến phường phản ánh con bị nhóm học sinh chặn đường, lấy đồ dùng học tập. Chuyển nhà trường giải quyết.')}${row('19/10/2009', 'Lần phản ánh thứ hai. Nhà trường trả lời “mâu thuẫn bạn bè, đã nhắc nhở”. Không có biên bản kèm theo.')}${row('03/11/2009', 'Lần phản ánh thứ ba, kèm một trang vở viết tay. <span class="hidden">nội dung trang vở đã bị gỡ</span>')}${row('Bưu phẩm tồn', 'Một phong bì do công dân gửi tới “lớp 10A6”, chưa phát. Tình trạng: thất lạc.')}</table>
 <form method="post" action="/dang-xuat"><button class="plain">Đăng xuất</button></form></section>

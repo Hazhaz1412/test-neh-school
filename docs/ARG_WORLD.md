@@ -1,6 +1,6 @@
 # Thế giới ARG
 
-Mọi tên dưới đây là hư cấu. Web, bài báo và thoại đều bám theo file này.
+Mọi tên dưới đây là hư cấu. Web, bài báo và thoại đều bám theo file này. Thế giới không có yếu tố siêu nhiên: câu chuyện là những sai phạm Trường NEH đã che giấu.
 
 ## Địa danh
 - **Tỉnh Hải Lâm**, có sông Trầu chảy qua.
@@ -19,4 +19,6 @@ Người chơi đối chiếu ba nguồn: báo tỉnh nói ít, báo phường n
 
 ## Quy tắc
 - Không dùng người, tổ chức hay sự kiện có thật. Không dùng quốc huy hay tên cơ quan nhà nước thật.
-- Bài hiện tại là nội dung tạm, trong `hub/web/news-data.js`.
+- Bài báo hiện là tin đời thường làm nền, trong `hub/web/news-data.js`; các bài về Trường NEH của cốt truyện cũ đã xóa.
+- Bài đăng mạng xã hội (Làng Ta `langta.vn` và app Fake trong điện thoại dùng chung `data/social_posts.json`; Sợi Chỉ `soichi.vn` dùng `data/soichi_posts.json`) đang trống, chờ cốt truyện mới.
+- Còn giữ: trang trường `thptneh.edu.vn` và cổng dân cư `dancu.hailam.gov.vn` (hồ sơ Nguyễn Bình An, học sinh 10A6 bị bắt nạt năm 2009 rồi chuyển đi, nơi chuyển đến bị giấu).

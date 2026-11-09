@@ -1,5 +1,5 @@
 extends Control
-# The back-alley shop: a dark ledger of what it sells and what the demon pawned.
+# The back-alley shop: a dark ledger of what it sells and what the guard confiscated.
 const Gear := preload("res://scripts/night_gear.gd")
 const PAPER := Color(0.91, 0.84, 0.68)
 const BRASS := Color(0.86, 0.66, 0.28)

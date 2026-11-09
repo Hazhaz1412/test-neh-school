@@ -14,14 +14,12 @@ var look := "a"
 var head_source: Node3D
 var body_mesh: MeshInstance3D
 static var clip_libraries := {}
-# Avatars keep their own textures; students wear repainted uniforms. Clips target a sibling rig.
-const STUDENT := "student"
+# Avatars keep their own textures. Clips target a sibling rig.
 const GUARD := "guard"
 const BONES := {"Head": "Head", "UpperArm.R": "R UpperArm", "UpperArm.L": "L UpperArm", "LowerArm.R": "R Forearm", "Fist.R": "R Hand", "Fist.L": "L Hand"}
 const MOTIONS := {
 	"f": {"idle": "f_idle_neutral_01", "walk": "f_walk_slow_01", "sprint": "f_run_fast_01", "crouch": "f_crouch_idle"},
 	"m": {"idle": "m_idle_neutral_01", "walk": "m_walk_slow_01", "sprint": "m_run_fast_01", "crouch": "m_idle_neutral_01"},
-	STUDENT: {"idle": "m_idle_neutral_01", "walk": "m_walk_bruised", "sprint": "m_run_injured", "crouch": "m_idle_neutral_01"},
 	# The school's night guard: patrol walk, a look round each room, an ear to the door and
 	# the paperwork he clears away in 306.
 	GUARD: {"idle": "m_idle_neutral_01", "walk": "m_walk_fast_01", "sprint": "m_run_fast_01", "crouch": "m_idle_neutral_01",
@@ -35,22 +33,21 @@ func bone(label: String) -> String:
 func _ready() -> void:
 	process_priority = 3
 	if variant == GUARD: look = "Security_Male_01"
-	var folder := "res://assets/rocketbox/" if variant == STUDENT else "res://assets/rocketbox/townsfolk/"
-	visual = load(folder + ("Male_Child_01.fbx" if variant == STUDENT else look + ".fbx")).instantiate()
+	visual = load("res://assets/rocketbox/townsfolk/" + look + ".fbx").instantiate()
 	add_child(visual)
 	skeleton = visual.find_children("*", "Skeleton3D", true, false)[0]
 	body_mesh = visual.find_children("*", "MeshInstance3D", true, false)[0]
 	_dress()
 	var top := (skeleton.global_transform * skeleton.get_bone_global_rest(skeleton.find_bone(bone("Head")))).origin
 	var foot := (skeleton.global_transform * skeleton.get_bone_global_rest(skeleton.find_bone(skeleton.get_bone_name(0) + " R Foot"))).origin
-	var scale_by := target_height / ((top.y - foot.y) * (1.12 if variant == STUDENT else 1.14))
+	var scale_by := target_height / ((top.y - foot.y) * 1.14)
 	visual.scale *= scale_by
 	# Local offset: a model built under a node far from y=0 (the tunnel sits at y=-300) must
 	# not be pushed that far again, or only its torch light is left where it should stand.
 	visual.position.y = -(foot.y - global_position.y) * scale_by + 0.06
 	animation = AnimationPlayer.new()
 	visual.add_child(animation)
-	var kind: String = variant if variant in [STUDENT, GUARD] else ("f" if look.begins_with("Female") else "m")
+	var kind: String = variant if variant == GUARD else ("f" if look.begins_with("Female") else "m")
 	var rig := visual.get_path_to(skeleton)
 	var key := "%s|%s|%s" % [kind, rig, skeleton.get_bone_name(0)]
 	if not clip_libraries.has(key):
@@ -63,15 +60,10 @@ func _dress() -> void:
 		var part: String = ["body", "head"][surface]
 		var mat := StandardMaterial3D.new()
 		mat.roughness = 0.82
-		if variant == STUDENT:
-			mat.albedo_texture = load("res://assets/rocketbox/textures/student_%s_%s.jpg" % [look, part])
-			mat.normal_enabled = true
-			mat.normal_texture = load("res://assets/rocketbox/textures/student_%s_normal.jpg" % part)
-		else:
-			mat.albedo_texture = load("res://assets/rocketbox/townsfolk/textures/%s_%s.jpg" % [look, part])
+		mat.albedo_texture = load("res://assets/rocketbox/townsfolk/textures/%s_%s.jpg" % [look, part])
 		body_mesh.set_surface_override_material(surface, mat)
 	# The third surface is eyelashes and hair cards; their texture is not shipped.
-	if variant != STUDENT and body_mesh.mesh.get_surface_count() > 2:
+	if body_mesh.mesh.get_surface_count() > 2:
 		var unseen := StandardMaterial3D.new()
 		unseen.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		unseen.albedo_color = Color(0.03, 0.025, 0.02, 0.0)

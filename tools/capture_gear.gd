@@ -30,16 +30,16 @@ func run() -> void:
 	var school: Node3D = load("res://scenes/school_runtime.tscn").instantiate()
 	root.add_child(school)
 	current_scene = school
-	while school.envy.demon == null:
+	while school.hunt.hunter == null:
 		await physics_frame
 	await create_timer(1.5).timeout
-	school.envy.set_physics_process(false)
-	school.player.inventory[2] = "salt_gun"
-	var demon: Node = school.envy.demon
-	demon.global_position = school.player.global_position + Vector3(0, 0, -1.4)
-	demon.rotation.y = PI
-	demon._seize()
-	demon.wait = 60.0
+	school.hunt.set_physics_process(false)
+	school.player.inventory[2] = "medicine"
+	var hunter: Node = school.hunt.hunter
+	hunter.global_position = school.player.global_position + Vector3(0, 0, -1.4)
+	hunter.rotation.y = PI
+	hunter._seize()
+	hunter.wait = 60.0
 	await create_timer(1.0).timeout
 	await shot("grab")
 	quit()

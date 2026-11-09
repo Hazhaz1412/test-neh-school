@@ -258,7 +258,7 @@ func _furnish() -> void:
 	_prop("res://assets/home/basin.glb", Vector3(1.9, 0, 0.32), 0.85, 0.0)
 	batch.box("steel", Transform3D.IDENTITY, Vector3(0.35, 2.1, 2.5), Vector3(0.05, 0.05, 0.3), Color.WHITE)
 	batch.box("paint", Transform3D.IDENTITY, Vector3(1.9, 1.5, 0.1), Vector3(0.6, 0.8, 0.02), Color(0.74, 0.82, 0.88))
-	_add_touch(Vector3(0.9, 1.0, 2.5), "Tắm", func(): think("Nước chảy đỏ một lúc rồi mới trong. Ống cũ thôi." if story.prologue else "Nước chảy đỏ một lúc rồi mới trong. Không phải máu của mình."))
+	_add_touch(Vector3(0.9, 1.0, 2.5), "Tắm", func(): think("Nước chảy vàng một lúc rồi mới trong. Ống cũ thôi."))
 	_add_touch(Vector3(1.9, 1.2, 0.8), "Soi gương", func(): think("Gương mờ, góc dưới có ai vẽ một quân cờ." if story.prologue else "Sau lưng không có ai. Mình đã nhìn hai lần."))
 	_add_touch(Vector3(3.6, 4.4, 6.8), "Khung cửa có vạch bút chì", func(): think("Những vạch đo chiều cao, chữ A nhỏ xíu: 2006, 2007, 2008. Không có 2009."))
 	_add_touch(Vector3(0.5, 3.9, 0.9), "Khe đầu giường", func(): think("Một quân hậu trắng, sứt đầu. Ai để quên từ đời nào."))
@@ -320,11 +320,19 @@ func _build_hud() -> void:
 	thought.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	phone = preload("res://scripts/home/home_phone.gd").new()
 	root_control.add_child(phone)
+	phone.raised_changed.connect(_on_phone_raised)
+	phone.dismiss_requested.connect(func(): story.toggle_phone())
 	fade = ColorRect.new()
 	fade.color = Color(0.012, 0.014, 0.018)
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root_control.add_child(fade)
+
+# The head bows to the phone as it comes up and lifts again as it goes away.
+func _on_phone_raised(up: bool) -> void:
+	var tween := create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(player, "glance", 0.32 if up else 0.0, 0.5 if up else 0.35)
+	tween.tween_property(player.camera, "fov", 64.0 if up else 72.0, 0.5 if up else 0.35)
 
 func _label(parent: Control, size_px: int, colour: Color) -> Label:
 	var label := Label.new()

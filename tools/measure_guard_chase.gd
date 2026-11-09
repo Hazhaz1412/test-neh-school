@@ -20,10 +20,10 @@ func run() -> void:
 	current_scene = school
 	for i in range(300):
 		await physics_frame
-		if school.envy.started: break
+		if school.hunt.started: break
 	for i in range(30): await physics_frame
 	var team: Node = school.team
-	var demon: CharacterBody3D = school.envy.demon
+	var hunter: CharacterBody3D = school.hunt.hunter
 	var player: CharacterBody3D = school.player
 	player.global_position = Vector3(0, 0.05, -78)
 	for run_index in range(STARTS.size()):
@@ -34,17 +34,17 @@ func run() -> void:
 		prey.global_position = STARTS[run_index]
 		prey.stamina = prey.MAX_STAMINA
 		prey.fatigue = 0.0
-		demon.global_position = STARTS[run_index] + BEHIND[run_index]
-		demon.target = prey
-		demon.state = demon.State.CHASE
-		demon.chase_time = 0.0
-		demon.unseen = 0.0
+		hunter.global_position = STARTS[run_index] + BEHIND[run_index]
+		hunter.target = prey
+		hunter.state = hunter.State.CHASE
+		hunter.chase_time = 0.0
+		hunter.unseen = 0.0
 		var stalls := 0
 		var stalled := 0.0
 		var losses := 0
 		var was_chasing := true
 		var caught_at := -1.0
-		var last := demon.global_position
+		var last := hunter.global_position
 		var crossing := false
 		var gap_before := 0.0
 		var kind := ""
@@ -53,32 +53,32 @@ func run() -> void:
 		while clock < SECONDS:
 			await physics_frame
 			clock += 1.0 / 60.0
-			var moved := demon.global_position.distance_to(last) / (1.0 / 60.0)
-			last = demon.global_position
+			var moved := hunter.global_position.distance_to(last) / (1.0 / 60.0)
+			last = hunter.global_position
 			# Each time the prey starts a crossing, and once the guard is past it: the gap won.
 			if prey.cross_time > 0.0 and not crossing:
 				crossing = true
-				gap_before = walk(school, demon.global_position, prey.global_position)
+				gap_before = walk(school, hunter.global_position, prey.global_position)
 				kind = "khe thấp" if prey.crawling else "cửa sổ/kệ"
-			elif crossing and prey.cross_time <= 0.0 and demon.cross_time <= 0.0 and demon.clear_time <= 0.0:
+			elif crossing and prey.cross_time <= 0.0 and hunter.cross_time <= 0.0 and hunter.clear_time <= 0.0:
 				crossing = false
-				print("  %s at t %.1f: his walk to them %.1f -> %.1f m" % [kind, clock, gap_before, walk(school, demon.global_position, prey.global_position)])
+				print("  %s at t %.1f: his walk to them %.1f -> %.1f m" % [kind, clock, gap_before, walk(school, hunter.global_position, prey.global_position)])
 			if int(clock * 60.0) % 30 == 0:
-				var w := walk(school, demon.global_position, prey.global_position)
+				var w := walk(school, hunter.global_position, prey.global_position)
 				longest = maxf(longest, w)
 				if trace:
-					print("    t %.1f guard %s %s prey %s walk %.1f stam %d fat %.2f" % [clock, demon.global_position.snapped(Vector3.ONE * 0.1), demon.state_name(), prey.global_position.snapped(Vector3.ONE * 0.1), w, prey.stamina, prey.fatigue])
-			var chasing: bool = demon.state in [demon.State.CHASE, demon.State.STRIKE]
-			if chasing and moved < 0.3 and demon.cross_time <= 0.0 and demon.clear_time <= 0.0 and demon.board_time <= 0.0:
+					print("    t %.1f guard %s %s prey %s walk %.1f stam %d fat %.2f" % [clock, hunter.global_position.snapped(Vector3.ONE * 0.1), hunter.state_name(), prey.global_position.snapped(Vector3.ONE * 0.1), w, prey.stamina, prey.fatigue])
+			var chasing: bool = hunter.state in [hunter.State.CHASE, hunter.State.STRIKE]
+			if chasing and moved < 0.3 and hunter.cross_time <= 0.0 and hunter.clear_time <= 0.0 and hunter.board_time <= 0.0:
 				stalled += 1.0 / 60.0
 				if is_equal_approx(stalled, STALL) or stalled >= STALL and stalled - 1.0 / 60.0 < STALL:
 					stalls += 1
-					print("  stall at ", demon.global_position.snapped(Vector3.ONE * 0.1), " t ", snappedf(clock, 0.1))
+					print("  stall at ", hunter.global_position.snapped(Vector3.ONE * 0.1), " t ", snappedf(clock, 0.1))
 			else:
 				stalled = 0.0
-			if was_chasing and not chasing and demon.state != demon.State.GRAB:
+			if was_chasing and not chasing and hunter.state != hunter.State.GRAB:
 				losses += 1
-				print("  lost the trail at t ", snappedf(clock, 0.1), " gap ", snappedf(demon.global_position.distance_to(prey.global_position), 0.1), " -> ", demon.state_name())
+				print("  lost the trail at t ", snappedf(clock, 0.1), " gap ", snappedf(hunter.global_position.distance_to(prey.global_position), 0.1), " -> ", hunter.state_name())
 			was_chasing = chasing
 			if team.member(prey).status != team.Status.FREE:
 				caught_at = clock

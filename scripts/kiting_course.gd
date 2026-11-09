@@ -360,7 +360,7 @@ func is_boarded(gap: Node3D) -> bool:
 
 # Seen being used with him close by: he will remember to board it.
 func note_use(gap: Node3D, by: Node3D) -> void:
-	var guard: Node3D = world.envy.demon if world.envy != null else null
+	var guard: Node3D = world.hunt.hunter if world.hunt != null else null
 	if guard != null and guard.global_position.distance_to(by.global_position) < 18.0:
 		seen_used[gap] = true
 
@@ -456,7 +456,7 @@ func prompt() -> String:
 	if boarded != null:
 		if unboarding > 0.05 and unboard_gap == boarded:
 			return "Đang gỡ ván %d%%" % int(unboarding / UNBOARD_SECONDS * 100.0)
-		return "Bị đóng ván · Giữ E 5 giây để gỡ · Trượt vào để phá (mất 25% máu)"
+		return "Bị đóng ván · Giữ E 5 giây để gỡ · Trượt vào để phá (mất 25% sức khỏe)"
 	if pallet_near(world, player.global_position) != null:
 		return "E · Gạt đổ kệ chặn lối"
 	if vault_near(world, player.global_position, 1.2) != null:

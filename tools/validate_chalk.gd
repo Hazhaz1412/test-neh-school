@@ -48,10 +48,8 @@ func validate() -> void:
 	p.set_physics_process(false)
 	p.set_process_unhandled_input(false)
 	school.survival.set_physics_process(false)
-	for ghost in school.enemies:
-		ghost.set_physics_process(false)
-		ghost.collision_layer = 0
-		ghost.position = Vector3(54, 0.05, 65)
+	# Chalk is a decoy for the guard, so it is thrown on a guard night.
+	school.guard_night = true
 	p.flashlight.hide()
 	p.battery = 0
 	p.add_item("battery")
@@ -128,10 +126,10 @@ func validate() -> void:
 	check(not p.chalk_charging and p.chalk == 3, "Opening map cancels charge without consuming a slot")
 	school.map_panel.hide()
 	p.begin_chalk_charge("key")
-	school.soul_quest.journal.show()
+	school.journal.journal.show()
 	p.tick_chalk_charge(1)
-	check(not p.chalk_charging and p.chalk == 3, "Journal and comfort UI block charging without pausing or spending supplies")
-	school.soul_quest.journal.hide()
+	check(not p.chalk_charging and p.chalk == 3, "The case journal blocks charging without pausing or spending supplies")
+	school.journal.journal.hide()
 	p.begin_chalk_charge("key")
 	p._notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT)
 	check(not p.chalk_charging and p.chalk == 3, "Losing window focus cancels charge instead of leaving a stuck throw")

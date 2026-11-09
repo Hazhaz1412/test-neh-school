@@ -9,7 +9,7 @@ const { execFileSync } = require('node:child_process');
 const CONFIG = path.join(os.homedir(), '.config', 'neh-school');
 const MANIFEST = path.join(CONFIG, 'installed.json');
 const NOTE_NAME = 'Ghi chú.txt';
-const NOTE = 'Chỉ khi kết nối với thế giới bên kia, mới có thể tìm thấy sự thật.\n';
+const NOTE = 'Có những chuyện ở Trường NEH chưa từng được công bố. Bắt đầu tìm từ Gaaglu.\n';
 
 function desktopFolder() {
   if (process.env.NEH_DESKTOP_DIR) return process.env.NEH_DESKTOP_DIR;

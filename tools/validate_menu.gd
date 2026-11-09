@@ -57,8 +57,7 @@ func run() -> void:
 	await create_timer(4.0).timeout
 	var school: Node = current_scene
 	check(school.name != "MainMenu" and school.progression.runner.active, "the corridor chapter starts in the corridor")
-	print("spirit ", school.spirit_enabled, " stage ", school.progression.stage, " want ", school.progression.Stage.CORRIDOR_RUN)
-	check(not school.spirit_enabled and school.progression.stage == school.progression.Stage.CORRIDOR_RUN, "with the story in the right state, no spirit world")
+	check(school.progression.stage == school.progression.Stage.CORRIDOR_RUN, "with the story in the right state")
 	var shell: Node = root.get_node("GameShell")
 	shell.open()
 	check(paused and shell.opened(), "the settings overlay pauses any scene")

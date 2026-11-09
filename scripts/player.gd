@@ -10,14 +10,14 @@ const CRANK_ENERGY := 1.035
 const CRANK_DRAIN := 10.0
 const CRANK_PUMP_MIN := 9
 const CRANK_PUMP_MAX := 14
-# The price of free light: every squeeze can be heard, so it cannot be spammed beside the demon.
+# The price of free light: every squeeze can be heard, so it cannot be spammed beside the guard.
 const CRANK_NOISE := 9.0
 const CRANK_LOW := 20.0
 const GRAVITY := 18.0
 const STAND_HEIGHT := 1.75
 const STAND_EYE := 1.62
 # Crouching (hold C) lowers the body for real: low cover hides the chest the
-# ghosts look for, and the capsule fits under things a standing one cannot.
+# guard looks for, and the capsule fits under things a standing one cannot.
 const CROUCH_HEIGHT := 1.1
 const CROUCH_EYE := 1.0
 const CROUCH_SPEED := 1.5
@@ -96,7 +96,7 @@ const PHOTO_COST := 20.0
 const BATTERY_RECHARGE := 50.0
 const CHALK_CHARGE_SECONDS := 1.5
 const CHALK_MAX_RANGE_MULTIPLIER := 5.0
-const ITEM_NAMES := {"torch": "Đèn pin", "crank": "Đèn bấm tay", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "salt_gun": "Súng muối", "medal": "Huy chương mạ"}
+const ITEM_NAMES := {"torch": "Đèn pin", "crank": "Đèn bấm tay", "camera": "Máy ảnh", "battery": "Pin", "medicine": "Sơ cứu", "chalk": "Phấn", "medal": "Huy chương mạ"}
 var inventory: Array[String] = ["torch", "camera", "chalk", "chalk", "chalk", ""]
 var selected_slot := 0
 # selected_slot while nothing is in hand (item put away with its number key).
@@ -114,7 +114,6 @@ var chalk: int:
 				inventory[i] = ""
 		for i in range(clampi(value, 0, BAG_SIZE)):
 			add_item("chalk")
-var combat: Node
 var held_visual: Node3D
 var holding_breath := false
 var seized := false
@@ -146,9 +145,6 @@ func _ready() -> void:
 	held_visual.player = self
 	camera.add_child(held_visual)
 	flashlight.light_energy = TORCH_ENERGY
-	combat = preload("res://scripts/player_combat.gd").new()
-	combat.name = "Combat"
-	add_child(combat)
 
 func selected_item() -> String:
 	# inventory[-1] would quietly return the last slot.
@@ -201,7 +197,7 @@ func cycle_item(step: int) -> void:
 
 func can_use_item() -> bool:
 	var world: Node3D = get_parent()
-	return enabled and not seized and health > 0 and not combat.busy() and world.simulation_active() and not world.map_panel.visible and (world.soul_quest == null or not world.soul_quest.panel_visible()) and (world.progression == null or not world.progression.panel_visible() and not world.progression.controls_player())
+	return enabled and not seized and health > 0 and world.simulation_active() and not world.map_panel.visible and (world.journal == null or not world.journal.panel_visible()) and (world.progression == null or not world.progression.panel_visible() and not world.progression.controls_player())
 
 func use_selected_item() -> bool:
 	if not can_use_item():
@@ -301,15 +297,15 @@ func is_pickup(target: Node3D) -> bool:
 	if script == preload("res://scripts/survival_item.gd"):
 		return target.kind != "gate"
 	if script == preload("res://scripts/night_story_interactable.gd"):
-		return target.kind != "lan"
-	return script in [preload("res://scripts/master_key.gd"), preload("res://scripts/soul_fragment.gd")]
+		return true
+	return false
 
 func get_interaction_target() -> Node3D:
 	if get_parent().get("progression") != null and get_parent().progression.controls_player():
 		return null
 	if get_parent().get("progression") != null and get_parent().progression.panel_visible():
 		return null
-	if not enabled or combat.busy():
+	if not enabled:
 		return null
 	if is_hidden():
 		return hidden_spot
@@ -333,11 +329,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if get_parent().get("progression") != null and get_parent().progression.controls_player():
 		return
-	if combat.busy():
-		if event is InputEventKey and event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
-		return
-	if get_parent().survival.opening.playing or get_parent().soul_quest != null and get_parent().soul_quest.panel_visible() or get_parent().progression != null and get_parent().progression.panel_visible():
+	if get_parent().survival.opening.playing or get_parent().journal != null and get_parent().journal.panel_visible() or get_parent().progression != null and get_parent().progression.panel_visible():
 		cancel_chalk_charge()
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
@@ -420,13 +412,6 @@ func _physics_process(delta: float) -> void:
 	if health <= 0.0 or not enabled or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		velocity = Vector3.ZERO
 		return
-	if combat.busy():
-		invulnerable_time = maxf(invulnerable_time, 0.1)
-		velocity.x = 0
-		velocity.z = 0
-		velocity.y = 0 if is_on_floor() else velocity.y - 18 * delta
-		move_and_slide()
-		return
 	if is_hidden():
 		velocity = Vector3.ZERO
 		stamina = minf(max_stamina, stamina + 12 * delta * recovery())
@@ -451,7 +436,7 @@ func _physics_process(delta: float) -> void:
 		sprint_exhausted = false
 	var running := Input.is_physical_key_pressed(KEY_SHIFT) and moving and not quiet and not crouching and not sprint_exhausted
 	var regained := 0.0 if running else minf(15.0 * (1 - fear * 0.005) * recovery() * delta, max_stamina - stamina)
-	stamina = clampf(stamina + (-SPRINT_DRAIN * combat.sprint_multiplier() * stamina_care * delta if running else regained), 0.0, max_stamina)
+	stamina = clampf(stamina + (-SPRINT_DRAIN * stamina_care * delta if running else regained), 0.0, max_stamina)
 	_tick_fatigue(delta, regained)
 	was_running = running
 	var target := transform.basis * Vector3(direction.x, 0, direction.y).normalized()
@@ -500,15 +485,15 @@ func _physics_process(delta: float) -> void:
 	startle = maxf(0, startle - delta * 1.7)
 	camera.position.x = sin(startle * 51) * startle * 0.015 + sin(step_time) * BOB_SWAY * bob_amount + lean_offset + LOOK_BACK_SHIFT * look_back_eased
 	camera.rotation.z = -sin(step_time) * BOB_ROLL * bob_amount - lean * LEAN_ROLL + sin(look_back_eased * PI) * LOOK_BACK_ROLL
-	camera.fov = lerpf(camera.fov, (79.0 if running else 73.0) + startle * 4 + (3.0 if combat.adrenaline_remaining > 0 else 0.0), delta * 5.0)
+	camera.fov = lerpf(camera.fov, (79.0 if running else 73.0) + startle * 4, delta * 5.0)
 
 func recovery() -> float:
 	return 1.0 - fatigue * FATIGUE_GRIP
 
 func _being_chased() -> bool:
-	var envy = get_parent().get("envy")
-	var demon = envy.demon if envy != null else null
-	return demon != null and demon.target == self and demon.state in [demon.State.CHASE, demon.State.STRIKE]
+	var hunt = get_parent().get("hunt")
+	var hunter = hunt.hunter if hunt != null else null
+	return hunter != null and hunter.target == self and hunter.state in [hunter.State.CHASE, hunter.State.STRIKE]
 
 func _tick_fatigue(delta: float, regained: float) -> void:
 	if _being_chased():
@@ -544,7 +529,7 @@ func _tick_slide(delta: float) -> void:
 			get_parent().kiting.unboard(boarded)
 			invulnerable_time = 0.0
 			take_damage(course.BREAK_COST)
-			get_parent().notify("Phá ván · mất 25% máu")
+			get_parent().notify("Phá ván · mất 25% sức khỏe")
 		else:
 			slide_time = 0.0
 			get_parent().notify("Không đủ sức phá ván · Giữ E để gỡ")
@@ -605,8 +590,8 @@ func _process(delta: float) -> void:
 	_pose_look_back()
 
 # Ease in and out, like a neck: slow to start, quick through the middle, slow to settle.
-# Only while the head is round (or coming back) does it own the camera's yaw: cutscenes and
-# combat aim the camera themselves the rest of the time.
+# Only while the head is round (or coming back) does it own the camera's yaw: cutscenes
+# aim the camera themselves the rest of the time.
 func _pose_look_back() -> void:
 	var was := look_back_eased
 	look_back_eased = smoothstep(0.0, 1.0, look_back)
@@ -625,7 +610,7 @@ func set_crouching(value: bool, force := false) -> bool:
 		crouch_blend = 1.0 if value else 0.0
 	return true
 
-# Where a ghost looks to see the player: the chest, lower while crouched. Leaning out round
+# Where the guard looks to see the player: the chest, lower while crouched. Leaning out round
 # cover, only the head shows, so that is what has to be seen.
 func sight_point() -> Vector3:
 	if absf(lean_offset) > 0.15:
@@ -744,7 +729,6 @@ func throw_chalk(charge := 0.0) -> bool:
 	return true
 
 func reset_survival() -> void:
-	combat.reset()
 	cancel_chalk_charge()
 	if is_hidden():
 		hidden_spot.release()
@@ -840,7 +824,7 @@ func end_hide() -> bool:
 	get_parent().notify("Lối ra đang bị chắn. Chờ một chút rồi nhấn E.")
 	return false
 
-func take_damage(amount: float, attacker: CharacterBody3D = null) -> bool:
+func take_damage(amount: float, _attacker: CharacterBody3D = null) -> bool:
 	if test_invincible() or health <= 0 or invulnerable_time > 0:
 		return false
 	health = maxf(0, health - amount)
@@ -850,14 +834,10 @@ func take_damage(amount: float, attacker: CharacterBody3D = null) -> bool:
 		cancel_chalk_charge()
 		enabled = false
 		velocity = Vector3.ZERO
-		combat.reset()
 		died.emit()
-	else:
-		combat.record_hit(attacker)
 	return true
 
 func recover() -> void:
-	combat.reset()
 	health = 100.0
 	invulnerable_time = 0.0
 	enabled = true

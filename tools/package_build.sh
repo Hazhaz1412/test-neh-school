@@ -33,3 +33,8 @@ if [ "$TARGET" = windows ]; then
   rm -rf "$CACHE"
 fi
 du -sh "$OUT"
+# Unzip and play: the executable and hub sit in one folder; -y keeps the executable bits.
+if [ -n "${ZIP:-}" ]; then
+  (cd "$(dirname "$OUT")" && rm -f "$ZIP" && zip -qr -y -9 "$ZIP" "$(basename "$OUT")")
+  ls -lh "$(dirname "$OUT")/$ZIP"
+fi
