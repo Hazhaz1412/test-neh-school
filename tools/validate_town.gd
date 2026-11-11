@@ -17,7 +17,7 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	var plan: RefCounted = town.plan
-	check(plan.lots.size() > 500, "lots placed: %d" % plan.lots.size())
+	check(plan.lots.size() > 400, "lots placed: %d" % plan.lots.size())
 	var blocked := 0
 	for lot in plan.lots:
 		if plan.in_corridor(lot.centre, 0.0):

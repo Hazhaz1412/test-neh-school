@@ -43,6 +43,13 @@ static func layout() -> Dictionary:
 static func _road(title: String, kind: String, width: float, walk: float, points: Array) -> Dictionary:
 	return {"name": title, "kind": kind, "width": width, "walk": walk, "points": points}
 
+# The backdrop keeps to the tube houses its night materials are tuned for.
+func _place_blocks() -> void:
+	pass
+
+func _pick_kind(_road_kind: String) -> String:
+	return "tube"
+
 # No river out here.
 func river_west(_z: float) -> float:
 	return INF

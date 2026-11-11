@@ -9,10 +9,8 @@ const SKYLINE := 460.0
 # One texel per window cell (~2.5 m), so each window is either lit or dark.
 const WINDOW_CELL := 2.5
 const FLOOR_CELL := 3.4
-# Shop lettering fades out at 70 m (town_builder), and the camera never leaves
-# the campus, so signs further out than this only get the coloured board.
-const SIGN_REACH := 75.0
 const VluTower := preload("res://scripts/city_backdrop/vlu_tower.gd")
+const CityHouses := preload("res://scripts/city_backdrop/city_houses.gd")
 
 func build(owner: Node3D, town_plan: RefCounted) -> void:
 	root = owner
@@ -29,9 +27,15 @@ func build(owner: Node3D, town_plan: RefCounted) -> void:
 	for road in plan.roads:
 		_road(road)
 	_junctions()
+	var houses := CityHouses.new(self)
 	for lot in plan.lots:
-		_house(lot)
-	_back_blocks()
+		if lot.get("place", {}).get("style", "") == "vlu":
+			var frame := _frame(lot)
+			batch.at(frame.origin)
+			VluTower.new(self).build(lot, frame)
+		else:
+			houses.build(lot)
+	houses.back_blocks()
 	_skyline()
 	for road in plan.roads:
 		_wires(road)
@@ -49,7 +53,7 @@ func build(owner: Node3D, town_plan: RefCounted) -> void:
 func _night_materials() -> void:
 	# The town's walls are tuned bright for its daytime sun; at night under the
 	# moon they would glow next to the school.
-	for name in ["plaster", "aged", "tile", "paver"]:
+	for name in ["plaster", "aged", "tile", "paver", "brick", "peel", "yellow"]:
 		materials[name].albedo_color *= 0.62
 	# Windows: a coarse random pattern, mapped in world space, lights some.
 	materials.glass.emission_enabled = true
@@ -111,19 +115,6 @@ func _ground() -> void:
 		batch.at(Vector3(strip.get_center().x, 0, strip.get_center().y))
 		batch.facing(Vector3.UP, "concrete", Vector3(strip.position.x, y, strip.position.y), Vector3(strip.end.x, y, strip.position.y), Vector3(strip.end.x, y, strip.end.y), Vector3(strip.position.x, y, strip.end.y), tone)
 
-# Fill what the street rows leave empty, up to FILL, never on the campus.
-func _back_blocks() -> void:
-	var step := 9.0
-	var x := -FILL
-	while x < FILL:
-		var z := -FILL
-		while z < FILL:
-			var p := Vector2(x + rng.randf_range(-1, 1), z + rng.randf_range(-1, 1))
-			if not plan.inside_campus(p, step):
-				_back_cell(p, step)
-			z += step
-		x += step
-
 # Mid-rise and tower blocks on the horizon, the way the city looks from a
 # school roof at night: mostly dark mass with scattered lit windows.
 func _skyline() -> void:
@@ -140,25 +131,10 @@ func _skyline() -> void:
 				footprint.y = rng.randf_range(18.0, 40.0) + (far - FILL) * rng.randf_range(0.05, 0.22)
 				var frame := Transform3D(Basis(Vector3.UP, rng.randf_range(-0.15, 0.15)), Vector3(p.x, 0, p.y))
 				batch.at(frame.origin)
-				var tint: Color = FACADES[rng.randi() % FACADES.size()].darkened(rng.randf_range(0.35, 0.55))
+				var tint: Color = Houses.FACADES[rng.randi() % Houses.FACADES.size()].darkened(rng.randf_range(0.35, 0.55))
 				batch.box("tower", frame, Vector3(0, footprint.y * 0.5, 0), footprint, tint)
 				if rng.randf() < 0.25:
 					# Red aircraft warning light on the tallest roofs.
 					batch.box("lantern", frame, Vector3(0, footprint.y + 0.4, 0), Vector3(0.6, 0.6, 0.6))
 			z += cell
 		x += cell
-
-func _shop_sign(frame: Transform3D, w: float, tall: float, place: Dictionary) -> void:
-	var at := Vector2(frame.origin.x, frame.origin.z)
-	if plan.inside_campus(at, SIGN_REACH):
-		super(frame, w, tall, place)
-		return
-	batch.box("paint", frame, Vector3(0, tall + 0.42, -0.14), Vector3(w - 0.12, 0.8, 0.14), SIGNS[rng.randi() % SIGNS.size()])
-
-func _house(lot: Dictionary) -> void:
-	if lot.get("place", {}).get("style", "") != "vlu":
-		super(lot)
-		return
-	var frame := _frame(lot)
-	batch.at(frame.origin)
-	VluTower.new(self).build(lot, frame)

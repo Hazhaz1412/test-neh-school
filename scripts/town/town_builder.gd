@@ -1,13 +1,17 @@
 @tool
 extends RefCounted
-# Turns the plan into a street: asphalt, tube houses, wires, river and salt fields.
+# Turns the plan into a town: asphalt, wires, river, salt fields and the named places. The
+# ordinary houses on every other lot come from town_houses.gd.
 const Batch := preload("res://scripts/town/mesh_batch.gd")
+const Houses := preload("res://scripts/town/town_houses.gd")
 const TEXTURE := "res://assets/polyhaven_town/textures/%s_%s.jpg"
-const FACADES := [Color(0.95, 0.88, 0.62), Color(0.72, 0.85, 0.74), Color(0.93, 0.93, 0.88), Color(0.95, 0.74, 0.60), Color(0.70, 0.82, 0.90), Color(0.96, 0.80, 0.82), Color(0.86, 0.84, 0.78), Color(0.60, 0.72, 0.70), Color(0.98, 0.92, 0.78)]
-const SIGNS := [Color(0.72, 0.10, 0.10), Color(0.08, 0.26, 0.58), Color(0.96, 0.78, 0.10), Color(0.06, 0.42, 0.28), Color(0.92, 0.42, 0.06), Color(0.95, 0.95, 0.92)]
-const AWNINGS := [Color(0.16, 0.36, 0.62), Color(0.76, 0.16, 0.14), Color(0.14, 0.50, 0.34), Color(0.90, 0.62, 0.12)]
-const GOODS := [Color(0.82, 0.22, 0.16), Color(0.92, 0.72, 0.18), Color(0.16, 0.44, 0.72), Color(0.92, 0.92, 0.88), Color(0.20, 0.58, 0.34), Color(0.78, 0.44, 0.20)]
 const SCHOOL_X := 262.0
+# Plastic table sets at the size adults sit at; town_diners seats people on them.
+const CHAIR_SCALE := 0.85
+const CHAIR_OFFSET := 0.7
+const SEAT_HEIGHT := 0.38
+const TABLE_TOP := 0.66
+const TABLE_SIZE := 0.76
 # The model is about 197 units long and its nose points +Z; the game's forward is -Z.
 const SCOOTER_FRAME := Transform3D(Basis(Vector3(-0.0094, 0, 0), Vector3(0, 0.0094, 0), Vector3(0, 0, -0.0094)), Vector3.ZERO)
 var scooter_mesh: Mesh
@@ -16,11 +20,12 @@ var batch := Batch.new()
 var root: Node3D
 var materials := {}
 var rng := RandomNumberGenerator.new()
-var shop_index := 0
 var solids: StaticBody3D
 var signs_root: Node3D
 var scatter := {}
 var triangles := 0
+# Every table set built: {"frame": table centre on the ground, "along": street direction, "inside": in a shop}.
+var tables: Array = []
 
 func build(owner: Node3D, town_plan: RefCounted) -> void:
 	root = owner
@@ -37,9 +42,11 @@ func build(owner: Node3D, town_plan: RefCounted) -> void:
 	for road in plan.roads:
 		_road(road)
 	_junctions()
+	var houses := Houses.new(self)
 	for lot in plan.lots:
-		_house(lot)
-	_back_blocks()
+		if not _landmark(lot):
+			houses.build(lot)
+	houses.back_blocks()
 	for road in plan.roads:
 		_wires(road)
 		_street_life(road)
@@ -51,7 +58,7 @@ func build(owner: Node3D, town_plan: RefCounted) -> void:
 	var meshes := Node3D.new()
 	meshes.name = "Meshes"
 	root.add_child(meshes)
-	triangles = batch.bake(meshes, materials, {"rail": 150.0, "cable": 220.0, "lit": 260.0, "paint": 300.0})
+	triangles = batch.bake(meshes, materials, {"rail": 150.0, "grille": 150.0, "cable": 220.0, "lit": 260.0, "paint": 300.0})
 	_bake_scatter()
 	scooter_mesh = _scooter_source()
 
@@ -102,6 +109,15 @@ func _make_materials() -> void:
 		"roof": _texture("clay_roof_tiles", 0.4),
 		"dirt": _texture("dirt", 0.14),
 		"mud": _texture("brown_mud", 0.12),
+		"brick": _texture("red_brick", 0.8),
+		"peel": _texture("damaged_plaster", 0.45),
+		"mossy": _texture("worn_mossy_plasterwall", 0.25),
+		"yellow": _texture("yellow_plaster", 0.3),
+		"cladding": _texture("exterior_wall_cladding_03", 0.4),
+		"stone": _texture("stone_tile_wall", 0.33),
+		"granite": _texture("granite_tile_03", 0.7, true, 0.45),
+		"wood": _school_texture("rough_wood", 0.5),
+		"pane": _plain(Color(0.20, 0.27, 0.32), 0.1, 0.5),
 		"paint": _plain(Color.WHITE),
 		"cable": _plain(Color(0.03, 0.03, 0.035), 0.7),
 		"steel": _plain(Color(0.75, 0.77, 0.78), 0.32, 0.9),
@@ -112,6 +128,8 @@ func _make_materials() -> void:
 	materials.plaster.albedo_color = Color(1.28, 1.26, 1.22)
 	materials.aged.albedo_color = Color(1.4, 1.38, 1.32)
 	materials.paver.albedo_color = Color(0.92, 1.0, 1.1)
+	materials.mossy.albedo_color = Color(1.25, 1.22, 1.15)
+	materials.yellow.albedo_color = Color(1.3, 1.25, 1.1)
 	materials.lit = _plain(Color.WHITE)
 	materials.lit.emission_enabled = true
 	materials.lit.emission_energy_multiplier = 1.5
@@ -126,6 +144,9 @@ func _make_materials() -> void:
 	materials.rail.alpha_scissor_threshold = 0.5
 	materials.rail.cull_mode = BaseMaterial3D.CULL_DISABLED
 	materials.rail.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	# The same bars in whatever colour the ironwork was painted.
+	materials.grille = materials.rail.duplicate()
+	materials.grille.albedo_color = Color.WHITE
 
 func _rail_texture() -> ImageTexture:
 	var image := Image.create(64, 64, true, Image.FORMAT_RGBA8)
@@ -233,205 +254,22 @@ func _frame(lot: Dictionary) -> Transform3D:
 	var x := Vector3.UP.cross(inward).normalized()
 	return Transform3D(Basis(x, Vector3.UP, inward), _flat(lot.front, 0.0))
 
-func _house(lot: Dictionary) -> void:
+# The named places that have a building of their own; every other lot is an ordinary house.
+func _landmark(lot: Dictionary) -> bool:
 	var frame := _frame(lot)
 	batch.at(frame.origin)
-	var place: Dictionary = lot.get("place", {})
-	match place.get("style", ""):
+	match lot.get("place", {}).get("style", ""):
 		"market":
 			_market(lot, frame)
-			return
 		"civic":
 			_civic(lot, frame)
-			return
 		"stall":
 			_stall(lot, frame)
-			return
 		"curio":
 			_curio(lot, frame)
-			return
-	var road: Dictionary = plan.roads[lot.road]
-	var w: float = lot.width
-	var d: float = lot.depth
-	var floors: int = place.get("floors", _floors_for(road))
-	var tall: float = plan.FLOOR
-	var height: float = floors * tall
-	var tint: Color = place.get("tint", FACADES[rng.randi() % FACADES.size()])
-	tint = tint.darkened(rng.randf_range(0.0, 0.08))
-	var skin: String = "aged" if rng.randf() < 0.12 else "plaster"
-	var ground_depth := 2.6
-	# Upper body with a recessed ground floor, the usual shop shape.
-	batch.box(skin, frame, Vector3(0, tall + (height - tall) * 0.5, d * 0.5), Vector3(w, height - tall, d), tint)
-	batch.box(skin, frame, Vector3(0, tall * 0.5, (d + ground_depth) * 0.5), Vector3(w, tall, d - ground_depth), tint.darkened(0.08))
-	for side in [-1.0, 1.0]:
-		batch.box("plaster", frame, Vector3(side * (w * 0.5 - 0.13), tall * 0.5, ground_depth * 0.5), Vector3(0.26, tall, ground_depth), tint)
-	batch.box("plaster", frame, Vector3(0, tall - 0.05, ground_depth * 0.5), Vector3(w, 0.1, ground_depth), Color(0.82, 0.80, 0.74), false)
-	_solid(frame, Vector3(0, 6, d * 0.5 + ground_depth * 0.5), Vector3(w, 12.0, d - ground_depth))
-	for side in [-1.0, 1.0]:
-		_solid(frame, Vector3(side * (w * 0.5 - 0.13), 6, ground_depth * 0.5), Vector3(0.26, 12.0, ground_depth))
-	_shopfront(lot, frame, w, ground_depth, tall, place, road)
-	for level in range(1, floors):
-		_upper_floor(frame, w, level * tall, tall, tint, skin, level, floors)
-	_rooftop(frame, w, d, height, tint)
-	_side_windows(frame, w, d, floors)
-
-func _floors_for(road: Dictionary) -> int:
-	match road.kind:
-		"main":
-			return rng.randi_range(3, 6)
-		"street":
-			return rng.randi_range(2, 5)
-		"country":
-			return rng.randi_range(1, 2)
-	return rng.randi_range(2, 4)
-
-func _shopfront(lot: Dictionary, frame: Transform3D, w: float, recess: float, tall: float, place: Dictionary, road: Dictionary) -> void:
-	var inner := w - 0.52
-	var alley: bool = road.kind == "alley"
-	var kind: String = place.get("style", "")
-	if kind.is_empty():
-		var roll := rng.randf()
-		kind = ("shut" if roll < 0.35 else ("home" if roll < 0.75 else "open")) if alley else ("shut" if roll < 0.14 else ("home" if roll < 0.24 else "open"))
-	match kind:
-		"shut":
-			var set_name: String = "rust" if rng.randf() < 0.4 else "shutter"
-			batch.box(set_name, frame, Vector3(0, (tall - 0.1) * 0.5, 0.2), Vector3(inner, tall - 0.1, 0.06), Color(0.86, 0.87, 0.86).darkened(rng.randf_range(0, 0.25)))
-			_solid(frame, Vector3(0, 1.5, 0.2), Vector3(inner, 3.0, 0.2))
-		"home":
-			batch.box("paint", frame, Vector3(0, 1.25, recess - 0.04), Vector3(inner * 0.92, 2.5, 0.08), Color(0.32, 0.20, 0.14))
-			# Mười Gió sells from this porch, so its gate is left off and it stays open.
-			if not lot.get("kiosk", false):
-				batch.quad("rail", frame * Vector3(inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 0, 0.3), frame * Vector3(-inner * 0.5, 2.8, 0.3), frame * Vector3(inner * 0.5, 2.8, 0.3), Color.WHITE, Vector2(inner * 2.0, 3.0))
-				_solid(frame, Vector3(0, 1.5, 0.3), Vector3(inner, 3.0, 0.12))
 		_:
-			batch.box("lit", frame, Vector3(0, tall - 0.14, 1.2), Vector3(inner * 0.5, 0.05, 0.1), Color.WHITE)
-			batch.box("plaster", frame, Vector3(0, 1.4, recess - 0.04), Vector3(inner, 2.8, 0.08), Color(0.70, 0.66, 0.58))
-			for shelf in range(3):
-				var y := 0.62 + shelf * 0.68
-				batch.box("paint", frame, Vector3(0, y, recess - 0.3), Vector3(inner * 0.9, 0.05, 0.5), Color(0.30, 0.23, 0.18))
-				var n := -inner * 0.43
-				while n < inner * 0.43:
-					var size := Vector3(rng.randf_range(0.1, 0.24), rng.randf_range(0.14, 0.46), 0.22)
-					if rng.randf() < 0.88:
-						batch.box("paint", frame, Vector3(n, y + size.y * 0.5 + 0.03, recess - 0.3), size, GOODS[rng.randi() % GOODS.size()].darkened(rng.randf() * 0.35))
-					n += size.x + 0.02
-			if rng.randf() < 0.7 or not place.is_empty():
-				_awning(frame, w, tall)
-	if alley and place.is_empty() and rng.randf() < 0.65:
-		return
-	if kind == "home" and place.get("id", "") == "home":
-		var plate := Label3D.new()
-		plate.font = ThemeDB.fallback_font
-		plate.text = "14"
-		plate.font_size = 96
-		plate.pixel_size = 0.004
-		plate.double_sided = false
-		plate.transform = Transform3D(frame.basis * Basis(Vector3.UP, PI), frame * Vector3(w * 0.5 - 0.5, 2.3, 0.2))
-		signs_root.add_child(plate)
-		return
-	if kind != "home" or rng.randf() < 0.3:
-		_shop_sign(frame, w, tall, place)
-
-func _awning(frame: Transform3D, w: float, tall: float) -> void:
-	var color: Color = AWNINGS[rng.randi() % AWNINGS.size()]
-	var stripes := int(w / 0.8)
-	for n in range(stripes):
-		var left := -w * 0.5 + n * w / stripes
-		var right := left + w / stripes
-		var tone: Color = color if n % 2 == 0 else Color(0.92, 0.90, 0.84)
-		batch.quad("paint", frame * Vector3(left, tall - 0.75, -1.5), frame * Vector3(right, tall - 0.75, -1.5), frame * Vector3(right, tall - 0.2, 0.0), frame * Vector3(left, tall - 0.2, 0.0), tone)
-		batch.quad("paint", frame * Vector3(left, tall - 0.2, 0.0), frame * Vector3(right, tall - 0.2, 0.0), frame * Vector3(right, tall - 0.75, -1.5), frame * Vector3(left, tall - 0.75, -1.5), tone.darkened(0.3))
-
-func _shop_sign(frame: Transform3D, w: float, tall: float, place: Dictionary) -> void:
-	var color: Color = place.get("sign", SIGNS[rng.randi() % SIGNS.size()])
-	var text: String = place.get("label", plan.SHOPS[shop_index % plan.SHOPS.size()])
-	if place.is_empty():
-		shop_index += 1
-		if rng.randf() < 0.4:
-			_blade_sign(frame, w, tall, color)
-	var y := tall + 0.42
-	batch.box("paint", frame, Vector3(0, y, -0.14), Vector3(w - 0.12, 0.8, 0.14), color)
-	var label := Label3D.new()
-	label.font = ThemeDB.fallback_font
-	label.text = text.to_upper()
-	label.font_size = 64
-	label.pixel_size = 0.0058
-	label.width = 900
-	label.modulate = Color(0.09, 0.08, 0.07) if color.get_luminance() > 0.55 else Color(0.98, 0.95, 0.82)
-	label.outline_size = 0
-	label.shaded = true
-	label.double_sided = false
-	label.visibility_range_end = 70.0
-	var fit := minf(1.0, (w - 0.5) / (text.length() * 0.27 + 0.2))
-	label.scale = Vector3.ONE * fit
-	# The label reads towards the street, which is the frame's -Z.
-	label.transform = Transform3D(frame.basis * Basis(Vector3.UP, PI) * Basis.from_scale(Vector3.ONE * fit), frame * Vector3(0, y, -0.225))
-	signs_root.add_child(label)
-
-func _upper_floor(frame: Transform3D, w: float, y: float, tall: float, tint: Color, skin: String, level: int, floors: int) -> void:
-	var inner := w - 0.5
-	var balcony := rng.randf() < 0.72
-	if balcony:
-		batch.box("plaster", frame, Vector3(0, y + 0.03, -0.42), Vector3(w - 0.1, 0.14, 0.84), tint.darkened(0.12), false)
-		var low := y + 0.1
-		var high := y + 1.12
-		batch.quad("rail", frame * Vector3(inner * 0.5 + 0.2, low, -0.8), frame * Vector3(-inner * 0.5 - 0.2, low, -0.8), frame * Vector3(-inner * 0.5 - 0.2, high, -0.8), frame * Vector3(inner * 0.5 + 0.2, high, -0.8), Color.WHITE, Vector2(inner * 2.2, 1.0))
-		if rng.randf() < 0.13:
-			_laundry(frame, inner, y)
-		if rng.randf() < 0.4:
-			for n in range(rng.randi_range(1, 3)):
-				var ledge := frame * Vector3(rng.randf_range(-inner * 0.42, inner * 0.42), y + 0.1, -0.62)
-				_add_scatter("bush", Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * 0.9), ledge))
-	var door := inner * rng.randf_range(0.5, 0.76)
-	var top := y + tall - 0.62
-	var bottom := y + (0.12 if balcony else 0.95)
-	var middle := (top + bottom) * 0.5
-	batch.box("glass", frame, Vector3(0, middle, -0.01), Vector3(door, top - bottom, 0.03), Color(0.75, 0.82, 0.86))
-	if rng.randf() < 0.55:
-		var cloth := Color.from_hsv(rng.randf_range(0.05, 0.6), rng.randf_range(0.08, 0.3), rng.randf_range(0.7, 0.92))
-		var half_way := door * rng.randf_range(0.2, 0.5)
-		batch.box("paint", frame, Vector3(-door * 0.5 + half_way * 0.5, middle, -0.03), Vector3(half_way, top - bottom, 0.02), cloth)
-	var trim: Color = Color(0.88, 0.86, 0.80) if rng.randf() < 0.6 else Color(0.34, 0.24, 0.16)
-	batch.box("paint", frame, Vector3(0, top + 0.03, -0.03), Vector3(door + 0.14, 0.07, 0.07), trim)
-	batch.box("paint", frame, Vector3(0, bottom - 0.03, -0.03), Vector3(door + 0.14, 0.07, 0.07), trim)
-	for x in [-door * 0.5, 0.0, door * 0.5]:
-		batch.box("paint", frame, Vector3(x, middle, -0.03), Vector3(0.06, top - bottom, 0.06), trim)
-	if not balcony:
-		batch.quad("rail", frame * Vector3(door * 0.5, bottom, -0.08), frame * Vector3(-door * 0.5, bottom, -0.08), frame * Vector3(-door * 0.5, top, -0.08), frame * Vector3(door * 0.5, top, -0.08), Color.WHITE, Vector2(door * 2.4, 2.0))
-	if rng.randf() < 0.3:
-		var unit := Vector3(-inner * 0.34 * (1.0 if rng.randf() < 0.5 else -1.0), y + 2.75, -0.2)
-		batch.box("paint", frame, unit, Vector3(0.72, 0.5, 0.3), Color(0.82, 0.82, 0.80))
-	if level == floors - 1 and rng.randf() < 0.3:
-		batch.box("paint", frame, Vector3(0, y + tall - 0.2, -0.02), Vector3(inner, 0.12, 0.05), tint.darkened(0.3))
-
-func _laundry(frame: Transform3D, inner: float, y: float) -> void:
-	var x := -inner * 0.4
-	while x < inner * 0.4:
-		var cloth := Color.from_hsv(rng.randf(), rng.randf_range(0.1, 0.45), rng.randf_range(0.35, 0.7))
-		var size := Vector2(rng.randf_range(0.26, 0.4), rng.randf_range(0.4, 0.68))
-		var top := y + 2.42
-		batch.quad("paint", frame * Vector3(x + size.x, top - size.y, -0.6), frame * Vector3(x, top - size.y, -0.6), frame * Vector3(x, top, -0.6), frame * Vector3(x + size.x, top, -0.6), cloth)
-		batch.quad("paint", frame * Vector3(x, top - size.y, -0.6), frame * Vector3(x + size.x, top - size.y, -0.6), frame * Vector3(x + size.x, top, -0.6), frame * Vector3(x, top, -0.6), cloth)
-		x += size.x + rng.randf_range(0.08, 0.3)
-
-func _rooftop(frame: Transform3D, w: float, d: float, height: float, tint: Color) -> void:
-	var roof := rng.randf()
-	var wall := 0.85 if roof > 0.32 else 0.3
-	batch.box("plaster", frame, Vector3(0, height + wall * 0.5, 0.09), Vector3(w, wall, 0.18), tint.darkened(0.05))
-	for side in [-1.0, 1.0]:
-		batch.box("plaster", frame, Vector3(side * (w * 0.5 - 0.08), height + 0.3, d * 0.5), Vector3(0.16, 0.6, d), tint.darkened(0.15))
-	if roof < 0.32:
-		var ridge := height + 2.0
-		batch.quad("roof", frame * Vector3(w * 0.5 + 0.2, height + 0.25, -0.3), frame * Vector3(-w * 0.5 - 0.2, height + 0.25, -0.3), frame * Vector3(-w * 0.5, ridge, 2.5), frame * Vector3(w * 0.5, ridge, 2.5), Color(0.86, 0.60, 0.46))
-		batch.quad("roof", frame * Vector3(-w * 0.5, height + 0.2, 5.0), frame * Vector3(w * 0.5, height + 0.2, 5.0), frame * Vector3(w * 0.5, ridge, 2.5), frame * Vector3(-w * 0.5, ridge, 2.5), Color(0.8, 0.56, 0.44))
-	var tin: String = "rust_tin" if rng.randf() < 0.45 else "tin"
-	batch.quad(tin, frame * Vector3(-w * 0.5, height + 0.3, d), frame * Vector3(w * 0.5, height + 0.3, d), frame * Vector3(w * 0.5, height + 1.6, d * 0.55), frame * Vector3(-w * 0.5, height + 1.6, d * 0.55), Color(0.85, 0.82, 0.76))
-	if rng.randf() < 0.75:
-		var spot := Vector3(rng.randf_range(-w * 0.2, w * 0.2), height + 0.95, d * 0.42)
-		var tank := Transform3D(frame.basis * Basis(Vector3.FORWARD, PI * 0.5), frame * spot)
-		for n in range(8):
-			var turn := Transform3D(Basis(Vector3.UP, n * TAU / 8.0), Vector3.ZERO)
-			batch.box("steel", tank * turn, Vector3(0.0, 0, 0.53), Vector3(0.44, 1.5, 0.05), Color.WHITE)
+			return false
+	return true
 
 func _civic(lot: Dictionary, frame: Transform3D) -> void:
 	var place: Dictionary = lot.place
@@ -507,8 +345,8 @@ func _market(lot: Dictionary, frame: Transform3D) -> void:
 			batch.box("paint", frame, at, Vector3(2.8, 0.9, 1.5), Color(0.52, 0.42, 0.32))
 			_solid(frame, at, Vector3(2.8, 1.0, 1.5))
 			for n in range(14):
-				batch.box("paint", frame, at + Vector3(rng.randf_range(-1.2, 1.2), 0.55, rng.randf_range(-0.6, 0.6)), Vector3(0.3, 0.2, 0.26), GOODS[rng.randi() % GOODS.size()])
-			batch.quad("paint", frame * Vector3(at.x - 1.6, 2.5, at.z + 0.9), frame * Vector3(at.x + 1.6, 2.5, at.z + 0.9), frame * Vector3(at.x + 1.6, 2.2, at.z - 0.9), frame * Vector3(at.x - 1.6, 2.2, at.z - 0.9), AWNINGS[rng.randi() % AWNINGS.size()])
+				batch.box("paint", frame, at + Vector3(rng.randf_range(-1.2, 1.2), 0.55, rng.randf_range(-0.6, 0.6)), Vector3(0.3, 0.2, 0.26), Houses.GOODS[rng.randi() % Houses.GOODS.size()])
+			batch.quad("paint", frame * Vector3(at.x - 1.6, 2.5, at.z + 0.9), frame * Vector3(at.x + 1.6, 2.5, at.z + 0.9), frame * Vector3(at.x + 1.6, 2.2, at.z - 0.9), frame * Vector3(at.x - 1.6, 2.2, at.z - 0.9), Houses.AWNINGS[rng.randi() % Houses.AWNINGS.size()])
 	batch.quad("rust_tin", frame * Vector3(w * 0.5 + 0.6, height + 2.4, d * 0.5), frame * Vector3(-w * 0.5 - 0.6, height + 2.4, d * 0.5), frame * Vector3(-w * 0.5 - 0.6, height, d + 0.8), frame * Vector3(w * 0.5 + 0.6, height, d + 0.8), Color(0.5, 0.48, 0.44))
 	batch.box("paint", frame, Vector3(0, height + 0.5, -0.9), Vector3(13, 1.0, 0.14), Color(0.72, 0.12, 0.10))
 	var label := Label3D.new()
@@ -521,68 +359,6 @@ func _market(lot: Dictionary, frame: Transform3D) -> void:
 	label.double_sided = false
 	label.transform = Transform3D(frame.basis * Basis(Vector3.UP, PI), frame * Vector3(0, height + 0.5, -0.98))
 	signs_root.add_child(label)
-
-# Whatever the street rows leave empty is filled, so gaps show more town instead of the void.
-func _back_blocks() -> void:
-	var step := 9.0
-	var x := -430.0
-	while x < plan.BRIDGE_START - 8.0:
-		var z := -300.0
-		while z < 300.0:
-			_back_cell(Vector2(x + rng.randf_range(-1, 1), z + rng.randf_range(-1, 1)), step)
-			z += step
-		x += step
-
-func _back_cell(p: Vector2, step: float) -> void:
-	var half := step * 0.5
-	var inside: bool = p.x > -290.0 and absf(p.y) < 170.0
-	if p.x > plan.river_west(p.y) - 5.0:
-		return
-	var probes := [p, p + Vector2(half, half), p + Vector2(-half, half), p + Vector2(half, -half), p + Vector2(-half, -half)]
-	for probe in probes:
-		if plan.in_corridor(probe, 0.6):
-			return
-	var cell := Vector2i(floori(p.x / 24.0), floori(p.y / 24.0))
-	var candidate := {"centre": p, "normal": Vector2.RIGHT, "width": step, "depth": step}
-	for gx in range(cell.x - 1, cell.x + 2):
-		for gy in range(cell.y - 1, cell.y + 2):
-			for other in plan.lot_grid.get(Vector2i(gx, gy), []):
-				if plan._overlap(candidate, other):
-					return
-	var height := rng.randf_range(5.0, 15.0)
-	var frame := Transform3D(Basis.IDENTITY, _flat(p))
-	batch.at(frame.origin)
-	var tint: Color = FACADES[rng.randi() % FACADES.size()].darkened(rng.randf_range(0.02, 0.18))
-	batch.box("aged", frame, Vector3(0, height * 0.5, 0), Vector3(step, height, step), tint)
-	batch.quad("tin" if rng.randf() < 0.5 else "rust_tin", frame * Vector3(-half, height + 0.1, half), frame * Vector3(half, height + 0.1, half), frame * Vector3(half, height + 0.9, -half), frame * Vector3(-half, height + 0.9, -half), Color(0.8, 0.76, 0.70))
-	if inside:
-		_solid(frame, Vector3(0, 6, 0), Vector3(step, 12, step))
-	# Only walls that face a street can be seen, so only those earn windows.
-	if plan.in_corridor(p, step):
-		for turn in range(4):
-			var face := frame * Transform3D(Basis(Vector3.UP, turn * PI * 0.5)).translated_local(Vector3(0, 0, -half))
-			for level in range(int(height / plan.FLOOR)):
-				if level > 0 or rng.randf() < 0.5:
-					_small_window(face, Vector3(rng.randf_range(-2.4, 2.4), level * plan.FLOOR + 1.7, 0))
-
-# A barred window; blank party walls read as unfinished geometry.
-func _small_window(face: Transform3D, at: Vector3) -> void:
-	batch.box("paint", face, at + Vector3(0, 0, -0.01), Vector3(1.24, 1.34, 0.05), Color(0.78, 0.76, 0.70))
-	batch.box("glass", face, at + Vector3(0, 0, -0.04), Vector3(1.06, 1.16, 0.03), Color.WHITE)
-	batch.quad("rail", face * (at + Vector3(0.55, -0.6, -0.1)), face * (at + Vector3(-0.55, -0.6, -0.1)), face * (at + Vector3(-0.55, 0.6, -0.1)), face * (at + Vector3(0.55, 0.6, -0.1)), Color.WHITE, Vector2(2.4, 1.2))
-
-func _side_windows(frame: Transform3D, w: float, d: float, floors: int) -> void:
-	for side in [-1.0, 1.0]:
-		var face := frame * Transform3D(Basis(Vector3.UP, -side * PI * 0.5), Vector3(side * w * 0.5, 0, d * 0.5))
-		for level in range(1, floors):
-			if rng.randf() < 0.7:
-				_small_window(face, Vector3(rng.randf_range(-d * 0.3, d * 0.3), level * plan.FLOOR + 1.7, 0))
-
-func _blade_sign(frame: Transform3D, w: float, tall: float, color: Color) -> void:
-	var x := (w * 0.5 - 0.2) * (1.0 if rng.randf() < 0.5 else -1.0)
-	var length := rng.randf_range(1.6, 2.8)
-	batch.box("paint", frame, Vector3(x, tall + 0.6 + length * 0.5, -0.5), Vector3(0.12, length, 0.72), color)
-	batch.box("lit", frame, Vector3(x, tall + 0.6 + length * 0.5, -0.5), Vector3(0.14, length * 0.86, 0.1), Color(1.0, 0.95, 0.8))
 
 # The shop the map leaves out: half-shuttered, one red lantern, no name over the door.
 func _curio(lot: Dictionary, frame: Transform3D) -> void:
@@ -712,15 +488,24 @@ func _street_life(road: Dictionary) -> void:
 			for n in range(rng.randi_range(1, 3)):
 				_add_scatter(clutter, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * size), _flat(spot + along * n * 0.7 + normal * 0.9, y)))
 
-func _sidewalk_seats(spot: Vector2, along: Vector2, y: float) -> void:
+func _sidewalk_seats(spot: Vector2, along: Vector2, y: float, inside := false) -> void:
 	var colours := [Color(0.72, 0.10, 0.10), Color(0.12, 0.28, 0.62), Color(0.90, 0.72, 0.16)]
 	var tint: Color = colours[rng.randi() % colours.size()]
-	var angle := atan2(along.x, along.y)
 	for n in range(4):
-		var at: Vector2 = spot + along.rotated(n * PI * 0.5) * 0.62
-		_add_scatter("chair", Transform3D(Basis(Vector3.UP, angle + n * PI * 0.5).scaled(Vector3.ONE * 0.62), _flat(at, y)), tint)
-	batch.at(_flat(spot))
-	batch.box("paint", Transform3D(Basis.IDENTITY, _flat(spot, y)), Vector3(0, 0.25, 0), Vector3(0.62, 0.5, 0.62), tint.darkened(0.15))
+		# Each chair is turned from its own offset: the model's seat faces +Z, so +Z is aimed back
+		# at the table. A shared angle plus quarter turns would not do, because Vector2.rotated and
+		# a basis about Y turn opposite ways and two of the four chairs end up facing out.
+		var out: Vector2 = along.rotated(n * PI * 0.5)
+		_add_scatter("chair", Transform3D(Basis(Vector3.UP, atan2(-out.x, -out.y)).scaled(Vector3.ONE * CHAIR_SCALE), _flat(spot + out * CHAIR_OFFSET, y)), tint)
+	# A top on four corner legs, so a seated person's knees go under it.
+	var frame := Transform3D(Basis(Vector3.UP, atan2(along.x, along.y)), _flat(spot, y))
+	var colour := tint.darkened(0.15)
+	var leg := TABLE_TOP - 0.04
+	batch.at(frame.origin)
+	batch.box("paint", frame, Vector3(0, TABLE_TOP - 0.02, 0), Vector3(TABLE_SIZE, 0.04, TABLE_SIZE), colour, false)
+	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		batch.box("paint", frame, Vector3(corner.x, 0, corner.y) * (TABLE_SIZE * 0.5 - 0.05) + Vector3.UP * leg * 0.5, Vector3(0.05, leg, 0.05), colour)
+	tables.append({"frame": frame, "along": along, "inside": inside})
 
 func _bake_scatter() -> void:
 	var folder := Node3D.new()

@@ -26,8 +26,9 @@ func run() -> void:
 	var story: Node = town.story
 	var seller: Node = story.muoi_gio
 	# His porch keeps no gate: from the alley, nothing stands between the player and his seat.
+	# Looked at from the alley straight outside his house, wherever on Hẻm 8 that turns out to be.
 	var road: Dictionary = town.plan.road_named(seller.ROAD)
-	var alley: Vector2 = road.path[seller.ROAD_INDEX]
+	var alley: Vector2 = road.path[town.plan._closest_index(road, seller.lot.front)]
 	var space := town.get_world_3d().direct_space_state
 	var seat: Vector3 = town.builder._frame(seller.lot) * Vector3(0, 1.0, seller.SEAT_DEPTH)
 	var seen: Dictionary = space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(alley.x, seat.y, alley.y), seat))

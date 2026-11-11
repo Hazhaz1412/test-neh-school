@@ -45,6 +45,10 @@ func _ready() -> void:
 	life = preload("res://scripts/town/town_life.gd").new()
 	add_child(life)
 	life.setup(self)
+	var diners: Node = preload("res://scripts/town/town_diners.gd").new()
+	diners.name = "Diners"
+	add_child(diners)
+	diners.setup(self)
 	story = preload("res://scripts/town/town_story.gd").new()
 	add_child(story)
 	story.setup(self)

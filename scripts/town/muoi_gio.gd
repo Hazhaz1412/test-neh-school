@@ -49,6 +49,9 @@ static func reserve(plan: RefCounted) -> Dictionary:
 			gap = distance
 			best = candidate
 	best.kiosk = true
+	# Whatever the plan meant to build there, he gets an ordinary tube house with its porch.
+	best.kind = "tube"
+	best.width = minf(best.width, 6.0)
 	return best
 
 func setup(owner_story: Node) -> void:
