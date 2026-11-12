@@ -37,6 +37,21 @@ Khoảng 540 × 300 m, chia đôi bởi sông Trầu.
 
 Càng đi về phía trường, phố càng thưa và tiếng xe càng nhỏ. Đó là chủ ý.
 
+## Nhà cửa
+
+Mỗi lô nhà tự sinh có một kiểu, do `town_plan.gd` chọn theo loại đường (bảng `MIX`):
+
+- **Nhà ống:** tầng trệt lùi vào làm cửa hàng, mỗi tầng trên một ban công hoặc cửa sổ song sắt. Các địa điểm có tên kiểu `open`, `home` luôn là nhà ống.
+- **Nhà hiện đại:** mặt tiền phẳng ốp đá hoặc ốp tấm, kính lớn, lam gỗ, tầng trên cùng lùi sau sân thượng. Nhiều nhất trên đường chính.
+- **Nhà cấp 4:** một tầng, tường gạch trần hoặc vôi, mái ngói hoặc mái tôn. Lô sâu có sân và hàng rào, lô nông mở thẳng ra đường làm quán. Nhiều nhất trong hẻm và đường Đồng Muối.
+- **Khu tập thể:** khối 4 đến 5 tầng dài 21 đến 30 m trên đường chính và phố, tầng trệt là dãy cửa hàng, ban công mỗi nhà một kiểu (chuồng cọp, lan can, xây bít), cầu thang chung có ô thoáng và tên nhà sơn trên tum.
+
+Cửa hàng mở (tầng trệt nhà ống, nhà cấp 4 làm quán, dãy cửa hàng khu tập thể) bày theo ngành hàng, suy từ chữ đầu của tên biển hiệu qua bảng `TRADES` trong `town_houses.gd`: quán ăn uống có bàn ghế nhựa và quầy inox, tiệm sửa xe có xe và đồ nghề, tiệm điện thoại, thuốc, vàng có tủ kính, tiệm quần áo có sào treo đồ, tiệm tóc, nha khoa, karaoke là vách kính, còn lại là kệ hàng. Tên mới thêm vào `SHOPS` tự nhận ngành theo bảng đó.
+
+Người ngồi quán do `town_diners.gd` đặt lên 26 bộ bàn ghế (nửa trong quán ăn, nửa ngoài vỉa hè): trong quán ăn bún phở, gắp đũa đưa lên miệng và nâng bát; ngoài vỉa hè uống trà đá, thỉnh thoảng nâng ly; tối đa 4 bàn cờ vua, hai người chơi thật theo luật trong `chess_rules.gd`, người chống cằm nghĩ, người với tay đi quân. Rocketbox chỉ có clip ngồi yên, nên tay được đặt bằng IK trong `seat_pose.gd` chồng lên clip đó. Người ngoài 45 m bị ẩn và dừng animation.
+
+Phía sau dãy mặt đường là khối nền: nhà thấp mái tôn, mái ngói hoặc mái bằng, chen vài khoảng sân có cây và vài chung cư mini cao 7 đến 11 tầng.
+
 ## Thiết kế di chuyển
 
 Người dùng yêu cầu không bắt đi bộ nhàm chán nhưng cũng không teleport.
@@ -56,7 +71,9 @@ Người dùng yêu cầu không bắt đi bộ nhàm chán nhưng cũng không 
 | `scripts/town/town_layout.gd` | Đọc đường, địa điểm từ scene, dựng bản xem trước trong editor |
 | `scripts/town/town_road.gd`, `town_place.gd` | Node một con đường, một địa điểm |
 | `scripts/town/town_plan.gd` | Từ dữ liệu trong scene tính ra đường, lô nhà, độ cao mặt đất |
-| `scripts/town/town_builder.gd` | Sinh mesh và collider từ bản đồ |
+| `scripts/town/town_builder.gd` | Sinh mesh và collider từ bản đồ: đường, sông, ruộng muối, địa điểm có tên |
+| `scripts/town/town_houses.gd` | Bốn kiểu nhà thường và khối nền phía sau dãy mặt đường |
+| `scripts/town/town_diners.gd`, `seat_pose.gd` | Người ngồi ăn, uống, đánh cờ ở bàn ghế nhựa; IK cho tay |
 | `scripts/town/mesh_batch.gd` | Gộp hình theo ô 72 m và vật liệu để giảm draw call |
 | `scripts/town/town_player.gd` | Đi bộ, lái xe, camera |
 | `scripts/town/town_traffic.gd` | Xe chạy theo vòng, người đi bộ |

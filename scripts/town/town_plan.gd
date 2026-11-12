@@ -11,6 +11,11 @@ const BRIDGE_RISE := 3.0
 const FIELD_LEVEL := -0.22
 const KERB := 0.14
 const FLOOR := 3.4
+# What lines each kind of street: weights for tube house, modern town house, single-storey cottage.
+const KINDS := ["tube", "modern", "cottage"]
+const MIX := {"main": [0.50, 0.42, 0.08], "street": [0.52, 0.26, 0.22], "alley": [0.45, 0.10, 0.45], "country": [0.15, 0.0, 0.85]}
+const WIDTHS := {"tube": Vector2(3.6, 6.4), "modern": Vector2(4.6, 8.0), "cottage": Vector2(6.0, 9.5)}
+const DEPTHS := {"tube": [15.0, 11.0, 7.5, 5.0], "modern": [15.0, 11.0, 7.5, 5.0], "cottage": [13.0, 10.0, 7.5, 5.0]}
 const SHOPS := ["Cơm Bình Dân", "Bún Riêu Cô Ba", "Sửa Xe Hoàng", "Tiệm Tóc Thu Hà", "Điện Thoại Minh Phát", "Photocopy Hùng", "Thuốc Tây Đức Tâm", "Bánh Mì Bảy Hổ", "Vá Xe 24h", "Hủ Tiếu Năm Lửa", "Nhà Sách Tuổi Xanh", "Trà Đá Chị Tư", "Gas Phú Lộc", "Áo Quần Thúy", "Ốc Cô Hai", "Sim Thẻ Nam Anh", "Karaoke Hồng Ân", "Giặt Ủi Sao Mai", "Nha Khoa Nụ Cười", "Vàng Bạc Kim Thành", "Bia Hơi Bạn Hiền", "Khóa Thợ Lành", "Kính Mắt Sáng", "Đồ Khô Hải Lâm", "Nước Mía Sầu Riêng", "Tiệm May Thanh", "Xôi Bà Lành", "Sơn Nhà Đại Lợi", "Cháo Lòng Cổ Đằng", "Chè Bến Trầu"]
 var roads: Array = []
 var places: Array = []
@@ -128,12 +133,41 @@ func _place_lots() -> void:
 		var side := signf((place.on - road.path[index]).dot(_normal(road, index)))
 		var fit := _lot_on(road, index, side, place.width, place.depth)
 		fit.place = place
+		# Named places are written against the tube house, whatever stands around them.
+		fit.kind = "tube"
 		_claim(fit)
+	_place_blocks()
 	for road in roads:
 		if road.kind == "bridge":
 			continue
 		for side in [-1.0, 1.0]:
 			_fill_side(road, side)
+
+# Old collective housing takes a whole stretch of street, so it is fitted before the single houses.
+func _place_blocks() -> void:
+	for road in roads:
+		if road.kind not in ["main", "street"]:
+			continue
+		for side in [-1.0, 1.0]:
+			var at := rng.randf_range(15.0, 140.0)
+			while at < road.length - 20.0:
+				var width := rng.randf_range(21.0, 30.0)
+				if _try_block(road, int(at / STEP), side, width):
+					at += width + rng.randf_range(160.0, 260.0)
+				else:
+					at += 8.0
+
+# A long front only fits a bend when it stands back from the kerb, which leaves a forecourt.
+func _try_block(road: Dictionary, index: int, side: float, width: float) -> bool:
+	if index >= road.path.size():
+		return false
+	for setback in [0.1, 1.5, 3.0]:
+		var lot := _lot_on(road, index, side, width, 10.5, setback)
+		lot.kind = "block"
+		if _free(lot):
+			_claim(lot)
+			return true
+	return false
 
 func nearest_road(p: Vector2) -> int:
 	var best := 0
@@ -164,8 +198,12 @@ func _lot_on(road: Dictionary, index: int, side: float, width: float, depth: flo
 func _fill_side(road: Dictionary, side: float) -> void:
 	var at := 0.0
 	var country: bool = road.kind == "country"
+	var kind := "tube"
 	while at < road.length:
-		var width := rng.randf_range(3.6, 6.4)
+		# Neighbours often match: a run of cottages, two new builds side by side.
+		if rng.randf() > 0.3:
+			kind = _pick_kind(road.kind)
+		var width := rng.randf_range(WIDTHS[kind].x, WIDTHS[kind].y)
 		var index := int((at + width * 0.5) / STEP)
 		if index >= road.path.size():
 			return
@@ -173,12 +211,22 @@ func _fill_side(road: Dictionary, side: float) -> void:
 		if country and (road.path[index].x > 176 or rng.randf() > 0.55):
 			at += rng.randf_range(4.0, 14.0)
 			continue
-		_try_lot(road, index, side, width, country)
+		_try_lot(road, index, side, width, kind)
 
-func _try_lot(road: Dictionary, index: int, side: float, width: float, country: bool) -> void:
+func _pick_kind(road_kind: String) -> String:
+	var weights: Array = MIX.get(road_kind, MIX.street)
+	var roll := rng.randf()
+	for i in range(KINDS.size()):
+		roll -= weights[i]
+		if roll < 0.0:
+			return KINDS[i]
+	return KINDS[0]
+
+func _try_lot(road: Dictionary, index: int, side: float, width: float, kind: String) -> void:
 	for setback in [0.1, 0.6, 1.2]:
-		for depth in ([9.0] if country else [15.0, 11.0, 7.5, 5.0]):
+		for depth in ([10.0] if road.kind == "country" else DEPTHS[kind]):
 			var lot := _lot_on(road, index, side, width, depth, setback)
+			lot.kind = kind
 			if _free(lot):
 				_claim(lot)
 				return

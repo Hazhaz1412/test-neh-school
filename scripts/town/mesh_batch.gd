@@ -31,6 +31,20 @@ func facing(toward: Vector3, material: String, a: Vector3, b: Vector3, c: Vector
 	else:
 		quad(material, a, b, c, d, color, uv)
 
+# For gable ends; toward picks the side it is seen from, as facing() does.
+func triangle(toward: Vector3, material: String, a: Vector3, b: Vector3, c: Vector3, color := Color.WHITE) -> void:
+	var normal := (b - a).cross(c - a).normalized()
+	if normal.dot(toward) < 0.0:
+		triangle(toward, material, a, c, b, color)
+		return
+	var data := _arrays(material)
+	var base: int = data[0].size()
+	data[0].append_array(PackedVector3Array([a, b, c]))
+	data[1].append_array(PackedVector3Array([normal, normal, normal]))
+	data[2].append_array(PackedColorArray([color, color, color]))
+	data[3].append_array(PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.ONE]))
+	data[4].append_array(PackedInt32Array([base, base + 2, base + 1]))
+
 # centre and size are in the frame's local space; open_bottom saves faces nobody sees.
 func box(material: String, frame: Transform3D, centre: Vector3, size: Vector3, color := Color.WHITE, open_bottom := true) -> void:
 	var h := size * 0.5
@@ -63,7 +77,8 @@ func bake(parent: Node3D, materials: Dictionary, reach: Dictionary) -> int:
 		node.mesh = mesh
 		node.name = "%s_%d_%d" % [key[1], key[0].x, key[0].y]
 		node.visibility_range_end = reach.get(key[1], 0.0)
-		if key[1] in ["cable", "rail"]:
+		# Wires, bars, and the thin finishes on a wall that already casts the shadow itself.
+		if key[1] in ["cable", "rail", "grille", "pane", "granite", "cladding", "stone", "wood"]:
 			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(node)
 		triangles += data[4].size() / 3

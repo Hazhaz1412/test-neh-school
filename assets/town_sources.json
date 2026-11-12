@@ -600,6 +600,16 @@
   "sha256": "e98b839ae681ba929eb80f07348c70d0731b48239abe69268effab18420cd271"
  },
  {
+  "file": "polyhaven_town/textures/damaged_plaster_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/damaged_plaster/damaged_plaster_diff_1k.jpg",
+  "sha256": "391649dbb391c978b0d95cdd2351617fe3b7a577e432b94171208e576c9b2c63"
+ },
+ {
+  "file": "polyhaven_town/textures/damaged_plaster_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/damaged_plaster/damaged_plaster_nor_gl_1k.jpg",
+  "sha256": "9d2e4c261211c951fc424fe695483596e821f86b13d1d05485551ef0240d6b67"
+ },
+ {
   "file": "polyhaven_town/textures/dirt_diff.jpg",
   "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirt/dirt_diff_1k.jpg",
   "sha256": "6ce6ca7e28ed046f7f93fa60dcb29f8cf42cd5a539adc5676675acccfa34efd3"
@@ -608,6 +618,26 @@
   "file": "polyhaven_town/textures/dirt_nor.jpg",
   "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirt/dirt_nor_gl_1k.jpg",
   "sha256": "5a5f97d920fdcdf352b350b95558bf48bb306be1fe61a47418aadc60b7deb0ce"
+ },
+ {
+  "file": "polyhaven_town/textures/exterior_wall_cladding_03_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/exterior_wall_cladding_03/exterior_wall_cladding_03_diff_1k.jpg",
+  "sha256": "b284af8fb0d4997c85f172902fcf0a0fa337249f63af1dd9c8f71cb5838df89e"
+ },
+ {
+  "file": "polyhaven_town/textures/exterior_wall_cladding_03_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/exterior_wall_cladding_03/exterior_wall_cladding_03_nor_gl_1k.jpg",
+  "sha256": "bdab42092ee8c68c07ed526a047e577e4697d80b3927fdb034db287bbe1d5723"
+ },
+ {
+  "file": "polyhaven_town/textures/granite_tile_03_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/granite_tile_03/granite_tile_03_diff_1k.jpg",
+  "sha256": "bdb28bea17413f1a05b0498b43e9f61f253bb72d753d3bf6b555cbf5f3c9b1b4"
+ },
+ {
+  "file": "polyhaven_town/textures/granite_tile_03_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/granite_tile_03/granite_tile_03_nor_gl_1k.jpg",
+  "sha256": "016a678038f885f58fdb2ab642835dddd5a4d1302dbec8cb656e37ddd17dbbff"
  },
  {
   "file": "polyhaven_town/textures/laminate_floor_02_diff.jpg",
@@ -640,6 +670,16 @@
   "sha256": "c1d15c30b089861dbc2995492ec77cd64f530a35bb340879fe0dc86ec3bb9b5c"
  },
  {
+  "file": "polyhaven_town/textures/red_brick_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_brick/red_brick_diff_1k.jpg",
+  "sha256": "6dea3a2b5a3185ff48d299d182c405a9f787129d79677792db6de4afd81c47f6"
+ },
+ {
+  "file": "polyhaven_town/textures/red_brick_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_brick/red_brick_nor_gl_1k.jpg",
+  "sha256": "99bd2c60dfdb02b011cc3551bd9ab51d9b0be2807e3ba8f7a53c8a4c945b2f87"
+ },
+ {
   "file": "polyhaven_town/textures/rusty_corrugated_iron_diff.jpg",
   "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_corrugated_iron/rusty_corrugated_iron_diff_1k.jpg",
   "sha256": "2525deb17323eefe39e8a90c6384033e31832b6aa9736bea27f81f4148508087"
@@ -670,6 +710,16 @@
   "sha256": "42826d27fdc53379324412ad2b71925e65d013f7df250d202fe296665a74e769"
  },
  {
+  "file": "polyhaven_town/textures/stone_tile_wall_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tile_wall/stone_tile_wall_diff_1k.jpg",
+  "sha256": "3e93afc3a1fe84acba1184d816474166c26e04a3e0cc7d7b6e1097be48b1b90c"
+ },
+ {
+  "file": "polyhaven_town/textures/stone_tile_wall_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/stone_tile_wall/stone_tile_wall_nor_gl_1k.jpg",
+  "sha256": "a8c93f867e4b8428d7543c4c1146667619311983c60dd9fe524e53c1a365bc49"
+ },
+ {
   "file": "polyhaven_town/textures/white_plaster_02_diff.jpg",
   "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_02/white_plaster_02_diff_1k.jpg",
   "sha256": "a1ebbe091bd1ae93d2abd5de8d69f9003a8d0ee6532bcf9a87c2492c97051f23"
@@ -678,6 +728,26 @@
   "file": "polyhaven_town/textures/white_plaster_02_nor.jpg",
   "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_02/white_plaster_02_nor_gl_1k.jpg",
   "sha256": "eb572ca3630d5bfde72e2601b1f02412da23ca005cd19384dced8690be4cb783"
+ },
+ {
+  "file": "polyhaven_town/textures/worn_mossy_plasterwall_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/worn_mossy_plasterwall/worn_mossy_plasterwall_diff_1k.jpg",
+  "sha256": "415cbcbe8f70269569aa4f2f1efc13ca1bd5f2fabc791dff428ef0fa243e1e9e"
+ },
+ {
+  "file": "polyhaven_town/textures/worn_mossy_plasterwall_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/worn_mossy_plasterwall/worn_mossy_plasterwall_nor_gl_1k.jpg",
+  "sha256": "0fdf1e22066c4f6fc2c820ae9b11aa5f9ea6ea131ccf3abb65f37251ab9f6a5d"
+ },
+ {
+  "file": "polyhaven_town/textures/yellow_plaster_diff.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/yellow_plaster/yellow_plaster_diff_1k.jpg",
+  "sha256": "5e67931012314b632569864200881850b67337360059f995e487f94f594c9353"
+ },
+ {
+  "file": "polyhaven_town/textures/yellow_plaster_nor.jpg",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/yellow_plaster/yellow_plaster_nor_gl_1k.jpg",
+  "sha256": "785d8a69535fbae8c38aa80f086c3963f22fbff014638b122368bd7b0aa491ee"
  },
  {
   "file": "polypizza_town/low_poly_scooter.glb",
