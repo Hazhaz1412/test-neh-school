@@ -63,7 +63,7 @@ func run() -> void:
 	check(paused and shell.opened(), "the settings overlay pauses any scene")
 	shell.close()
 	check(not paused, "and closing resumes")
-	Progress.enter(self, 4)
+	Progress.enter(self, Progress.index_of("town"))
 	await create_timer(1.0).timeout
 	check(current_scene.has_method("spend"), "the day chapter opens the town")
 	Progress.wipe()

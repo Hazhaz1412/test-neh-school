@@ -301,7 +301,8 @@ func begin_first_chase() -> void:
 	stage_time = 0
 	runner.start()
 
-# The jump into the reservoir was the end of the dream: Peter wakes up at home.
+# The jump into the reservoir is not the end of the dream: Peter comes up in the dream shore
+# (scenes/dream_shore.tscn) and wakes at home only after reaching the gate there.
 func finish_dream() -> void:
 	runner.reset()
 	runner.restore_pose()
@@ -314,7 +315,7 @@ func _go_home() -> void:
 	var tree := world.get_tree()
 	if tree.has_meta("chapter_corridor"):
 		tree.remove_meta("chapter_corridor")
-	tree.change_scene_to_file.call_deferred("res://scenes/home.tscn")
+	tree.change_scene_to_file.call_deferred("res://scenes/dream_shore.tscn")
 
 func close() -> void:
 	if panel != null: panel.hide()

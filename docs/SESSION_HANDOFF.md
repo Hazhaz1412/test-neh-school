@@ -29,6 +29,18 @@ Mọi thứ đã xóa vẫn còn trong lịch sử git (commit trước `7bcef53
 
 Tiền truyện ở nhà 19:40 → Đêm 0 (giấc mơ: cài tóc → gương vỡ → tủ côn trùng → gương cầm tay → trốn và bám theo bác bảo vệ → chụp giấy tờ ở B-302 → lẻn ra → phá cửa phòng kỹ thuật → đường hầm → bể nước) → tỉnh dậy 05:52 → Ngày 1 ở khu phố → Đêm 1 cả nhóm trốn bác bảo vệ tới 06:00. Sáu chương trong `scripts/game_progress.gd`.
 
+## Giấc mơ mặt nước (2026-11-14)
+
+Sau bể nước ở hành lang đỏ, người chơi trồi lên ở `scenes/dream_shore.tscn` (chương "Đêm 0 · Mặt nước"), đi qua cổng trường thì mới tỉnh ở nhà. Sàn sụp thành vực rộng 99 m có ba đảo (`dream_rift.gd`); qua vực là năm câu đố, điều phối trong `dream_world.gd` (`STAGES`):
+
+1. `bridge1`: lối đi vỡ chỉ liền khi đứng cạnh bàn học lẻ (`anamorphic_bridge.gd`, phấn chiếu bằng `anamorphic_path.gdshader`); chụp ảnh ở đó thì cầu thành thật.
+2. `board`: tấm bảng chỉ có ở "ngày ấy". Ảnh mang vật đi: `memory_camera.gd` lưu transform của vật so với ống kính, đặt xuống là `mắt * rel`. Chụp ngang thì bảng nằm ngang, phải chụp dọc đầu bảng.
+3. `leap`: hai bảng, khoảng trống 18 m, phải nhảy cóc. Chụp từ xa thì bảng rơi xa; không chụp được tấm đang đứng lên; hai bảng chung một ảnh thì dời cùng nhau.
+4. `bridge2`: điểm nhìn (bàn lẻ lơ lửng) nằm ngoài vực, phải lấy tấm bảng của đảo làm cầu tàu ra đó.
+5. `gate`: cổng xích; ảnh "ngày ấy" dán đúng góc thì cổng mở.
+
+R xếp lại bảng của đảo hiện tại. Rơi xuống vực thì về đầu câu đố đang chơi. Kiểm tra: `tools/validate_dream.gd` (headless, giải hết năm câu và thử cả cách sai); ảnh: `tools/capture_dream.gd` ra `docs/dream-*.png`.
+
 ## Cách chạy
 
 ```sh

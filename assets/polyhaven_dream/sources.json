@@ -1,0 +1,498 @@
+{
+ "source": "https://polyhaven.com",
+ "license": "CC0 1.0 https://polyhaven.com/license",
+ "downloaded": "2026-11-14",
+ "pages": {
+  "large_iron_gate": "https://polyhaven.com/a/large_iron_gate",
+  "modular_electricity_poles": "https://polyhaven.com/a/modular_electricity_poles",
+  "alarm_clock_01": "https://polyhaven.com/a/alarm_clock_01",
+  "qwantani_dusk_2_puresky": "https://polyhaven.com/a/qwantani_dusk_2_puresky",
+  "ceiling_fan": "https://polyhaven.com/a/ceiling_fan",
+  "football": "https://polyhaven.com/a/football",
+  "book_encyclopedia_set_01": "https://polyhaven.com/a/book_encyclopedia_set_01",
+  "office_notepads": "https://polyhaven.com/a/office_notepads",
+  "plastic_broom": "https://polyhaven.com/a/plastic_broom",
+  "mounted_fluorescent_lights": "https://polyhaven.com/a/mounted_fluorescent_lights",
+  "security_camera_01": "https://polyhaven.com/a/security_camera_01",
+  "standing_chalkboard_01": "https://polyhaven.com/a/standing_chalkboard_01",
+  "stationery_supplies": "https://polyhaven.com/a/stationery_supplies",
+  "wall_clock": "https://polyhaven.com/a/wall_clock"
+ },
+ "files": [
+  {
+   "file": "assets/polyhaven_dream/large_iron_gate/large_iron_gate_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_iron_gate/large_iron_gate_1k.gltf",
+   "sha256": "fd46dd0fc634c0529656dca3d275e4eb81fbfbb5105228dc9d4e215b0b4bec77",
+   "bytes": 7101
+  },
+  {
+   "file": "assets/polyhaven_dream/large_iron_gate/textures/large_iron_gate_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/large_iron_gate/large_iron_gate_nor_gl_1k.jpg",
+   "sha256": "c46a14086705f0d4bc2858c461aa8dfdd3bf7a09955c370591511612429d60fb",
+   "bytes": 698636
+  },
+  {
+   "file": "assets/polyhaven_dream/large_iron_gate/textures/large_iron_gate_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/large_iron_gate/large_iron_gate_diff_1k.jpg",
+   "sha256": "422b17616829c7a48805211fcca9699c0aec63dee40a8d851f5ba81fcf329575",
+   "bytes": 610309
+  },
+  {
+   "file": "assets/polyhaven_dream/large_iron_gate/large_iron_gate.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/large_iron_gate/large_iron_gate.bin",
+   "sha256": "973f9f7b7e968a5b22bcf07aac03312af5b74bac125750c887934ee30d986c8f",
+   "bytes": 971848
+  },
+  {
+   "file": "assets/polyhaven_dream/large_iron_gate/textures/large_iron_gate_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/large_iron_gate/large_iron_gate_arm_1k.jpg",
+   "sha256": "f528b46396e097324af2c14cc2f15b855b5f9b909bf6a8da9819f528e6ebde4a",
+   "bytes": 840287
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/modular_electricity_poles_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/modular_electricity_poles/modular_electricity_poles_1k.gltf",
+   "sha256": "2032fb781809021258ceeb22f163bd9ddca2a9186173ed99ee61130dbb808c62",
+   "bytes": 149324
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_pieces_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_pieces_diff_1k.jpg",
+   "sha256": "c681efa29ce6b28eb3377cfcdb35d1c88a9265189920e9979419d2d5b4086c1d",
+   "bytes": 802771
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/modular_electricity_poles.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_electricity_poles/modular_electricity_poles.bin",
+   "sha256": "143bc8cd007674c74a6bac784a24fd4181234c07498b3a2bbdbf6abcd8a5897f",
+   "bytes": 7215652
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_pieces_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_pieces_arm_1k.jpg",
+   "sha256": "4648fab787b80889e54ea90e79fcb3de4c644729c16b8616ae79707b3e5515dd",
+   "bytes": 1052303
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_pieces_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_pieces_nor_gl_1k.jpg",
+   "sha256": "c78ec7efc67caebc9d43c1c29e5d3972c23bf17e865267cc3acb793774125caa",
+   "bytes": 865048
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_arm_1k.jpg",
+   "sha256": "4765dd2e76a1191b271b2fb1c93354fe3b9cb12a323bafd7f1661effe88fc441",
+   "bytes": 748382
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_diff_1k.jpg",
+   "sha256": "da86d0fc97683a99fc2670f8b889b9632dd6da05e9c042c40cc7bf9e4d0b0104",
+   "bytes": 658915
+  },
+  {
+   "file": "assets/polyhaven_dream/modular_electricity_poles/textures/modular_electricity_poles_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_electricity_poles/modular_electricity_poles_nor_gl_1k.jpg",
+   "sha256": "7c77d694c898139a82a66543e33748b4ab7b1f7cf456cdd453d5509810ae238a",
+   "bytes": 931236
+  },
+  {
+   "file": "assets/polyhaven_dream/alarm_clock_01/alarm_clock_01_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/alarm_clock_01/alarm_clock_01_1k.gltf",
+   "sha256": "ca16e83e334e28f8eaf2bf1fbf8ce043b7e4fe5d0e171d01a264b12f5f42a78c",
+   "bytes": 10056
+  },
+  {
+   "file": "assets/polyhaven_dream/alarm_clock_01/textures/alarm_clock_01_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/alarm_clock_01/alarm_clock_01_diff_1k.jpg",
+   "sha256": "deb82094c2c1aa8cda0a0ce7192b193a81c5376743344503764abbcd2db19ac1",
+   "bytes": 404998
+  },
+  {
+   "file": "assets/polyhaven_dream/alarm_clock_01/textures/alarm_clock_01_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/alarm_clock_01/alarm_clock_01_nor_gl_1k.jpg",
+   "sha256": "a0a7b35de5712e23d06832e49516ec0e1170aa159eb60ec9b2af0b0df2102fa4",
+   "bytes": 420026
+  },
+  {
+   "file": "assets/polyhaven_dream/alarm_clock_01/alarm_clock_01.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/alarm_clock_01/alarm_clock_01.bin",
+   "sha256": "74b589dc31596fe9350e8ef6d123571955d58cee9955060d831fa0f3055758c6",
+   "bytes": 284408
+  },
+  {
+   "file": "assets/polyhaven_dream/alarm_clock_01/textures/alarm_clock_01_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/alarm_clock_01/alarm_clock_01_arm_1k.jpg",
+   "sha256": "99727eb8908dfea5aac2a2353af7ff60857e40c50b396d7efbe15df685fe4918",
+   "bytes": 538163
+  },
+  {
+   "file": "assets/polyhaven_dream/qwantani_dusk_2_puresky_2k.hdr",
+   "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/qwantani_dusk_2_puresky_2k.hdr",
+   "sha256": "440d1b5d29c79bea0985a13777642df6829e80399602a9d5f39bc20203ae6d1b",
+   "bytes": 4612798
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/ceiling_fan_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ceiling_fan/ceiling_fan_1k.gltf",
+   "sha256": "be84d4ce1cbbbee21c5f588d5dfde41297f4ecbddedbb0f05e5cb01ddb8ede1b",
+   "bytes": 4777
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/textures/ceiling_fan_emissive_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceiling_fan/ceiling_fan_emissive_1k.jpg",
+   "sha256": "460d12108893202bfa8261dcfcf521e1bf5063ff12b189939f34b5e1032a3ede",
+   "bytes": 36867
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/textures/ceiling_fan_spec_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceiling_fan/ceiling_fan_spec_1k.jpg",
+   "sha256": "a8ab87ed40265af3ea4cdd3b941251fef0912cf48cb490db93ba7c653e520b1f",
+   "bytes": 26647
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/textures/ceiling_fan_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceiling_fan/ceiling_fan_nor_gl_1k.jpg",
+   "sha256": "debd38190fdcd65687c5b3752a4f7ba5db30d1e1ac4d59afc05c3f0c93d27c1f",
+   "bytes": 390818
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/textures/ceiling_fan_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceiling_fan/ceiling_fan_diff_1k.jpg",
+   "sha256": "a9fb7032da0ce9fac50de7fe02ca2644ae3d925a5e4a73f006fb4902fd5db27b",
+   "bytes": 392243
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/textures/ceiling_fan_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceiling_fan/ceiling_fan_arm_1k.jpg",
+   "sha256": "af123055dc185abd34342cfe58df87cc1bf61144831157181c9af03c542339c5",
+   "bytes": 566114
+  },
+  {
+   "file": "assets/polyhaven_dream/ceiling_fan/ceiling_fan.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceiling_fan/ceiling_fan.bin",
+   "sha256": "06ad4d0cfc71b92e3a8c3fb6540b58ad41c389bb7baae82f9fa21a9286040b28",
+   "bytes": 455032
+  },
+  {
+   "file": "assets/polyhaven_dream/football/football_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/football/football_1k.gltf",
+   "sha256": "85d0bcd1135c479891e91c287cb571d321dde82b355b79180ea11a00b60f1dfa",
+   "bytes": 4366
+  },
+  {
+   "file": "assets/polyhaven_dream/football/textures/football_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/football/football_arm_1k.jpg",
+   "sha256": "615de9ec1b97329e1b7ef792c234a230610f6f30afd90c9250febb98a1f87a1c",
+   "bytes": 965640
+  },
+  {
+   "file": "assets/polyhaven_dream/football/textures/football_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/football/football_nor_gl_1k.jpg",
+   "sha256": "313d8d24127865d066825eb94d391d4431136c9c068c0f0dc959bcccb925661f",
+   "bytes": 939017
+  },
+  {
+   "file": "assets/polyhaven_dream/football/football.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/football/football.bin",
+   "sha256": "89e30e582fca1f33361d247e1bad6012c9e04d81191504327c64cbf64c80b4d1",
+   "bytes": 109648
+  },
+  {
+   "file": "assets/polyhaven_dream/football/textures/football_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/football/football_diff_1k.jpg",
+   "sha256": "b014796d1be23ac40f11f23082fef1dbe0ba6b66e618709d992df6eb86f4a2a4",
+   "bytes": 743366
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/book_encyclopedia_set_01_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_1k.gltf",
+   "sha256": "89eb80fffd619ebbe5043d632bd8cf25b2d68a3614aee2f356e850c69ae498ba",
+   "bytes": 55011
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_cover_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_cover_diff_1k.jpg",
+   "sha256": "a456aae6ef0ab24769527cccac5313a802ad253584c49fc10a377ce75969d382",
+   "bytes": 126794
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/book_encyclopedia_set_01.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/book_encyclopedia_set_01/book_encyclopedia_set_01.bin",
+   "sha256": "bbc726698b6e40ab5537b73e082f7bb4db97b9e6f978f52cdaf763dddc85d9ba",
+   "bytes": 2547932
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_paper_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_paper_nor_gl_1k.jpg",
+   "sha256": "705f4380c654c44d086ceb120595078e562438c6e4ba01458d2d23fd61483d9d",
+   "bytes": 193390
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_cover_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_cover_arm_1k.jpg",
+   "sha256": "ab19b627092da77770de2212a04785940feb2df0957cab8993742a6b8b3f7bff",
+   "bytes": 189997
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_cover_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_cover_nor_gl_1k.jpg",
+   "sha256": "17ad410f2d1aab487e47c729a5b988ea4e4d196679c8696331b7960e77a91c17",
+   "bytes": 19941
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_paper_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_paper_diff_1k.jpg",
+   "sha256": "b552d6829b75db7a75012bb761068c63507b69e8e944597ea53f6d1a70efa36c",
+   "bytes": 115297
+  },
+  {
+   "file": "assets/polyhaven_dream/book_encyclopedia_set_01/textures/book_encyclopedia_set_01_paper_roughness_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/book_encyclopedia_set_01/book_encyclopedia_set_01_paper_roughness_1k.jpg",
+   "sha256": "62d875e9427f5d71f1bb4d9dc9569e34465bfd3067b8b13f5644b73e23a09fa3",
+   "bytes": 12684
+  },
+  {
+   "file": "assets/polyhaven_dream/office_notepads/office_notepads_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/office_notepads/office_notepads_1k.gltf",
+   "sha256": "dec1bd1f656e21bbda8957bcd19a715b1d1fbc5f9f153ada7ccdaf8407d97411",
+   "bytes": 15568
+  },
+  {
+   "file": "assets/polyhaven_dream/office_notepads/textures/office_notepads_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/office_notepads/office_notepads_nor_gl_1k.jpg",
+   "sha256": "d6be173e3c16755e3c163724b205114f0dc93ff2d6a746b819815f4100432018",
+   "bytes": 393394
+  },
+  {
+   "file": "assets/polyhaven_dream/office_notepads/textures/office_notepads_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/office_notepads/office_notepads_diff_1k.jpg",
+   "sha256": "6cce5f76748a73954a9158904b6d26319f028f796166c140b3cbf0bbb7c62727",
+   "bytes": 460873
+  },
+  {
+   "file": "assets/polyhaven_dream/office_notepads/textures/office_notepads_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/office_notepads/office_notepads_arm_1k.jpg",
+   "sha256": "a4a1c7356075ab0de890ae7de0397a0b4c35f6dd7feacafe3a32e773b76c7e68",
+   "bytes": 445320
+  },
+  {
+   "file": "assets/polyhaven_dream/office_notepads/office_notepads.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/office_notepads/office_notepads.bin",
+   "sha256": "4095356347a19a2e64ee2f5cee46d50d9bdf7c52f617573bca94cfe6e494842c",
+   "bytes": 17740
+  },
+  {
+   "file": "assets/polyhaven_dream/plastic_broom/plastic_broom_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/plastic_broom/plastic_broom_1k.gltf",
+   "sha256": "2c5520d7eecc1206fc9c5c65faa2cee262ae67b71988f9b164d13e8f38e3b7d6",
+   "bytes": 4696
+  },
+  {
+   "file": "assets/polyhaven_dream/plastic_broom/textures/plastic_broom_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/plastic_broom/plastic_broom_nor_gl_1k.jpg",
+   "sha256": "b5bed424a1f8347d839add0f329fb856ea02ced5929f7cdb4f558f7ae581552c",
+   "bytes": 92643
+  },
+  {
+   "file": "assets/polyhaven_dream/plastic_broom/textures/plastic_broom_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/plastic_broom/plastic_broom_diff_1k.jpg",
+   "sha256": "fcffd470ca8e8dd126e072c6d5b0a604fbffc07ff38da442efcda50db29965e6",
+   "bytes": 265496
+  },
+  {
+   "file": "assets/polyhaven_dream/plastic_broom/textures/plastic_broom_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/plastic_broom/plastic_broom_arm_1k.jpg",
+   "sha256": "9d7bce015163853e93f9dd35f5299e8c351b3eaca8d0399fbaed05f89e845757",
+   "bytes": 507260
+  },
+  {
+   "file": "assets/polyhaven_dream/plastic_broom/plastic_broom.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/plastic_broom/plastic_broom.bin",
+   "sha256": "236ced2fe52ffb6b890ca2e2aa8c1e3e2df538689fcbc77e9757f8e87819ff6c",
+   "bytes": 590400
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/mounted_fluorescent_lights_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/mounted_fluorescent_lights/mounted_fluorescent_lights_1k.gltf",
+   "sha256": "7a56f167fe7074f4e4d4f314f72c5aa8b01c191394ee5ecb0b3461a240441b4a",
+   "bytes": 21071
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/textures/mounted_fluorescent_lights_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/mounted_fluorescent_lights/mounted_fluorescent_lights_nor_gl_1k.jpg",
+   "sha256": "3a4504ed0f70061994b37c9ef512e7a2a7e0b7680a977add1643226ae56ea60d",
+   "bytes": 267596
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/textures/mounted_fluorescent_lights_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/mounted_fluorescent_lights/mounted_fluorescent_lights_diff_1k.jpg",
+   "sha256": "8e56f625c04198792d8e9e5551137cbbd399072c26fe27827b37734afd584ea1",
+   "bytes": 299833
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/textures/mounted_fluorescent_lights_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/mounted_fluorescent_lights/mounted_fluorescent_lights_arm_1k.jpg",
+   "sha256": "6bb051b47c5e684f7d981595e7a88c3f41989621dc4b8c9460dba989e6421438",
+   "bytes": 652812
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/textures/mounted_fluorescent_lights_emission_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/mounted_fluorescent_lights/mounted_fluorescent_lights_emission_1k.jpg",
+   "sha256": "185aaca71b4c9d908be69440b807769ce9b2a6472d3a8396755394029196ea59",
+   "bytes": 71330
+  },
+  {
+   "file": "assets/polyhaven_dream/mounted_fluorescent_lights/mounted_fluorescent_lights.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/mounted_fluorescent_lights/mounted_fluorescent_lights.bin",
+   "sha256": "587851c1b4e09e4cf3438f3d8bb084d4591f6be3a7bb1b4324b84af97b3c5f03",
+   "bytes": 551720
+  },
+  {
+   "file": "assets/polyhaven_dream/security_camera_01/security_camera_01_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/security_camera_01/security_camera_01_1k.gltf",
+   "sha256": "d2468fe353cd9f992a5549709cf9efcfae67e9fd17f80bf7ff3866e2881dd2ae",
+   "bytes": 4743
+  },
+  {
+   "file": "assets/polyhaven_dream/security_camera_01/security_camera_01.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/security_camera_01/security_camera_01.bin",
+   "sha256": "c43dd3576213c169d1b3a9968788c0da2d14073e59c7d2503bc230c05042bb21",
+   "bytes": 386836
+  },
+  {
+   "file": "assets/polyhaven_dream/security_camera_01/textures/security_camera_01_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/security_camera_01/security_camera_01_diff_1k.jpg",
+   "sha256": "572968d8c693682aa5c87d59428e1db234b0d81ec620af8a019c72e3f011d53f",
+   "bytes": 521174
+  },
+  {
+   "file": "assets/polyhaven_dream/security_camera_01/textures/security_camera_01_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/security_camera_01/security_camera_01_arm_1k.jpg",
+   "sha256": "68bb728aff5af6bd4141201cd221c7e17ef537f49978c321b0e183677f8877ba",
+   "bytes": 530966
+  },
+  {
+   "file": "assets/polyhaven_dream/security_camera_01/textures/security_camera_01_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/security_camera_01/security_camera_01_nor_gl_1k.jpg",
+   "sha256": "80e791da5d975177d16d5f30202deac0b262ffe6b13311605c09c630b93d0de5",
+   "bytes": 315604
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/standing_chalkboard_01_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/standing_chalkboard_01/standing_chalkboard_01_1k.gltf",
+   "sha256": "95e3a825067d6a96adf1e732ff088485bc8edc1f87e79f707c97a44702be0574",
+   "bytes": 5145
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/standing_chalkboard_01.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/standing_chalkboard_01/standing_chalkboard_01.bin",
+   "sha256": "5d848d6ed6dd5c69a99620bbddc7516b2175cbc4b1fdefc02538c27dd8ddeb69",
+   "bytes": 100120
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_frame_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_frame_nor_gl_1k.jpg",
+   "sha256": "941c640d2d9aa63fe78302569868ceb1277bdd85a503faf5ac5a14fef6c85ef7",
+   "bytes": 503632
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_board_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_board_arm_1k.jpg",
+   "sha256": "090e2f7e70170e2d22c710ff19fb368a78c1c010cf59a51bde9b8647d6cf3b4d",
+   "bytes": 491057
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_board_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_board_diff_1k.jpg",
+   "sha256": "27a77bb4472385470469a2dcc25c2dc4e3ce303d46ba2fb60f5e6b1f6242fc4f",
+   "bytes": 142727
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_frame_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_frame_arm_1k.jpg",
+   "sha256": "a2922087465730645fbf32724fa4c44a276d91d339e5c97ff421826de171ec4a",
+   "bytes": 671800
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_board_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_board_nor_gl_1k.jpg",
+   "sha256": "3ac29c09203e61c4d96eded3f90c4247a0178214913a94cffb7dfd55a5f4b9f3",
+   "bytes": 164130
+  },
+  {
+   "file": "assets/polyhaven_dream/standing_chalkboard_01/textures/standing_chalkboard_01_frame_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/standing_chalkboard_01/standing_chalkboard_01_frame_diff_1k.jpg",
+   "sha256": "37bb9789728b29eb30d02f82ad96d8a123d7dda14438314f40d2721ce8ab7617",
+   "bytes": 538645
+  },
+  {
+   "file": "assets/polyhaven_dream/stationery_supplies/stationery_supplies_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/stationery_supplies/stationery_supplies_1k.gltf",
+   "sha256": "9f5ef7799af1193e5d794cc02eb6add2d2eb7e80bc1974930fae76b3cd7ce9a9",
+   "bytes": 15220
+  },
+  {
+   "file": "assets/polyhaven_dream/stationery_supplies/textures/stationery_supplies_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stationery_supplies/stationery_supplies_nor_gl_1k.jpg",
+   "sha256": "23c332f95ca9cafc24f51a1ad54ca81548d3ab60559401e793fdec00cbe7952c",
+   "bytes": 475821
+  },
+  {
+   "file": "assets/polyhaven_dream/stationery_supplies/textures/stationery_supplies_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stationery_supplies/stationery_supplies_diff_1k.jpg",
+   "sha256": "a70e92052b2da3457a6059aec0fa83bc01bf0d376be814661cee0b49e4abb9ad",
+   "bytes": 646389
+  },
+  {
+   "file": "assets/polyhaven_dream/stationery_supplies/textures/stationery_supplies_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/stationery_supplies/stationery_supplies_arm_1k.jpg",
+   "sha256": "b7b00e07f043d9928aa4b6dc6a3feede9c870e6e810ae75b54692171cfba6052",
+   "bytes": 720443
+  },
+  {
+   "file": "assets/polyhaven_dream/stationery_supplies/stationery_supplies.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/stationery_supplies/stationery_supplies.bin",
+   "sha256": "475d839c3569551710607cfc71416aa50a3715cd02d56da8c86271982feacb6e",
+   "bytes": 128940
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/wall_clock_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wall_clock/wall_clock_1k.gltf",
+   "sha256": "4e67385443e808bc709c054c1de5be1e83d4bf07eb0893884c301fec0bae8bc6",
+   "bytes": 9008
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/textures/wall_clock_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wall_clock/wall_clock_nor_gl_1k.jpg",
+   "sha256": "6138946e055828e92d5e0d8d50c75e3d2da0ea789dd6512b30f85f0e18435d00",
+   "bytes": 236489
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/textures/wall_clock_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wall_clock/wall_clock_diff_1k.jpg",
+   "sha256": "012bfc3ceecd5e35679fe5764e33b6d1b8a631ad4fc9f5b267af25ad10468672",
+   "bytes": 366683
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/textures/wall_clock_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wall_clock/wall_clock_arm_1k.jpg",
+   "sha256": "c78aabec7bb4af4fd6818be1099523e59bf12d88c872530b2260cdea08d81968",
+   "bytes": 444044
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/textures/wall_clock_glass_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wall_clock/wall_clock_glass_arm_1k.jpg",
+   "sha256": "42804955958b3d0fdc1da8d4c4e8e909b04f659ae1b02911e148abe0741b8b84",
+   "bytes": 376244
+  },
+  {
+   "file": "assets/polyhaven_dream/wall_clock/wall_clock.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wall_clock/wall_clock.bin",
+   "sha256": "61d9fe03e871508230160de546ef505f3f4405b1e82c167536945a483a8bb639",
+   "bytes": 132412
+  }
+ ],
+ "downloaded_more": "2026-11-14"
+}

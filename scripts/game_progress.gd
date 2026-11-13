@@ -4,6 +4,7 @@ const CHAPTERS := [
 	{"id": "prologue", "title": "Tiền truyện", "text": "Căn nhà số 14, Hẻm 31", "scene": "res://scenes/home.tscn", "meta": "prologue"},
 	{"id": "night0", "title": "Đêm 0 · Giấc mơ", "text": "Lẻn vào Trường NEH", "scene": "res://scenes/school_runtime.tscn"},
 	{"id": "corridor", "title": "Đêm 0 · Hành lang đỏ", "text": "Chạy trốn dưới đường hầm", "scene": "res://scenes/school_runtime.tscn", "meta": "chapter_corridor"},
+	{"id": "dream", "title": "Đêm 0 · Mặt nước", "text": "Đi tới cổng trường", "scene": "res://scenes/dream_shore.tscn"},
 	{"id": "home", "title": "Tỉnh giấc · 05:52", "text": "Chỉ là một giấc mơ?", "scene": "res://scenes/home.tscn"},
 	{"id": "town", "title": "Ngày 1 · Khu phố", "text": "Tiếp tục ở giờ đã dừng", "scene": "res://scenes/town.tscn"},
 	{"id": "night1", "title": "Đêm 1", "text": "Trốn bác bảo vệ tới sáng", "scene": "res://scenes/school_runtime.tscn", "meta": "night_one"},

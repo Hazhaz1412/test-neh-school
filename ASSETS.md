@@ -173,3 +173,18 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 - **Tường bê tông và ván gỗ:** dùng lại texture Poly Haven có sẵn `dirty_concrete` và `rough_wood` (`assets/polyhaven_school/`).
 - **Ba bạn đồng đội:** model Rocketbox (MIT) có sẵn `Male_Child_01`, `Female_Child_01`, `Male_Adult_08`.
 - **Âm thanh:** dùng lại `floor_thud.wav` (kệ đổ), `chair_impact.wav` (phá ván), tiếng giày CC0 `assets/audio/guard_steps/`, `guard_keys.wav`, `guard_whistle.wav`.
+
+## Giấc mơ — mặt nước (Đêm 0, sau bể nước)
+
+Cảnh `scenes/dream_shore.tscn`, dựng trong `scripts/dream/dream_world.gd`. Mọi asset được chọn cùng một nguồn ảnh chụp PBR (Poly Haven) để ánh sáng, độ chi tiết và tỷ lệ khớp nhau; bàn ghế và gạch sàn dùng lại từ trường.
+
+- **Poly Haven, CC0 1.0** (https://polyhaven.com/license), lấy ngày 2026-11-14, file gốc giữ nguyên trong `assets/polyhaven_dream/`, URL và SHA-256 ở `assets/polyhaven_dream/sources.json`:
+  - Large Iron Gate: https://polyhaven.com/a/large_iron_gate (cổng trường, phóng 1.2 lần; trụ và tường dùng texture yellow_plaster có sẵn).
+  - Modular Electricity Poles: https://polyhaven.com/a/modular_electricity_poles (dùng ba cột dựng sẵn preset_01..03; dây điện là mesh võng tự sinh).
+  - Alarm Clock 01: https://polyhaven.com/a/alarm_clock_01 (phóng 34 lần, kim xoay về 05:52; lớp kính gốc được thay bằng kính trong vì phóng lớn nó che mất mặt số).
+  - HDRI Qwantani Dusk 2 (Pure Sky): https://polyhaven.com/a/qwantani_dusk_2_puresky, bản 2K, cùng series với trời khu phố.
+- Đồ trường học rải rác (`scripts/dream/dream_props.gd`), cùng Poly Haven CC0, cùng `sources.json`: Ceiling Fan, Football, Book Encyclopedia Set 01, Office Notepads (chỉ dùng tờ A4 trắng), Plastic Broom, Mounted Fluorescent Lights, Security Camera 01, Standing Chalkboard 01, Stationery Supplies (bút chì phóng 48 lần, ống bút), Wall Clock (kim xoay về 05:52). Trang: https://polyhaven.com/a/<tên>. Loại: két nhựa (có chữ thương hiệu), thùng rác kiểu Mỹ, sổ da.
+- Dùng lại thêm: metal_office_desk (bàn giáo viên), television_02 và plastic_monobloc_chair_01 của khu phố.
+- Dùng lại: SchoolDesk_01, SchoolChair_01 (`assets/polyhaven_corridor/`), floor_tiles_08 và yellow_plaster (`assets/polyhaven_school/`), tiếng bước chân ướt (`assets/audio/steps/footstep_wet_*`).
+- **Ambient Relaxing Loop**, isaiah658, CC0: https://opengameart.org/content/ambient-relaxing-loop — `assets/music/dream_ambient.ogg`, nguồn và hash ở `assets/music/dream_sources.json`. Cùng tác giả với tiếng pad dưới nước lúc chìm, nên hai đoạn nối liền.
+- Đã cân nhắc và loại: biển "Wet Floor" (chữ tiếng Anh), đèn đường kiểu châu Âu, ghế băng kiểu nhà thờ của Poly Haven (không hợp bối cảnh trường Việt Nam).
