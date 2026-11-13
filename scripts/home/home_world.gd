@@ -27,6 +27,8 @@ var thought: Label
 var fade: ColorRect
 var phone: Control
 var story: Node
+var kitchen: Node3D
+var seat_chair: Node3D
 var bridge: Node
 var interactions: Array = []
 var current := {}
@@ -61,6 +63,8 @@ func _ready() -> void:
 	_build_doors()
 	_build_stairs()
 	_furnish()
+	kitchen = preload("res://scripts/home/home_kitchen.gd").new()
+	add_child(kitchen)
 	var meshes := Node3D.new()
 	add_child(meshes)
 	batch.bake(meshes, builder.materials, {})
@@ -75,6 +79,7 @@ func _ready() -> void:
 	bridge.name = "ArgBridge"
 	bridge.world = self
 	add_child(bridge)
+	kitchen.setup(self)
 	story = preload("res://scripts/home/home_story.gd").new()
 	add_child(story)
 	story.setup(self)
@@ -179,10 +184,20 @@ func _door_touch(door: Node3D, door_name: String) -> void:
 
 func _front_door() -> void:
 	if not exit_action.is_valid():
-		think("Tối rồi. Mai hẵng ra ngoài." if story.prologue else "Chưa có lý do ra ngoài lúc này.")
+		think("Tối rồi. Mai hẵng ra ngoài." if story.prologue else "Bụng đang réo. Xuống bếp kiếm gì ăn đã.")
 		return
 	front_door.set_open(true)
 	exit_action.call()
+
+func _open_fridge() -> void:
+	if story.prologue:
+		think("Nửa chai nước mắm người thuê trước để lại. Hạn dùng 2009.")
+	elif story.step == "hungry":
+		story.start_cooking()
+	elif story.step == "go_out":
+		think("Hết trứng, hết xúc xích. Trưa phải đi chợ.")
+	else:
+		think("Mì đang chờ ngoài bàn.")
 
 func set_exit(action: Callable) -> void:
 	exit_action = action
@@ -240,18 +255,25 @@ func _furnish() -> void:
 	batch.box("paint", Transform3D.IDENTITY, Vector3(4.4, 0.27, 9.4), Vector3(0.5, 0.55, 1.5), Color(0.34, 0.25, 0.18))
 	_solid(Vector3(4.4, 0.3, 9.4), Vector3(0.5, 0.6, 1.5))
 	batch.box("paint", Transform3D.IDENTITY, Vector3(2.6, 0.012, 10.6), Vector3(2.2, 0.02, 2.6), Color(0.46, 0.24, 0.20))
+	# The table runs along the room (x 2.0-3.2, z 4.1-6.1, top 0.76); two chairs on each long side
+	# face it. The one nearest the kitchen is Peter's (home_kitchen.gd slides it out to sit).
 	_prop(haven % ["dining_table", "dining_table"], Vector3(2.6, 0, 5.1), 0.76, PI * 0.5)
-	for spot in [[Vector3(1.9, 0, 4.3), 0.0], [Vector3(3.3, 0, 4.3), 0.0], [Vector3(1.9, 0, 5.9), PI], [Vector3(3.3, 0, 5.9), PI]]:
-		_prop(haven % ["dining_chair_02", "dining_chair_02"], spot[0], 0.95, spot[1], false)
+	for spot in [[Vector3(1.78, 0, 4.6), PI * 0.5], [Vector3(1.78, 0, 5.6), PI * 0.5], [Vector3(3.42, 0, 4.6), -PI * 0.5], [Vector3(3.42, 0, 5.6), -PI * 0.5]]:
+		var chair := _prop(haven % ["dining_chair_02", "dining_chair_02"], spot[0], 0.95, spot[1], false)
+		if spot[0].is_equal_approx(Vector3(3.42, 0, 4.6)):
+			seat_chair = chair
 	# Kitchen run along the back wall.
-	batch.box("paint", Transform3D.IDENTITY, Vector3(4.4, 0.44, 0.42), Vector3(4.0, 0.88, 0.62), Color(0.58, 0.42, 0.30))
-	batch.box("steel", Transform3D.IDENTITY, Vector3(4.4, 0.9, 0.42), Vector3(4.0, 0.04, 0.66), Color(0.75, 0.75, 0.74))
-	batch.box("paint", Transform3D.IDENTITY, Vector3(3.2, 0.905, 0.42), Vector3(0.55, 0.02, 0.4), Color(0.32, 0.34, 0.36))
+	# Two counter runs with the sink cabinet (home_kitchen.gd) between them at x 2.9-3.5.
+	for run in [[2.4, 2.9], [3.5, 6.4]]:
+		var middle: float = (run[0] + run[1]) * 0.5
+		var length: float = run[1] - run[0]
+		batch.box("paint", Transform3D.IDENTITY, Vector3(middle, 0.44, 0.42), Vector3(length, 0.88, 0.62), Color(0.58, 0.42, 0.30))
+		batch.box("steel", Transform3D.IDENTITY, Vector3(middle, 0.9, 0.42), Vector3(length, 0.04, 0.66), Color(0.75, 0.75, 0.74))
 	_solid(Vector3(4.4, 0.45, 0.42), Vector3(4.0, 0.9, 0.66))
-	_prop(haven % ["electric_stove", "electric_stove"], Vector3(5.45, 0.92, 0.45), 0.14, 0.0, false)
-	_prop(haven % ["vintage_microwave", "vintage_microwave"], Vector3(4.3, 0.92, 0.4), 0.3, 0.0, false)
+	# The gas stove, pots and the rest of the cooking corner are home_kitchen.gd's.
+	_prop(haven % ["vintage_microwave", "vintage_microwave"], Vector3(6.02, 0.92, 0.4), 0.3, 0.0, false)
 	_prop("res://assets/home/fridge.glb", Vector3(5.95, 0, 1.6), 1.75, -PI * 0.5)
-	_add_touch(Vector3(5.5, 1.0, 1.6), "Mở tủ lạnh", func(): think("Nửa chai nước mắm người thuê trước để lại. Hạn dùng 2009." if story.prologue else "Nửa chai nước mắm và một quả trứng. Đúng là nhà của mình."))
+	_add_touch(Vector3(5.5, 1.0, 1.6), "Mở tủ lạnh", _open_fridge)
 	_add_touch(Vector3(3.2, 1.0, 0.8), "Rửa mặt ở bồn", func(): think("Nước lạnh, có mùi gỉ." if story.prologue else "Nước lạnh. Tay vẫn còn run."))
 	# Bathroom.
 	_prop("res://assets/home/toilet.glb", Vector3(0.5, 0, 0.6), 0.75, PI * 0.5)

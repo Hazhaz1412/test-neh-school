@@ -136,6 +136,19 @@ Tham khảo hình thái phố (không đưa ảnh vào game): nhà ống và h�
 
 `assets/home/`: giường, tủ lạnh, bồn cầu, chậu rửa từ Poly Pizza, CC0, URL và mã băm ở `assets/town_sources.json`. Sofa, bàn ăn, ghế, bếp, TV, lò vi sóng từ Poly Haven (CC0), nội thất còn lại từ Kenney (CC0). `hub/assets/gaaglu.png` do `tools/build_gaaglu_icon.py` vẽ. `phone_buzz.wav`, `phone_ding.wav` do `tools/build_town_audio.py` tổng hợp.
 
+### Bếp: minigame mì net (`scripts/home/home_kitchen.gd`)
+
+Model trong `assets/kitchen/`, đều CC0 1.0, lấy ngày 2026-11-14. Trang gốc, URL tải và SHA-256 nằm ở `assets/kitchen/sources.json`.
+- Poly Pizza: bếp ga đôi "Stove" (MilkAndBanana), "Kitchen Sink" (Kenney, kéo giãn cho vừa khoảng trống trên tủ bếp), "Pot" (Kay Lousberg), "Frying Pan" (CreativeTrio), "Mixing Bowl" (MilkAndBanana, dùng làm tô), "Soda Can" (Kenney, chính là lon Xiteen; chữ XITEEN là Label3D), "Bottle Ketchup" (Kenney, dùng làm chai tương ớt), "Egg", "Egg Cooked", "Meat Sausage", "Leek" (dùng làm hành lá, bóp mỏng lại), "Cooking Spatula" (đều của Kenney), "Chef Knife", "Chopsticks" (MilkAndBanana).
+- Poly Haven: "Wooden Cutting Board".
+- Dựng bằng code: gói mì How How (hộp và nhãn Label3D), mặt sợi mì (`assets/materials/noodles.gdshader`), hạt hành thái, giọt tương ớt, mảnh vỏ trứng. Tên How How và Xiteen là nhái hư cấu.
+
+Âm thanh trong `assets/audio/kitchen/`, CC0 1.0. Nguồn, đoạn cắt và mã băm của cả file gốc lẫn file đã cắt nằm ở `assets/audio/kitchen/sources.json`.
+- "General Household Sound Effects" (https://opengameart.org/content/general-household-sound-effects): nước sôi, chiên, dao thớt, đũa chạm tô, tiếng ga xì. Đều cắt ngắn từ bản ghi dài.
+- "stove switch" (https://opengameart.org/content/stove-switch): vặn bếp.
+- "cutlery sounds" (https://opengameart.org/content/cutlery-sounds): đặt lon xuống bàn, cầm đũa.
+- Dùng lại âm thanh đã có của game: `paper.wav` (xé gói), `water_drip.wav` (thả mì), `water_leak.wav` (chắt nước), `chair_scrape.wav` (kéo ghế).
+
 ## Hành lang đỏ
 
 - **Nhạc (CC0):** `assets/music/chase_wolfgang.ogg` ("Chase!" của Wolfgang_) và `dark_ambience_gabovitch.ogg` ("Dark Ambience Loop" của Iwan Gabovitch). Nguồn ở `assets/music/corridor_sources.json`.

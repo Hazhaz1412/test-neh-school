@@ -1,0 +1,122 @@
+[
+ {
+  "file": "boil_loop.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/boilingwater01.wav",
+  "source_sha256": "2115c6d6bcb3d70cd69d40aac00b03dc80057fae04c02bf70c8cf0009b100e90",
+  "sha256": "3558e44a788afec1f6f9903944e9e5d499451c7bc9b430ec35f7bef4cc7ffdf3",
+  "edit": "8 s from 0:30, mono Vorbis",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "fry_loop.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/fryingpan01.wav",
+  "source_sha256": "cf725a48f22ef7bc58458dbe6c9f4b174ec1c5a5c92f152549ff2da21de8ab88",
+  "sha256": "818bb9c1fec0d8c44fe14b47b36c55c722f390e54769785fbb2dccb95365f4eb",
+  "edit": "8 s from 0:12, mono Vorbis",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "chop_1.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/kitchencuttingboard01.wav",
+  "source_sha256": "8caa77e924eb2e55fa1b225183d2f25e47be0099adfcb959d2d0d0ebe905c556",
+  "sha256": "b7d61db753701bfd42869a4e23308d8b15fc7a499b57ae36a977964ac8f26c5a",
+  "edit": "0.35 s at 1.42 s, loudness normalised",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "chop_2.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/kitchencuttingboard01.wav",
+  "source_sha256": "8caa77e924eb2e55fa1b225183d2f25e47be0099adfcb959d2d0d0ebe905c556",
+  "sha256": "8e8e465e6a2cc1a4b3a665ae7770debf1877641c798d988b1583cc84fc3401b5",
+  "edit": "0.35 s at 4.555 s, loudness normalised",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "chop_3.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/kitchencuttingboard01.wav",
+  "source_sha256": "8caa77e924eb2e55fa1b225183d2f25e47be0099adfcb959d2d0d0ebe905c556",
+  "sha256": "36c06e606200bcb4f8d7a86b5d6b0c4cf3161fcd249e336905eb846e20771e42",
+  "edit": "0.35 s at 6.01 s, loudness normalised",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "clink_1.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/forkonplate01.wav",
+  "source_sha256": "f0ded35a69cfecdf307f3dd7331c17f32369d84fd3d015776f7c615e418db885",
+  "sha256": "c3cebb8201816eb0582276161559edb3439dc8f9e10f7da0a2d25e0ad58077bb",
+  "edit": "0.35 s at 0.375 s",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "clink_2.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/forkonplate01.wav",
+  "source_sha256": "f0ded35a69cfecdf307f3dd7331c17f32369d84fd3d015776f7c615e418db885",
+  "sha256": "e7e07c155d6d297d8c77cc29c9a11150690b22b40abb0ea6f0d908fde66f7396",
+  "edit": "0.35 s at 0.875 s",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "clink_3.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/forkonplate01.wav",
+  "source_sha256": "f0ded35a69cfecdf307f3dd7331c17f32369d84fd3d015776f7c615e418db885",
+  "sha256": "d63551ee695b7b1d0f6292dfac12bff03a664e2832a85aaae9d7cb2a5972d04c",
+  "edit": "0.35 s at 1.37 s",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "fizz.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/general-household-sound-effects",
+  "url": "https://opengameart.org/sites/default/files/poppingbubbles01.wav",
+  "source_sha256": "9fddd30ab530907eec0bab0ccd288d64b311ce495698558adaf23eb450735329",
+  "sha256": "36ba39d07d2fbc9697576f0a091833aa80df47172f11e0f6eaa2c7c923526526",
+  "edit": "first 2.5 s, +12 dB, fades",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "stove_on.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/stove-switch",
+  "url": "https://opengameart.org/sites/default/files/turn_stove_on_01.ogg",
+  "source_sha256": "44b351416dc52d61d23d1d7b83b421c98246408e51dbf0b1c0eb8d13b9325b83",
+  "sha256": "44b351416dc52d61d23d1d7b83b421c98246408e51dbf0b1c0eb8d13b9325b83",
+  "edit": "unchanged",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "can_on_table.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/cutlery-sounds",
+  "url": "https://opengameart.org/sites/default/files/cup_on_table_01.ogg",
+  "source_sha256": "1c57e37924e85a24ef7722f553522b32027142013afcb7e87f5f01bfed31d3c3",
+  "sha256": "1c57e37924e85a24ef7722f553522b32027142013afcb7e87f5f01bfed31d3c3",
+  "edit": "unchanged",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "pick_chopsticks.ogg",
+  "license": "CC0 1.0",
+  "page": "https://opengameart.org/content/cutlery-sounds",
+  "url": "https://opengameart.org/sites/default/files/pick_cutlery_01.ogg",
+  "source_sha256": "91b4b1331b1e1a26a1766e4b6ae443259d084db14ce33cbd78b5905a80e0d305",
+  "sha256": "91b4b1331b1e1a26a1766e4b6ae443259d084db14ce33cbd78b5905a80e0d305",
+  "edit": "unchanged",
+  "retrieved": "2026-11-14"
+ }
+]

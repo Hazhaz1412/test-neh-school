@@ -17,6 +17,8 @@ var step_clock := 0.0
 func _ready() -> void:
 	floor_max_angle = deg_to_rad(52.0)
 	floor_snap_length = 0.45
+	# Same pace up the stair ramp as on the flat; floor snapping keeps him on it going down.
+	floor_constant_speed = true
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.3
@@ -46,7 +48,8 @@ func _physics_process(delta: float) -> void:
 	var direction := Vector3(wish.x, 0, wish.y).limit_length().rotated(Vector3.UP, yaw)
 	velocity.x = direction.x * WALK
 	velocity.z = direction.z * WALK
-	velocity.y = -3.0 if is_on_floor() else velocity.y - 18.0 * delta
+	# No downward push while on the floor: pressed into the ramp, it ate most of the climb.
+	velocity.y = 0.0 if is_on_floor() else velocity.y - 18.0 * delta
 	move_and_slide()
 	rotation.y = yaw
 	camera.rotation.x = clampf(pitch - glance, -1.45, 1.45)

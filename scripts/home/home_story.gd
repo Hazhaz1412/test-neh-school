@@ -89,11 +89,10 @@ func wake() -> void:
 	if consent:
 		_start_hub()
 	world.player.global_position = WAKE_SPOT
-	step = "go_out"
+	step = "hungry"
 	world.phone.date_text = "Thứ Bảy, 15 tháng 11"
 	world.phone.fake_new = world.phone.fake.post_count
-	world.goal.text = "Ra khỏi nhà · Tới khu phố"
-	world.set_exit(_leave_for_town)
+	world.goal.text = "Xuống bếp kiếm gì ăn"
 	_install()
 	if OS.get_cmdline_args().has("--script"):
 		return
@@ -103,7 +102,26 @@ func wake() -> void:
 	world.fade.hide()
 	world.player.enabled = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	world.think("Chỉ là mơ... Nhưng sao rõ tới vậy?")
+	world.think("Ah... Sau ngần ấy năm thì giấc mơ đó vẫn luôn quay lại ám ảnh mình.", 5.0)
+	await get_tree().create_timer(5.4).timeout
+	if step == "hungry":
+		world.think("Có lẽ là mình sẽ đi kiếm gì đó ăn vậy.")
+
+# The first thing after waking is breakfast (home_kitchen.gd); only then does the street open up.
+func start_cooking() -> void:
+	step = "cooking"
+	world.kitchen.begin()
+
+func cooked() -> void:
+	step = "carry"
+
+func sat_down() -> void:
+	step = "eating"
+
+func ate() -> void:
+	step = "go_out"
+	world.goal.text = "Ra khỏi nhà · Tới khu phố"
+	world.set_exit(_leave_for_town)
 
 func toggle_phone() -> void:
 	if blocking():
@@ -167,7 +185,7 @@ func step_name() -> String:
 	return step
 
 func blocking() -> bool:
-	return panel != null
+	return panel != null or world.kitchen.busy
 
 func _sound(path: String, volume: float) -> AudioStreamPlayer:
 	var sound := AudioStreamPlayer.new()

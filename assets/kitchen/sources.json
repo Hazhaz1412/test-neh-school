@@ -1,0 +1,192 @@
+[
+ {
+  "file": "bowl.glb",
+  "title": "Mixing Bowl",
+  "author": "MilkAndBanana",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/8TzJ3FF2ow",
+  "url": "https://static.poly.pizza/6a248e52-076d-4e31-87e8-63e90bb443c6.glb",
+  "sha256": "01548be68ed9b66da146e6085baf035f8c42eef2febcdb6d39dab4bc3c4f59c7",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "xiteen_can.glb",
+  "title": "Soda Can",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/KOLcdOATw6",
+  "url": "https://static.poly.pizza/54d66c00-9887-4deb-8bd8-9c1eb72bcea3.glb",
+  "sha256": "c72876815f4f982019f829d82448034f3b025902c57900b5e75c394f053522c1",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "egg.glb",
+  "title": "Egg",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/7AertTbq90",
+  "url": "https://static.poly.pizza/ae70829f-0bbd-4cdb-bf90-ca7835470bc0.glb",
+  "sha256": "9a5378b190355f34d250c85bb88e346f3866c9eea6dab58d585d025b80ec507c",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "egg_fried.glb",
+  "title": "Egg Cooked",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/KedPT53OM3",
+  "url": "https://static.poly.pizza/1fd24119-8e7e-45c4-a240-4f35d6541d9c.glb",
+  "sha256": "394be3ef0f6d3bd08cca819a28c8a7014b8488b36e578b6ea826efa7cbdabd6b",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "sausage_fried.glb",
+  "title": "Meat Sausage",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/OXXYJHPght",
+  "url": "https://static.poly.pizza/8a4d07da-b13c-4bc1-be18-8a1558e8c7c7.glb",
+  "sha256": "f1f0daa5773bfddb681d92a81c91fc97f46d7b5b719ae7d7f3833720f1443964",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "chili_sauce.glb",
+  "title": "Bottle Ketchup",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/Yi64J2aKtI",
+  "url": "https://static.poly.pizza/f9320ee9-9fc8-43db-842c-d5a378a22428.glb",
+  "sha256": "9fe768613cf558958ff83e9c85cd29e1a7ddd2c0a091df1f140a86825a36a14e",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "pan.glb",
+  "title": "Frying Pan",
+  "author": "CreativeTrio",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/JeVqTzcwUT",
+  "url": "https://static.poly.pizza/d9b6e530-535e-4f1b-8ac0-df9928150e95.glb",
+  "sha256": "a1cd23d3ae128c3de59001f2098236095872ca04434e883802e589eb1d81b3de",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "pot.glb",
+  "title": "Pot",
+  "author": "Kay Lousberg",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/NRG2XZMTVD",
+  "url": "https://static.poly.pizza/f57a3cc4-4661-454e-b5d2-e2cc5c934b8e.glb",
+  "sha256": "600bcdf577b6e29f71ee882d9b10ebe017c01c8a0a487b22359f74b33bf0a021",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "knife.glb",
+  "title": "Chef Knife",
+  "author": "MilkAndBanana",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/deYbqWPM0f",
+  "url": "https://static.poly.pizza/4d2ae607-5aba-49d7-bf2a-f5fdba600696.glb",
+  "sha256": "41f3190016e2fe67fda952367ad99f36e4260eb78a43f97c214dc39e8d274693",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "chopsticks.glb",
+  "title": "Chopsticks",
+  "author": "MilkAndBanana",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/LD1IEWZkn1",
+  "url": "https://static.poly.pizza/cc6703f6-97c1-4ef2-91dd-f56e0bf2c15a.glb",
+  "sha256": "044826e2358c069c775920c1d333468f3a87ebed7e92ebb7b8b6db2c2fae6bc7",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "spatula.glb",
+  "title": "Cooking Spatula",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/VMluJiBnkx",
+  "url": "https://static.poly.pizza/5dd09d41-14cf-4875-a571-4fad5fb23853.glb",
+  "sha256": "e9abf699aea0658285c698128dd858715a0dc4a87f308ebc5c03201308752cf2",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "cutting_board/wooden_cutting_board.gltf",
+  "title": "Wooden Cutting Board",
+  "author": "Poly Haven",
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_cutting_board",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_cutting_board/wooden_cutting_board_1k.gltf",
+  "sha256": "89fa89f6987c5087c0c7a8ac8ccbe451cfa8976ae46377d83a423e658cff9de4",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "cutting_board/wooden_cutting_board.bin",
+  "title": "Wooden Cutting Board",
+  "author": "Poly Haven",
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_cutting_board",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_cutting_board/wooden_cutting_board.bin",
+  "sha256": "d7fa7549afcae99eb4739dfb13039f1e56f03327c2936cb021bfd05c3afad839",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "cutting_board/textures/wooden_cutting_board_arm_1k.jpg",
+  "title": "Wooden Cutting Board",
+  "author": "Poly Haven",
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_cutting_board",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_cutting_board/wooden_cutting_board_arm_1k.jpg",
+  "sha256": "f35dec51ff94e279a9d43a4ee64b75235cc3d6701107ae22a1eea797e3d236d3",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "cutting_board/textures/wooden_cutting_board_diff_1k.jpg",
+  "title": "Wooden Cutting Board",
+  "author": "Poly Haven",
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_cutting_board",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_cutting_board/wooden_cutting_board_diff_1k.jpg",
+  "sha256": "79274fb86cc7f62363e4448b4597f06933d640a79c746ff6f823d2e4e27ad143",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "cutting_board/textures/wooden_cutting_board_nor_gl_1k.jpg",
+  "title": "Wooden Cutting Board",
+  "author": "Poly Haven",
+  "license": "CC0 1.0",
+  "page": "https://polyhaven.com/a/wooden_cutting_board",
+  "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_cutting_board/wooden_cutting_board_nor_gl_1k.jpg",
+  "sha256": "b123d7ca0d0be01a31686240c925e85a1d2499172586f119482924b06b0b0c93",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "gas_stove.glb",
+  "title": "Stove",
+  "author": "MilkAndBanana",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/c4V1vLlgpE",
+  "url": "https://static.poly.pizza/6de34136-c349-4e40-8da4-4ce3516634cc.glb",
+  "sha256": "3026fb4ad1c34d406a519e84ac529165241267ee58631d4b8915a630d41361c1",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "scallion.glb",
+  "title": "Leek",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/jnfaimryxs",
+  "url": "https://static.poly.pizza/fec9f872-1046-423e-bf14-78e6efd3351d.glb",
+  "sha256": "aa341265d4df504ea0dc39b512709293f3ae4d9ad2c49b5c5401a16eaeec6cc0",
+  "retrieved": "2026-11-14"
+ },
+ {
+  "file": "sink.glb",
+  "title": "Kitchen Sink",
+  "author": "Kenney",
+  "license": "CC0 1.0",
+  "page": "https://poly.pizza/m/nNGtcp9qK2",
+  "url": "https://static.poly.pizza/c0e9a45c-2468-4f60-803b-7ce563fbc2ab.glb",
+  "sha256": "a5c7af7a8095240ef5e95d08e10e58329986d2b8ed8c89a14a96c47e888784e6",
+  "retrieved": "2026-11-14"
+ }
+]
