@@ -187,7 +187,7 @@ func _finish_dawn() -> void:
 	var survived := "06:00 · HOÀN THÀNH ĐÊM 1\nBạn đã trụ được tới sáng."
 	if world.team != null:
 		survived = "06:00 · HOÀN THÀNH ĐÊM 1\nTrời sáng, bác bảo vệ mở cổng. %d/%d người trong nhóm còn trụ được." % [world.team.remaining(), world.team.members.size()]
-	end_text.text = (survived if won else "06:00 · ĐÊM 1 THẤT BẠI") + ("\n\nEnter · Sang sáng hôm sau · R · Chơi lại" if won else "\n\nR · Chơi lại")
+	end_text.text = (survived if won else "06:00 · ĐÊM 1 THẤT BẠI") + ("\n\nEnter · Về nhà ngủ · R · Chơi lại" if won else "\n\nR · Chơi lại")
 	if world.test_cheats.used_this_run:
 		end_text.text += "\nTEST · Có dùng cheat trong lượt này"
 	end_panel.show()

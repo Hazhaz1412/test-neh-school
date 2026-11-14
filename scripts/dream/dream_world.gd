@@ -16,7 +16,10 @@ extends Node3D
 #  4. bridge2: another broken path, but its viewpoint (a desk hanging in the air) is out over the
 #     void. The island's one board has to become a pier to stand on.
 #  5. gate: chained now, open back then. A photo of then, pressed into the same view, opens it.
-# R puts the current island's boards back. Walking through the gate ends the night.
+# R puts the current island's boards back.
+#  6. lucid: through the gate the main character knows it is a dream, and the yard lets go of
+#     its things (lucid_sky.gd). Weightless jumps, floating, pulling floating things into place,
+#     up a spiral round the flagpole to a door standing in the clouds. Through it is waking up.
 # Everything is built here from licensed assets (ASSETS.md, "Giấc mơ — mặt nước").
 const Player := preload("res://scripts/dream/dream_player.gd")
 const WATER := preload("res://assets/materials/dream_water.gdshader")
@@ -31,6 +34,9 @@ const Bridge := preload("res://scripts/dream/anamorphic_bridge.gd")
 const School := preload("res://scripts/dream/dream_school.gd")
 const MemoryCamera := preload("res://scripts/dream/memory_camera.gd")
 const Props := preload("res://scripts/dream/dream_props.gd")
+const Lucid := preload("res://scripts/dream/lucid_sky.gd")
+# The flagpole the lucid spiral turns round.
+const FLAGPOLE := Vector3(0, 0, -188)
 # Everything stands this far into the water (the depth the floor shader draws the tiles at).
 const SINK := 0.12
 const GATE_AT := Vector3(0, 0, -166)
@@ -49,10 +55,10 @@ const SAFE_NEAR := Vector3(-6.0, 0, -25.0)
 const ROUTE := [Vector3(0, 0, 6), Vector3(0, 0, -24), Vector3(0, 0, -166), Vector3(0, 0, -215)]
 # The puzzles in order, the z the player has to be past (on solid ground) for each to begin,
 # and where a fall puts them back.
-const STAGES := ["bridge1", "board", "leap", "bridge2", "gate", "open"]
+const STAGES := ["bridge1", "board", "leap", "bridge2", "gate", "open", "lucid"]
 const STAGE_FROM := {"board": -51.8, "leap": -69.8, "bridge2": -99.8, "gate": -130.0}
 const SAFE := {"bridge1": Vector3(-6.0, 0.1, -25.0), "board": Vector3(0, 0.1, -53.0), "leap": Vector3(0, 0.1, -71.0),
-	"bridge2": Vector3(0, 0.1, -101.0), "gate": Vector3(0, 0.1, -133.0), "open": Vector3(0, 0.1, -133.0)}
+	"bridge2": Vector3(0, 0.1, -101.0), "gate": Vector3(0, 0.1, -133.0), "open": Vector3(0, 0.1, -133.0), "lucid": Vector3(0, 0.1, -171.0)}
 const BOARD_LENGTH := 8.0
 const BOARD_WIDTH := 1.4
 # Blackboards that can be carried in a photo: which puzzle they belong to, where they lie
@@ -95,6 +101,9 @@ var wire_material: StandardMaterial3D
 var tops: Array = []
 var falling_poles: Array[Dictionary] = []
 var hint_time := 0.0
+var sky: Node3D
+var pull_input := false
+var reticle: ColorRect
 
 func _ready() -> void:
 	preload("res://scripts/game_progress.gd").mark("dream")
@@ -139,8 +148,16 @@ func _ready() -> void:
 	player.enabled = false
 	player.eye = 0.25
 	player.pitch = 0.9
-	player.stepped.connect(func(at: Vector3) -> void: ripple(at, 1.0))
+	player.stepped.connect(func(at: Vector3) -> void:
+		if at.y < 0.4: ripple(at, 1.0))
+	player.landed.connect(func(at: Vector3, speed: float) -> void:
+		if at.y < 0.4: ripple(at, clampf(speed / 3.0, 1.0, 3.0)))
 	ripple(player.global_position, 2.5)
+	sky = Lucid.new()
+	sky.position = FLAGPOLE
+	add_child(sky)
+	sky.build(player)
+	sky.reached_door.connect(_on_door)
 	camera = MemoryCamera.new()
 	add_child(camera)
 	camera.setup(player.camera)
@@ -525,6 +542,15 @@ func _hud() -> void:
 	hint.add_theme_font_size_override("font_size", 20)
 	hint.modulate.a = 0.0
 	hud.add_child(hint)
+	# A small soft dot to aim pulls with, shown only once the dream is lucid.
+	reticle = ColorRect.new()
+	reticle.color = Color(1, 0.95, 0.85, 0.55)
+	reticle.size = Vector2(5, 5)
+	reticle.set_anchors_preset(Control.PRESET_CENTER)
+	reticle.position = -reticle.size / 2
+	reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reticle.visible = false
+	hud.add_child(reticle)
 	fade = ColorRect.new()
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0.02, 0.03, 0.05, 1.0)
@@ -554,8 +580,9 @@ func _process(delta: float) -> void:
 	if camera.holding:
 		player.pitch = move_toward(player.pitch, camera.photo.pitch, delta * 2.5)
 	var shake: float = rift.shake
-	player.camera.h_offset = sin(clock * 47.0) * 0.05 * shake
-	player.camera.v_offset = sin(clock * 61.0 + 1.0) * 0.04 * shake
+	# The floor going is felt as a slow sway, not a jolt.
+	player.camera.h_offset = sin(clock * 7.0) * 0.03 * shake
+	player.camera.v_offset = sin(clock * 9.0 + 1.0) * 0.02 * shake
 	match state:
 		"rise": _rise()
 		"walk": _walk()
@@ -617,11 +644,9 @@ func _walk() -> void:
 				_say("Cổng khoá xích. Ngày ấy thì sao?")
 		"open":
 			if p.z < GATE_AT.z - 3.0 and absf(p.x - GATE_AT.x) < 3.0:
-				state = "leave"
-				state_time = 0.0
-				player.enabled = false
-				camera.enabled = false
-				_say("")
+				_begin_lucid()
+		"lucid":
+			_lucid()
 
 # The world is endless but the dream is not: far from the way the haze closes in and turns you back.
 func _keep_in(p: Vector3) -> void:
@@ -655,6 +680,44 @@ func _begin(next: String) -> void:
 			_say("Lại những mảnh vỡ. Lần này cái bàn lẻ ở đâu?")
 		"gate":
 			_say("Đi tới cổng trường")
+
+# Through the gate: the dream knows it is a dream. Gravity lets go, the yard's things rise.
+func _begin_lucid() -> void:
+	_set_stage("lucid")
+	player.lucid = true
+	camera.enabled = false
+	camera.raised = false
+	camera.holding = false
+	sky.start()
+	reticle.visible = true
+	_say("Nhẹ bẫng. Mình biết đây là mơ.\nSpace · nhảy   Giữ Space khi rơi · lơ lửng")
+
+func _lucid() -> void:
+	# Hold the left mouse button (or E) to pull; only changes of the real input are passed on,
+	# so tests can call sky.set_pulling() directly.
+	var held := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_physical_key_pressed(KEY_E))
+	if held != pull_input:
+		pull_input = held
+		sky.set_pulling(held)
+	if not has_meta("told_rise") and stage_time > 7.0:
+		set_meta("told_rise", true)
+		_say("Đồ đạc trong sân trôi lên thành bậc thang.\nLên mây thôi.")
+	if not has_meta("told_pull") and sky.gap_ahead() >= 0:
+		set_meta("told_pull", true)
+		_say("Thiếu một bậc. Thứ gì đang trôi thì kéo lại được.\nGiữ chuột trái · kéo về chỗ mình nhìn   Thả ra · để nó ở đó")
+	if not has_meta("told_cloud") and player.global_position.y > sky.cloud_top - 0.5 and player.is_on_floor():
+		set_meta("told_cloud", true)
+		_say("Đi trên mây.")
+
+func _on_door() -> void:
+	if state != "walk":
+		return
+	sky.set_pulling(false)
+	state = "leave"
+	state_time = 0.0
+	player.enabled = false
+	reticle.visible = false
+	_say("")
 
 # The floor has finished going: the pieces of the old path rise into view.
 func _on_settled() -> void:

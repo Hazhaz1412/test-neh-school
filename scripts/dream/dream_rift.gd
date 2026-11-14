@@ -20,7 +20,6 @@ var clock := 0.0
 var pour: Array[GPUParticles3D] = []
 var rumble: AudioStreamPlayer
 var crash: AudioStreamPlayer
-var falls: AudioStreamPlayer
 var shake := 0.0
 var islands: Array = []
 
@@ -39,11 +38,10 @@ func setup(near: float, far: float, floor_material: ShaderMaterial, stand: Array
 	_walls()
 	_slabs()
 	_pour()
-	rumble = _sound("res://assets/audio/floor_thud.wav", -4)
-	crash = _sound("res://assets/audio/mirror_crash_muffled.wav", -6)
-	falls = _sound("res://assets/audio/water_leak.wav", -40)
-	# A three-second clip; replaying it keeps the water pouring.
-	falls.finished.connect(falls.play)
+	# Kept soft and far away: the dream stays calm even as the floor goes. The water pouring over
+	# the lips is only seen, not heard (its looping hiss was too loud for the scene).
+	rumble = _sound("res://assets/audio/floor_thud.wav", -20)
+	crash = _sound("res://assets/audio/mirror_crash_muffled.wav", -26)
 
 func _sound(path: String, db: float) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
@@ -165,7 +163,7 @@ func collapse() -> void:
 	for slab in stay:
 		slab.visible = true
 	rumble.play()
-	shake = 1.0
+	shake = 0.35
 	bridge_floor.queue_free()
 
 func _process(delta: float) -> void:
@@ -181,8 +179,6 @@ func _process(delta: float) -> void:
 	if t > 0.4 and not pour[0].emitting:
 		for sheet in pour:
 			sheet.emitting = true
-		falls.play()
-	falls.volume_db = lerpf(-40.0, -14.0, clampf((t - 0.4) / 3.0, 0, 1))
 	var still := 0
 	for slab in falling:
 		if slab.has("gone"):

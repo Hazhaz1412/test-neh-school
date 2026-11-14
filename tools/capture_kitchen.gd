@@ -86,7 +86,8 @@ func run() -> void:
 	for i in range(40):
 		var angle := i * 0.5
 		kitchen.squirt(kitchen.bowl.position + Vector3(cos(angle) * 0.0012 * i, 0.088, sin(angle) * 0.0012 * i))
-	kitchen.chili.position = kitchen.bowl.position + Vector3(0.02, 0.193 + 0.088, -0.098)
+	kitchen.chili.scale = Vector3.ONE * 0.55
+	kitchen.chili.position = kitchen.bowl.position + Vector3(0.02, 0.102 + 0.08, -0.054)
 	kitchen.chili.rotation.x = 2.6
 	await shot("7-sauce")
 	kitchen.acted.emit()

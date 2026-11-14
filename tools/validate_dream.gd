@@ -3,7 +3,9 @@ extends SceneTree
 # The dream shore end to end, solved the intended way, with the wrong ways checked to fail:
 # the rise, the floor giving way, falling and coming back, bridge 1 (forced perspective),
 # the carried board (side-on fails, end-on spans), the leapfrog, the pier to the second
-# viewpoint and bridge 2, the gate photo, and waking at home.
+# viewpoint and bridge 2, the gate photo, the lucid climb past the gate (pulling the missing
+# steps in, every jump of the spiral made on real physics, the cloud and the door) and waking
+# at home. Also: a weightless jump still cannot clear a gap of the photo puzzles.
 var failures := 0
 var dream: Node3D
 var p: CharacterBody3D
@@ -80,7 +82,7 @@ func run() -> void:
 	# Off the edge and back.
 	p.set_physics_process(true)
 	p.global_position = Vector3(0, 0, -40)
-	await create_timer(0.7).timeout
+	await create_timer(1.3).timeout
 	check(dream.state == "fall", "stepping into the rift falls")
 	await create_timer(2.4).timeout
 	check(dream.state == "walk" and p.global_position.distance_to(dream.SAFE["bridge1"]) < 1.0, "and comes back at the lip")
@@ -115,6 +117,20 @@ func run() -> void:
 	dream.reset_boards()
 	await frames(2)
 	check(board.is_in_group("dream_past") and board.position.distance_to(Vector3(-2, 0, -57)) < 0.01, "2 R puts it back as a memory")
+	# A running jump off the lip of island A, weightless as it is, does not reach island B.
+	p.set_physics_process(true)
+	p.global_position = Vector3(0, 0.05, -60.5)
+	p.yaw = 0.0
+	p.drive = Vector2(0, -1)
+	await create_timer(1.0).timeout
+	p.jump()
+	var flew := 0.0
+	while dream.state == "walk" and flew < 6.0:
+		flew += 1.0 / 60.0
+		await physics_frame
+	p.drive = Vector2.ZERO
+	check(dream.state == "fall", "2 a jump does not clear the 6 m gap")
+	await create_timer(2.6).timeout
 	await stand(Vector3(-7.0, 1.6, -57), Vector3(-2, 0, -57))
 	await snap()
 	await stand(Vector3(0, 1.6, -62.4), Vector3(0, 1.6 - 1.6 / 4.6 * 4.5, -66.9))
@@ -214,8 +230,107 @@ func run() -> void:
 	check(dream.stage == "open" and not dream.school.get_node("GateShut").visible, "5 pressed in, in line, the gate opens")
 	p.global_position = Vector3(0, 0.05, gate_z + 5)
 	await walk_to(Vector3(0, 0, gate_z - 6), 5.0)
-	check(dream.state == "leave", "walking through the open gate ends the dream")
+	check(dream.stage == "lucid" and p.lucid and not cam.enabled and dream.state == "walk", "6 through the gate the dream goes lucid")
+	var sky: Node3D = dream.sky
+	await create_timer(9.0).timeout
+	check(sky.risen(), "6 the yard's things have risen into a spiral")
+	# Before anything is pulled, a missing step cannot be jumped.
+	var first_gap: int = sky.MISSING[0]
+	check(not await hop(sky.pieces[first_gap - 1], sky.pieces[first_gap + 1]), "6 a missing step is too far to jump")
+	# Pull each missing piece into its slot, standing on the step before it.
+	for gap in sky.MISSING:
+		var piece: Dictionary = sky.pieces[gap]
+		var before: Dictionary = sky.pieces[gap - 1]
+		var top: Vector3 = before.body.global_position
+		var eye := top + Vector3(0, 1.6, 0)
+		await stand(eye, piece.body.global_position - Vector3(0, piece.size.y * 0.5, 0))
+		check(sky.aimed().get("index", -1) == gap, "6 step %d: looking at it picks the piece that floated off" % gap)
+		sky.set_pulling(true)
+		var slot: Vector3 = sky.to_global(sky.slot_at(gap))
+		await stand(eye, slot)
+		await create_timer(4.0).timeout
+		sky.set_pulling(false)
+		await frames(3)
+		var off: float = piece.body.global_position.distance_to(slot)
+		check(off < 1.5, "6 step %d: pulled in where the eye put it (%.2f m from the slot)" % [gap, off])
+	# Climb it for real: every jump, ground to cloud.
+	p.set_physics_process(true)
+	var ground: Vector3 = sky.to_global(sky.slot_at(0)) + Vector3(0, -sky.FIRST, 3.0)
+	p.global_position = ground
+	p.velocity = Vector3.ZERO
+	await frames(5)
+	var climbed := 0
+	var target_body: Node3D = sky.pieces[0].body
+	if await hop_to(target_body):
+		climbed = 1
+		for i in range(1, sky.STEPS):
+			if not await hop(sky.pieces[i - 1], sky.pieces[i]):
+				print("     missed step %d at %s" % [i, p.global_position])
+				break
+			climbed += 1
+	check(climbed == sky.STEPS, "6 the whole spiral climbed jump by jump (%d / %d)" % [climbed, sky.STEPS])
+	var cloud: Node3D = sky.get_node("CloudIsland")
+	var on_cloud: Vector3 = cloud.global_position + Vector3(0, 0.5, 0) - sky.island_dir * 12.0
+	check(await hop_to(null, on_cloud), "6 and onto the cloud (at %s)" % p.global_position)
+	var door: Node3D = sky.door
+	var left := 12.0
+	while dream.state == "walk" and left > 0.0:
+		var to := door.global_position - p.global_position
+		p.yaw = atan2(-to.x, -to.z)
+		p.drive = Vector2(0, -1)
+		left -= 1.0 / 60.0
+		await physics_frame
+	p.drive = Vector2.ZERO
+	check(dream.state == "leave", "walking through the door in the clouds ends the dream")
 	await create_timer(4.5).timeout
 	check(current_scene != null and current_scene.scene_file_path == "res://scenes/home.tscn", "wakes up at home")
 	print("failures: %d" % failures)
 	quit(failures)
+
+# Stand in the middle of one piece and make a running jump for another, floating on the way down.
+func hop(from: Dictionary, to: Dictionary) -> bool:
+	p.set_physics_process(true)
+	var body: Node3D = from.body
+	var away: Vector3 = body.global_position - to.body.global_position
+	away.y = 0
+	# Start a little back from the middle, on the side away from the target, for a run-up.
+	var run_up := minf(maxf(from.size.x, from.size.z) * 0.3, 0.8)
+	p.global_position = body.global_position + away.normalized() * run_up + Vector3(0, 0.05, 0)
+	p.velocity = Vector3.ZERO
+	await frames(4)
+	return await hop_to(to.body)
+
+# Run at `body` (or at `point`), jump when the floor ahead runs out, float down; true on landing.
+func hop_to(body: Node3D, point := Vector3.ZERO) -> bool:
+	var sky: Node3D = dream.sky
+	var jumped := false
+	var left := 7.0
+	while left > 0.0:
+		left -= 1.0 / 60.0
+		var aim := point if body == null else body.global_position
+		var to := aim - p.global_position
+		to.y = 0
+		p.yaw = atan2(-to.x, -to.z)
+		p.drive = Vector2(0, -1) if to.length() > 0.25 else Vector2.ZERO
+		p.drive_float = jumped and p.velocity.y < 0.0
+		if p.is_on_floor():
+			var under: Dictionary = sky.standing_on()
+			var arrived: bool = (body != null and not under.is_empty() and under.body == body) or (body == null and p.global_position.y > sky.cloud_top - 0.3)
+			if arrived:
+				p.drive = Vector2.ZERO
+				p.drive_float = false
+				await frames(2)
+				return true
+			if jumped:
+				break
+			var forward := Vector3(-sin(p.yaw), 0, -cos(p.yaw))
+			var space := p.get_world_3d().direct_space_state
+			var ray := PhysicsRayQueryParameters3D.create(p.global_position + forward * 0.5 + Vector3.UP * 0.3, p.global_position + forward * 0.5 + Vector3.DOWN * 0.4)
+			ray.exclude = [p.get_rid()]
+			if space.intersect_ray(ray).is_empty() or p.is_on_wall():
+				p.jump()
+				jumped = true
+		await physics_frame
+	p.drive = Vector2.ZERO
+	p.drive_float = false
+	return false

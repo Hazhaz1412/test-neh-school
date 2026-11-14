@@ -1,0 +1,41 @@
+{
+ "source": "Fantozzi's Footsteps (Grass/Sand & Stone), Fantozzi, submitted by qubodup",
+ "page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+ "license": "CC0 1.0",
+ "archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+ "archive_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+ "downloaded": "2026-11-14",
+ "note": "The Sand steps, which the uploader notes sound like grass; copied unchanged.",
+ "files": [
+  {
+   "file": "assets/audio/steps/grass_01.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandL1.ogg",
+   "sha256": "fe6ec00cbe8790be0f37540cb8db8d245ca062337b121003685b6a96700cd0ae"
+  },
+  {
+   "file": "assets/audio/steps/grass_02.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandR1.ogg",
+   "sha256": "439ffe4d6fdf38194caf87e103897354756d69607bd4e48cef923e1ade68ee70"
+  },
+  {
+   "file": "assets/audio/steps/grass_03.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandL2.ogg",
+   "sha256": "68ba66063efa32b3a83979194582b1420f808cd217ccb5839c382d0e08522e18"
+  },
+  {
+   "file": "assets/audio/steps/grass_04.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandR2.ogg",
+   "sha256": "5eec48117da8fa433963ba06a93f67705f0bbd86ac3f473ab7b3bd120bf55fce"
+  },
+  {
+   "file": "assets/audio/steps/grass_05.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandL3.ogg",
+   "sha256": "0a526053424687c18735bca107b7234e48aceeb6bf12eec1f182d89aaf792b71"
+  },
+  {
+   "file": "assets/audio/steps/grass_06.ogg",
+   "from": "Fantozzi-footsteps/ogg/Fantozzi-SandR3.ogg",
+   "sha256": "7498c4e50282acc4e7e0442a9f2e551fae685898f8261152dbc627f04901ddbe"
+  }
+ ]
+}

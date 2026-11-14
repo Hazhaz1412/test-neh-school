@@ -31,7 +31,9 @@ func run() -> void:
 		root.get_texture().get_image().save_png("res://docs/menu-main.png")
 	menu.show_chapters()
 	var open: Array = menu.column.get_children().filter(func(c): return c is Button and not c.disabled)
-	check(open.size() == 2, "only the first chapter and Back are open")
+	# Chapters marked "open" (in development) are always unlocked on top of the rest.
+	var always: int = Progress.CHAPTERS.filter(func(c): return c.get("open", false)).size()
+	check(open.size() == 2 + always, "only the first chapter, the always-open ones and Back are open")
 	Progress.mark("corridor")
 	Progress.mark("prologue")
 	check(Progress.furthest() == 2 and Progress.latest() == 0, "going back keeps what was unlocked")
@@ -41,7 +43,7 @@ func run() -> void:
 	check(labels(menu)[0].contains("Hành lang đỏ"), "Continue names where the player stopped: " + labels(menu)[0])
 	menu.show_chapters()
 	open = menu.column.get_children().filter(func(c): return c is Button and not c.disabled)
-	check(open.size() == 4, "reached chapters are open")
+	check(open.size() == 4 + always, "reached chapters are open")
 	menu.show_settings()
 	await process_frame
 	var environment := Environment.new()

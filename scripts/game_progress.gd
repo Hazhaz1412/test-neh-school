@@ -8,6 +8,8 @@ const CHAPTERS := [
 	{"id": "home", "title": "Tỉnh giấc · 05:52", "text": "Chỉ là một giấc mơ?", "scene": "res://scenes/home.tscn"},
 	{"id": "town", "title": "Ngày 1 · Khu phố", "text": "Tiếp tục ở giờ đã dừng", "scene": "res://scenes/town.tscn"},
 	{"id": "night1", "title": "Đêm 1", "text": "Trốn bác bảo vệ tới sáng", "scene": "res://scenes/school_runtime.tscn", "meta": "night_one"},
+	# "open": always unlocked in the chapter menu while it is being built.
+	{"id": "meadow", "title": "Đêm 1 · Đồng cỏ", "text": "Đi về phía chỗ sáng", "scene": "res://scenes/dream_meadow.tscn", "open": true},
 ]
 const METAS := ["prologue", "chapter_corridor", "night_one", "next_survival_run"]
 static var path := "user://progress.cfg"
@@ -31,7 +33,7 @@ static func latest() -> int:
 	return _file().get_value("progress", "latest", -1)
 
 static func unlocked(index: int) -> bool:
-	return index == 0 or index <= furthest()
+	return index == 0 or index <= furthest() or CHAPTERS[index].get("open", false)
 
 # Test tools drive scenes in any order, so only a real session records anything.
 static func mark(id: String) -> void:

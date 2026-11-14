@@ -227,8 +227,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if get_tree().has_meta("night_one"):
 					var hunter: Node = hunt.hunter
 					Gear.finish_night(Gear.read(), player.inventory, hunter.confiscated if hunter != null else [])
+				var after_night_one := get_tree().has_meta("night_one")
 				get_tree().remove_meta("night_one")
-				get_tree().change_scene_to_file("res://scenes/town.tscn")
+				# Home to bed after Night 1: the meadow dream comes before the next morning.
+				get_tree().change_scene_to_file("res://scenes/dream_meadow.tscn" if after_night_one else "res://scenes/town.tscn")
 			return
 		if event.keycode == KEY_M and not progression.controls_player():
 			paused_by_user = false

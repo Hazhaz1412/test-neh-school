@@ -198,6 +198,25 @@ Cảnh `scenes/dream_shore.tscn`, dựng trong `scripts/dream/dream_world.gd`. M
   - HDRI Qwantani Dusk 2 (Pure Sky): https://polyhaven.com/a/qwantani_dusk_2_puresky, bản 2K, cùng series với trời khu phố.
 - Đồ trường học rải rác (`scripts/dream/dream_props.gd`), cùng Poly Haven CC0, cùng `sources.json`: Ceiling Fan, Football, Book Encyclopedia Set 01, Office Notepads (chỉ dùng tờ A4 trắng), Plastic Broom, Mounted Fluorescent Lights, Security Camera 01, Standing Chalkboard 01, Stationery Supplies (bút chì phóng 48 lần, ống bút), Wall Clock (kim xoay về 05:52). Trang: https://polyhaven.com/a/<tên>. Loại: két nhựa (có chữ thương hiệu), thùng rác kiểu Mỹ, sổ da.
 - Dùng lại thêm: metal_office_desk (bàn giáo viên), television_02 và plastic_monobloc_chair_01 của khu phố.
+- Đoạn lucid (`scripts/dream/lucid_sky.gd`) chỉ dùng lại asset ở trên: metal_office_desk, Book Encyclopedia Set 01 (phóng 9 lần), Office Notepads (phóng 9 lần), yellow_plaster cho khung cửa, `memory.wav` khi kéo hoặc thả vật. Mây là shader tự viết (`assets/materials/dream_cloud.gdshader`) trên nhiễu FastNoiseLite của Godot, không có file ảnh.
 - Dùng lại: SchoolDesk_01, SchoolChair_01 (`assets/polyhaven_corridor/`), floor_tiles_08 và yellow_plaster (`assets/polyhaven_school/`), tiếng bước chân ướt (`assets/audio/steps/footstep_wet_*`).
 - **Ambient Relaxing Loop**, isaiah658, CC0: https://opengameart.org/content/ambient-relaxing-loop — `assets/music/dream_ambient.ogg`, nguồn và hash ở `assets/music/dream_sources.json`. Cùng tác giả với tiếng pad dưới nước lúc chìm, nên hai đoạn nối liền.
 - Đã cân nhắc và loại: biển "Wet Floor" (chữ tiếng Anh), đèn đường kiểu châu Âu, ghế băng kiểu nhà thờ của Poly Haven (không hợp bối cảnh trường Việt Nam).
+
+## Giấc mơ — đồng cỏ (sau Đêm 1)
+
+Cảnh `scenes/dream_meadow.tscn`, dựng trong `scripts/meadow/dream_meadow.gd`.
+
+- **Poly Haven, CC0 1.0** (https://polyhaven.com/license), lấy ngày 2026-11-14, nằm trong `assets/polyhaven_meadow/`; URL và SHA-256 ghi ở `assets/polyhaven_meadow/sources.json`:
+  - HDRI Kloofendal 48d Partly Cloudy (Pure Sky): https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky, bản 2K, trời xanh lúc đã vào vùng sáng.
+  - HDRI Farm Field (Pure Sky): https://polyhaven.com/a/farm_field_puresky, bản 2K, trời u ám lúc đầu (làm tối và ám xanh trong shader).
+  - Island Tree 01: https://polyhaven.com/a/island_tree_01. Đã giảm lưới bằng Blender 5.2 từ 1.6 triệu xuống khoảng 0.4 triệu tam giác (61 MB còn 16 MB), texture giữ nguyên; cách làm ghi trong `sources.json` mục `derived`.
+  - Gothic Bed 01: https://polyhaven.com/a/GothicBed_01 (cái giường).
+  - Dandelion 01 (https://polyhaven.com/a/dandelion_01) và Shrub 01 (https://polyhaven.com/a/shrub_01), trồng quanh gốc cây.
+  - Texture Leafy Grass: https://polyhaven.com/a/leafy_grass, làm hạt cho nền đất dưới cỏ.
+- **Animated Fish Pack**, Quaternius, CC0: https://opengameart.org/content/animated-fish. Đã chuyển FBX sang GLB bằng Blender, giữ animation Swim; alpha vật liệu đặt về 1. Gồm ba loại cá nhỏ, cá đuối manta và cá voi, nằm ở `assets/meadow/fish/`.
+- **Barramundi Fish**, Microsoft, Khronos glTF-Sample-Assets, CC0: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish. Hash của cả bộ cá ghi ở `assets/meadow/fish/sources.json`.
+- **Fantozzi's Footsteps (Grass/Sand & Stone)**, CC0: https://opengameart.org/content/fantozzis-footsteps-grasssand-stone. Dùng sáu tiếng bước "Sand" (nghe như bước trên cỏ), lưu thành `assets/audio/steps/grass_0*.ogg`, nguồn ở `grass_sources.json`.
+- Dùng lại: cột điện Modular Electricity Poles (`assets/polyhaven_dream/`), nhạc `dream_ambient.ogg`, `memory.wav`.
+- Tự viết trong shader, không có file ảnh: cỏ (`meadow_grass.gdshader`, mỗi ngọn được đặt bằng hash của INSTANCE_ID), các tia sáng, bong bóng, trời pha hai HDRI, hậu kỳ dreamcore (`dreamcore_post.gdshader`).
+- Đã cân nhắc và loại: Jacaranda Tree (208 MB), các cụm cỏ Grass Medium (hơn 1 triệu đa giác mỗi cụm, không rải nổi cả cánh đồng).

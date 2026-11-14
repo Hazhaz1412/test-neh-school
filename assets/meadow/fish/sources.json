@@ -1,0 +1,46 @@
+{
+ "downloaded": "2026-11-14",
+ "files": [
+  {
+   "file": "assets/meadow/fish/fish1.glb",
+   "from": "FBX/Fish1.fbx",
+   "sha256": "c7b9a101642504585d455deea04c807c64101790b0eccb6b7d6fd0effcc302ed"
+  },
+  {
+   "file": "assets/meadow/fish/fish2.glb",
+   "from": "FBX/Fish2.fbx",
+   "sha256": "5adf72c8fe30cd215669b2b24f41ab94f6891a4a920ca768c290ff9ccd8b3fae"
+  },
+  {
+   "file": "assets/meadow/fish/fish3.glb",
+   "from": "FBX/Fish3.fbx",
+   "sha256": "3e195a6ed1510ba7e74d7d8228db9655aa3a0c485a458eea25610ddd67d84dc2"
+  },
+  {
+   "file": "assets/meadow/fish/manta_ray.glb",
+   "from": "FBX/Manta ray.fbx",
+   "sha256": "6dd5b70a78810e7eed94c4360702ba3ce6f262ebffb4387ecdce7b18df2920c3"
+  },
+  {
+   "file": "assets/meadow/fish/whale.glb",
+   "from": "FBX/Whale.fbx",
+   "sha256": "d0463332054d3b79eb78fc148048a8283fd5fb7561e915775c7b265be552ebd6"
+  }
+ ],
+ "quaternius": {
+  "source": "Animated Fish Pack by Quaternius",
+  "page": "https://opengameart.org/content/animated-fish",
+  "archive": "https://opengameart.org/sites/default/files/Animated%20Fish%20Pack%20by%20%40Quaternius.zip",
+  "archive_sha256": "c56a4bf3468e900ed9d881037334152dc203f93b656373347c8a7fc3dedb1855",
+  "license": "CC0 1.0 (License.txt in the archive)",
+  "note": "FBX converted to GLB in Blender 5.2 with the Swim animation; material alpha set to 1 (the FBX import left it at 0, which drew the fish invisible). Nothing else changed."
+ },
+ "barramundi": {
+  "file": "assets/meadow/fish/barramundi_fish.glb",
+  "source": "Barramundi Fish, Microsoft, Khronos glTF-Sample-Assets",
+  "page": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish",
+  "download": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/BarramundiFish/glTF-Binary/BarramundiFish.glb",
+  "license": "CC0 1.0",
+  "sha256": "ecc3bafb6b00f2c8b810863c388e3768a7b7ea0d0335e8cb8c574c266e571f4a"
+ }
+}

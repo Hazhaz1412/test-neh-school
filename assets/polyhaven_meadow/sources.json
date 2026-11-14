@@ -1,0 +1,240 @@
+{
+ "source": "https://polyhaven.com",
+ "license": "CC0 1.0 https://polyhaven.com/license",
+ "downloaded": "2026-11-14",
+ "pages": {
+  "kloofendal_48d_partly_cloudy_puresky": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+  "farm_field_puresky": "https://polyhaven.com/a/farm_field_puresky",
+  "dandelion_01": "https://polyhaven.com/a/dandelion_01",
+  "shrub_01": "https://polyhaven.com/a/shrub_01",
+  "leafy_grass": "https://polyhaven.com/a/leafy_grass",
+  "GothicBed_01": "https://polyhaven.com/a/GothicBed_01",
+  "island_tree_01": "https://polyhaven.com/a/island_tree_01"
+ },
+ "files": [
+  {
+   "file": "assets/polyhaven_meadow/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+   "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+   "sha256": "5244534e9cf5b606f2ff513aa00ddb161b0a4826ffd88a0d3bd03ac29247d198",
+   "bytes": 5451493
+  },
+  {
+   "file": "assets/polyhaven_meadow/farm_field_puresky_2k.hdr",
+   "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/farm_field_puresky_2k.hdr",
+   "sha256": "51c732607a26aec353a418c4e2a2772257234a055be99b3716aff34a189c88d2",
+   "bytes": 5033248
+  },
+  {
+   "file": "assets/polyhaven_meadow/dandelion_01/textures/dandelion_01_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dandelion_01/dandelion_01_nor_gl_1k.jpg",
+   "sha256": "fd69513a4803145f634b5ace49fed8709e454b3026d060687071757a72c33250",
+   "bytes": 495857
+  },
+  {
+   "file": "assets/polyhaven_meadow/dandelion_01/textures/dandelion_01_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dandelion_01/dandelion_01_arm_1k.jpg",
+   "sha256": "dad70c20756581fd795548f52a23580d94a2af538664dbbfe64e66a76e4eebb6",
+   "bytes": 448489
+  },
+  {
+   "file": "assets/polyhaven_meadow/shrub_01/textures/shrub_01_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_01/shrub_01_nor_gl_1k.jpg",
+   "sha256": "076870a39a4e21a364cf94566e6dd1852a29045fdf1f23393637235b19d1c2e8",
+   "bytes": 746497
+  },
+  {
+   "file": "assets/polyhaven_meadow/shrub_01/textures/shrub_01_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_01/shrub_01_arm_1k.jpg",
+   "sha256": "8faecdc28d8f03ba0ac139be16e617e8bfd0778780ec1d7850812230378b89be",
+   "bytes": 386309
+  },
+  {
+   "file": "assets/polyhaven_meadow/leafy_grass_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/leafy_grass/leafy_grass_diff_1k.jpg",
+   "sha256": "cfa40bc9d9417d1852db8753a8d5917f110c40101179f63543c382e39bc05e4a",
+   "bytes": 1195394
+  },
+  {
+   "file": "assets/polyhaven_meadow/leafy_grass_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/leafy_grass/leafy_grass_nor_gl_1k.jpg",
+   "sha256": "832328216adc0a7e1f70a31d5ee48c9ab7f2152d83816122736cf42ac4b2ebd6",
+   "bytes": 1466049
+  },
+  {
+   "file": "assets/polyhaven_meadow/leafy_grass_rough_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/leafy_grass/leafy_grass_rough_1k.jpg",
+   "sha256": "0c2a1d91aacb8e54a496051b59854e51e456fe858abeade778e308359ef16463",
+   "bytes": 511385
+  },
+  {
+   "file": "assets/polyhaven_meadow/GothicBed_01/GothicBed_01_1k.gltf",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/GothicBed_01/GothicBed_01_1k.gltf",
+   "sha256": "67df189dd3a645936827f3cc123fb9e97ca9d2201d1e4090762bf477cab82fc0",
+   "bytes": 2683
+  },
+  {
+   "file": "assets/polyhaven_meadow/GothicBed_01/textures/GothicBed_01_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/GothicBed_01/GothicBed_01_diff_1k.jpg",
+   "sha256": "f7e8611a731a87a42a35d92e59f78b848ac20475827b79cb8aa34df0dd5bcbd5",
+   "bytes": 116672
+  },
+  {
+   "file": "assets/polyhaven_meadow/GothicBed_01/textures/GothicBed_01_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/GothicBed_01/GothicBed_01_nor_gl_1k.jpg",
+   "sha256": "27533a33617689035cf9880803ed19af45550864442734ee9898697933b7319f",
+   "bytes": 196568
+  },
+  {
+   "file": "assets/polyhaven_meadow/GothicBed_01/GothicBed_01.bin",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/GothicBed_01/GothicBed_01.bin",
+   "sha256": "2276e86480c49dfb63a4671a9637621f88727708cf83342156c157a1d89f747b",
+   "bytes": 658648
+  },
+  {
+   "file": "assets/polyhaven_meadow/GothicBed_01/textures/GothicBed_01_arm_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/GothicBed_01/GothicBed_01_arm_1k.jpg",
+   "sha256": "049014a0bb54fd3da3b555d90966b63cad7e35feb5470b578524a7b1cec8506a",
+   "bytes": 180642
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/island_tree_01.gltf.import",
+   "sha256": "801967be3ad4814b410ede1d8ddfc3e1b7fdc007442fa5072b955431538e08e3",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/island_tree_01.bin",
+   "sha256": "a0bc2d63562f9675d51f07551109d0217c3751f78a0f5807e0eb0472ae88f29b",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/island_tree_01.gltf",
+   "sha256": "b3894378d555f4add8825da42345e4436b5a7ddba5c2de83a5c9ee0ee21472d3",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_nor_gl_1k.jpg",
+   "sha256": "ca22e428e1b1ebac47b2fc67ec355700c8779d6628d2fc6c3ebae9002988f63e",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_nor_gl_1k.jpg",
+   "sha256": "07ba461c0c95da4e49a42981766bdb6191d4c3c4d815796c082266dcc3cecdb8",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_arm_1k.jpg",
+   "sha256": "9e3f82263247ce4f619692cea4c4f6fe9936ff465a86623481849062642c7d05",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_diff_1k.jpg",
+   "sha256": "bee5ec22196e9e31ad0c95a5a9b4636571cc0124d5bb27a92f1e307d289cc60d",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_diff_1k.jpg.import",
+   "sha256": "cd12308e7d40a1123db923397e84cb012cd39de4ac07df34219a5b511cdb7f5a",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_arm_1k.jpg",
+   "sha256": "bf972dff0fbc71f146b4c02103fc3596477a49a9eff46b87b13c89b7b90d18ca",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_arm_1k.jpg.import",
+   "sha256": "34f0c25d5868f288bbcdd1b0fd868e9dfc86c458bdcbc6a013e28cb41938206d",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_nor_gl_1k.jpg.import",
+   "sha256": "51dd20d20864c8f958e366e342e26180c237ecc706708777e1be8d2af9684631",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_diff_1k.jpg",
+   "sha256": "51bff9a3a6ed7d89ff4c73f01708b7267ed8d7a82b0cb12343741894f708218f",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_diff_1k.png",
+   "sha256": "228260978d4e0bcf65d822f9c08bc74ed36a76f3a322c975709361fa245c694d",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_diff_1k.png.import",
+   "sha256": "56e2a80364ddf0d45a90d7d0e1400c7c2a5ec87b5524527af105a56f09550898",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_arm_1k.jpg",
+   "sha256": "90da3a072dbcb052715b1313b9dbc69a4aa8a09a31a4b3868411a2bb51d72037",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_arm_1k.jpg.import",
+   "sha256": "5279ed03df2cbdb821fd07f35564c7fab712c1a3b09ec0417158376b670637e0",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_arm_1k.jpg.import",
+   "sha256": "b255a051432912db86cbf79ac4d528ae123e87bf7268002795225e6438f36a2a",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_nor_gl_1k.jpg.import",
+   "sha256": "7d5c00dcc1973e47f9222a40873e155d01bf29eba29fef24065861fae534657b",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_diff_1k.jpg.import",
+   "sha256": "9590730c75efac0d434f8501ac05862ff7f41cceb0454fb448aecba2fad868af",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_leaves_nor_gl_1k.jpg.import",
+   "sha256": "be634beb799709d1a24ea9731e4fb883e8d6a76423c7385f4052ce2cc778eebc",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/island_tree_01/textures/island_tree_01_branches_nor_gl_1k.jpg",
+   "sha256": "2d67393ba76a0f49cf965fa0c99d8c16268e71e87b1203d35539bfdb971a514e",
+   "note": "derived, see derived.island_tree_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/dandelion_01/dandelion_01_1k.gltf",
+   "sha256": "3754e2adae84f5f034788656872384e994854df772f0e88a5f6368b688a80cf4",
+   "note": "derived, see derived.dandelion_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/dandelion_01/dandelion_01_1k.bin",
+   "sha256": "cd63148b333eef1bef5c86d50d639f7468a6f6208ba829b6811143fb7f4d9678",
+   "note": "derived, see derived.dandelion_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/shrub_01/shrub_01_1k.gltf",
+   "sha256": "6e669f653932ab79e70d2b1db8b365f11c0c6cadf5f0f65a7af62660ca5138aa",
+   "note": "derived, see derived.shrub_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/shrub_01/shrub_01_1k.bin",
+   "sha256": "ff604cbec02180a62b108f99ce6118647190d117d6c372d34e41aabd03424a29",
+   "note": "derived, see derived.shrub_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/dandelion_01/textures/dandelion_01_diff_1k.png",
+   "sha256": "30cfb622befb981d4621b6fd49d620a36ce9f2f55d8d9a741a70ca30dc76863d",
+   "note": "Blender re-export of the Poly Haven diffuse with its alpha, see derived.dandelion_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/shrub_01/textures/shrub_01_diff_1k.png",
+   "sha256": "a004955124b7144267129ab60ea540d2957d417dd7bf3bd3fb555d5b4977cbf5",
+   "note": "Blender re-export of the Poly Haven diffuse with its alpha, see derived.shrub_01"
+  }
+ ],
+ "derived": {
+  "island_tree_01": "From island_tree_01 1k glTF (https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/island_tree_01/island_tree_01_1k.gltf). Slimmed in Blender 5.2 headless: trunk decimated to 30k tris, branches to 50k, 30% of the leaf cards kept and each grown 1.35x about its centre (1.6M -> 0.4M tris, 61 MB -> 16 MB). Textures unchanged.",
+  "dandelion_01": "From the 1k glTF: every mesh decimated to 12% in Blender 5.2 (5 plants, 55k -> 6.6k tris). Textures unchanged.",
+  "shrub_01": "From the 1k glTF: decimated to 8% in Blender 5.2 (156k -> 12.5k tris). Textures unchanged."
+ }
+}

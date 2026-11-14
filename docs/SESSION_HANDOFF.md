@@ -38,8 +38,27 @@ Sau bể nước ở hành lang đỏ, người chơi trồi lên ở `scenes/dr
 3. `leap`: hai bảng, khoảng trống 18 m, phải nhảy cóc. Chụp từ xa thì bảng rơi xa; không chụp được tấm đang đứng lên; hai bảng chung một ảnh thì dời cùng nhau.
 4. `bridge2`: điểm nhìn (bàn lẻ lơ lửng) nằm ngoài vực, phải lấy tấm bảng của đảo làm cầu tàu ra đó.
 5. `gate`: cổng xích; ảnh "ngày ấy" dán đúng góc thì cổng mở.
+6. `lucid` (thêm 2026-11-14): qua cổng là "biết mình đang mơ" (`lucid_sky.gd`). Đồ trong sân (bàn giáo viên, sách khổng lồ, tờ giấy thi, bảng đen) nổi lên thành 16 bậc xoắn quanh cột cờ, lên tới biển mây; trên mây có cửa lớp sáng đèn, bước qua là tỉnh. Bốn bậc (`MISSING`) đã trôi đi: giữ chuột trái hoặc E để kéo vật về trước mắt, nhìn đâu vật tới đó, thả ra thì vật ở yên. Không kéo được vật đang đứng. Bậc thiếu cao gấp đôi tầm nhảy nên bắt buộc phải kéo. Không thua, không đếm giờ; rơi thì lơ lửng xuống nước rồi leo lại.
 
-R xếp lại bảng của đảo hiện tại. Rơi xuống vực thì về đầu câu đố đang chơi. Kiểm tra: `tools/validate_dream.gd` (headless, giải hết năm câu và thử cả cách sai); ảnh: `tools/capture_dream.gd` ra `docs/dream-*.png`.
+Nhảy (Space) có ở cả giấc mơ, nhẹ như không trọng lực (`dream_player.gd`). Trước cổng, khi bay gần như không trôi ngang (`AIR_DRIFT`), nên không nhảy tắt qua vực được. Sau cổng nhảy cao hơn, giữ Space khi rơi thì lơ lửng. Gờ thấp dưới 0.4 m được tự bước lên (`_step_up`): trước đây bảng đặt lệch vài cm so với mép đảo làm kẹt người chơi.
+
+Người dùng muốn giấc mơ chill và ảo kiểu lucid dream, không căng thẳng. Đã bỏ tiếng nước đổ rì rào lúc sàn sập, giảm tiếng đổ vỡ và rung.
+
+R xếp lại bảng của đảo hiện tại. Rơi xuống vực thì về đầu câu đố đang chơi. Kiểm tra: `tools/validate_dream.gd` (headless; giải hết năm câu, thử cả cách sai, rồi kéo bốn bậc thiếu và cho bot nhảy thật hết 16 bậc lên mây, vào cửa); ảnh: `tools/capture_dream.gd` ra `docs/dream-*.png` (cảnh lucid là `dream-6-*`).
+
+## Giấc mơ đồng cỏ (2026-11-14)
+
+Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.tscn`, chương "Đêm 1 · Đồng cỏ"; nằm lên giường xong thì sang `town.tscn` như trước. Đang dev nên tạm nối như vậy.
+
+- Mở đầu trong tối: đồng cỏ đồi lượn dưới trời u ám, chỉ có một chỗ sáng ở xa 90 m, nơi các tia sáng ánh cầu vồng rọi xuống một cái cây và một cái giường. Hàng cột điện đi xa dần vào sương.
+- Bước vào vùng sáng thì trong 7 giây trời chuyển sang xanh mây trắng, bong bóng bay lên, cá bơi lượn trên không quanh cây; xa hơn có cá đuối và cá voi.
+- E cạnh giường để nằm xuống, nhìn lên tán cây, trắng dần rồi sang sáng hôm sau.
+- Không thua, không đếm giờ. Nhảy lơ lửng như giấc mơ mặt nước (dùng chung `dream_player.gd`, `lucid = true`). Đi xa hơn 150 m thì bị giữ lại nhẹ nhàng ở mép.
+- Người dùng muốn cảm giác liminal space / dreamcore. Hậu kỳ `dreamcore_post.gdshader` gồm: nhòe rìa, quầng sáng, lệch màu, nâng vùng tối thành tím nhạt, hạt phim, viền tối. Thêm DOF làm mờ cảnh xa.
+- Cỏ: ba lớp MultiMesh (8 / 16 / 32 m) chỉ mang số lượng; vị trí từng ngọn do shader tính, cùng hàm `ground_height()` với collider (sửa một bên thì phải sửa bên kia). Validator so collider với mặt đất vẽ ra.
+- Đang dev nên chương này có `"open": true` trong `game_progress.gd`: luôn mở trong menu Chọn chương, không cần thắng Đêm 1.
+- Tối ưu (đo bằng `tools/bench_meadow.gd`, `MEADOW_QUALITY=0|1|2`): mức đồ họa trong Cài đặt quyết định lượng cỏ, tầm cỏ dày, SSAO, DOF, tầm bóng; mức Nhẹ còn vẽ 3D ở 75% rồi FSR phóng lên và tắt bóng của cây. Bồ công anh và bụi cây đã giảm lưới. Trời chỉ tính lại bản đồ phản chiếu khi độ sáng đổi. Trên RTX 3060 ở chỗ nặng nhất (cạnh cây, ban ngày): Nhẹ 367 FPS, Cân bằng 233, Cao 177 (trước khi tối ưu: 160).
+- Kiểm tra: `tools/validate_meadow.gd`. Ảnh: `tools/capture_meadow.gd` ra `docs/meadow-*.png`.
 
 ## Cách chạy
 
