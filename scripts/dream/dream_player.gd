@@ -9,6 +9,8 @@ extends CharacterBody3D
 # you along, and holding Space while coming down floats.
 const WALK := 2.3
 const LUCID_WALK := 3.2
+# Holding Shift in a lucid dream: long, light running strides.
+const LUCID_RUN := 7.5
 const GRAVITY := 7.0
 const JUMP := 3.6
 const AIR_DRIFT := 1.6
@@ -35,12 +37,19 @@ var lucid := false
 var drive := Vector2.ZERO
 var drive_jump := false
 var drive_float := false
+var drive_run := false
 var jump_buffer := 0.0
 var coyote := 0.0
 var was_on_floor := true
 var dry_steps: AudioStreamPlayer
 # Set by a scene with its own ground (the meadow's grass): every step plays this instead.
 var ground_steps: AudioStreamPlayer
+# Gravity can turn. `frame` is the player's own world: frame.y is up, and walking, jumping,
+# falling and looking all happen in it. A scene can set `gravity_field` (position -> up vector);
+# the frame then turns by the smallest rotation that matches it, taking the speed along, so a
+# road that curls up a wall is walked like flat ground (meadow's road to the sky).
+var frame := Basis.IDENTITY
+var gravity_field: Callable
 signal landed(at: Vector3, fall_speed: float)
 
 func _ready() -> void:
@@ -88,15 +97,24 @@ func _unhandled_input(event: InputEvent) -> void:
 # Looking is applied every drawn frame, not every physics tick, so turning stays smooth on
 # screens faster than the physics rate. The head sways a little with each step.
 func _process(_delta: float) -> void:
-	rotation.y = yaw
+	global_basis = frame * Basis(Vector3.UP, yaw)
 	camera.rotation.x = pitch
-	var speed := Vector2(velocity.x, velocity.z).length()
+	var flat := frame.transposed() * velocity
+	var speed := Vector2(flat.x, flat.z).length()
 	camera.position.y = eye + sin(bob) * 0.012 * clampf(speed / WALK, 0, 1)
 
 func jump() -> void:
 	jump_buffer = 0.15
 
 func _physics_process(delta: float) -> void:
+	if gravity_field.is_valid():
+		var want: Vector3 = (gravity_field.call(global_position) as Vector3).normalized()
+		if frame.y.dot(want) < 0.999999:
+			var turn := Basis(Quaternion(frame.y, want))
+			frame = (turn * frame).orthonormalized()
+			velocity = turn * velocity
+		up_direction = frame.y
+		global_basis = frame * Basis(Vector3.UP, yaw)
 	var wish := drive
 	var float_held := drive_float
 	if drive_jump:
@@ -110,32 +128,37 @@ func _physics_process(delta: float) -> void:
 		jump_buffer = 0.0
 	var direction := Vector3(wish.x, 0, wish.y).limit_length().rotated(Vector3.UP, yaw)
 	var on_floor := is_on_floor()
-	var walk := LUCID_WALK if lucid else WALK
+	var running := lucid and (drive_run or (enabled and Input.is_physical_key_pressed(KEY_SHIFT)))
+	var walk := (LUCID_RUN if running else LUCID_WALK) if lucid else WALK
+	# Everything below is worked out in the player's own frame (y is up), then turned back.
+	var local := frame.transposed() * velocity
 	# Water drags: speed comes up and dies away softly. In the air there is less to push against.
 	var grip := 5.0 if on_floor else (3.0 if lucid else 2.0)
 	if not on_floor and not lucid:
 		walk = AIR_DRIFT
-	velocity.x = move_toward(velocity.x, direction.x * walk, delta * grip)
-	velocity.z = move_toward(velocity.z, direction.z * walk, delta * grip)
+	local.x = move_toward(local.x, direction.x * walk, delta * grip)
+	local.z = move_toward(local.z, direction.z * walk, delta * grip)
 	coyote = 0.12 if on_floor else maxf(coyote - delta, 0.0)
 	jump_buffer = maxf(jump_buffer - delta, 0.0)
 	if on_floor:
-		velocity.y = 0.0
+		local.y = 0.0
 	else:
-		velocity.y -= (LUCID_GRAVITY if lucid else GRAVITY) * delta
-		if lucid and float_held and velocity.y < -FLOAT_FALL:
-			velocity.y = move_toward(velocity.y, -FLOAT_FALL, delta * 30.0)
-		velocity.y = maxf(velocity.y, -14.0)
+		local.y -= (LUCID_GRAVITY if lucid else GRAVITY) * delta
+		if lucid and float_held and local.y < -FLOAT_FALL:
+			local.y = move_toward(local.y, -FLOAT_FALL, delta * 30.0)
+		local.y = maxf(local.y, -14.0)
 	if jump_buffer > 0.0 and coyote > 0.0:
 		jump_buffer = 0.0
 		coyote = 0.0
-		velocity.y = LUCID_JUMP if lucid else JUMP
+		local.y = LUCID_JUMP if lucid else JUMP
 		floor_snap_length = 0.0
 		stepped.emit(global_position)
-	var fall_speed := -velocity.y
+	velocity = frame * local
+	direction = frame * direction
+	var fall_speed := -local.y
 	var before := global_position
 	move_and_slide()
-	if velocity.y <= 0.0:
+	if velocity.dot(frame.y) <= 0.0:
 		floor_snap_length = 0.3
 	if on_floor and is_on_wall() and direction.length() > 0.1:
 		_step_up(before, direction)
@@ -145,7 +168,8 @@ func _physics_process(delta: float) -> void:
 		_step_sound()
 		step_clock = 0.3
 	was_on_floor = now_on_floor
-	var speed := Vector2(velocity.x, velocity.z).length()
+	var moved := frame.transposed() * velocity
+	var speed := Vector2(moved.x, moved.z).length()
 	bob += delta * speed * 3.2
 	if speed > 0.5 and now_on_floor:
 		step_clock -= delta
@@ -168,7 +192,7 @@ func _step_sound() -> void:
 # Blocked by something low: try the same move from up to STEP higher and settle back down on top.
 func _step_up(from: Vector3, direction: Vector3) -> void:
 	var start := Transform3D(global_basis, from)
-	var up := Vector3.UP * STEP
+	var up := frame.y * STEP
 	if test_move(start, up):
 		return
 	var raised := start.translated(up)
@@ -179,8 +203,8 @@ func _step_up(from: Vector3, direction: Vector3) -> void:
 	var hit := KinematicCollision3D.new()
 	if not test_move(over, -up, hit):
 		return
-	if hit.get_normal().angle_to(Vector3.UP) > floor_max_angle:
+	if hit.get_normal().angle_to(frame.y) > floor_max_angle:
 		return
 	global_position = over.origin + hit.get_travel()
-	velocity.y = 0.0
+	velocity -= frame.y * velocity.dot(frame.y)
 	apply_floor_snap()

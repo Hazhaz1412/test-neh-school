@@ -61,4 +61,14 @@ func run() -> void:
 	await measure("day-tree")
 	look(eye(0, 4), Vector3(40, 6, 90))
 	await measure("day-field")
+	meadow.make_night()
+	look(eye(3.6, 0.7), Vector3(0, 30, -24))
+	await measure("night-wake")
+	var fold: Node3D = meadow.fold
+	var s: float = fold.arc + 6.0
+	player.frame = Basis(Quaternion(Vector3.UP, fold.up_of(s)))
+	player.global_position = fold.point(3.0, s)
+	player.yaw = 0.0
+	player.pitch = 0.05
+	await measure("night-fair")
 	quit()

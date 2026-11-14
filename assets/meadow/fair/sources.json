@@ -1,0 +1,107 @@
+{
+ "source": "Poly Pizza (https://poly.pizza), each model with its own author and licence below",
+ "downloaded": "2026-11-14",
+ "note": "GLB files as served by static.poly.pizza, unchanged.",
+ "files": [
+  {
+   "page": "https://poly.pizza/m/5KiVEnXN5Cw",
+   "download": "https://static.poly.pizza/ac71a5c4-105c-4147-8cb7-2de8cd8ec192.glb",
+   "title": "Ferris wheel",
+   "creator": "Poly by Google",
+   "licence": "CC-BY 3.0",
+   "sha256": "9ecd4353123630708056dd8b667ca3b1531fc7906ce0c4ca7ac38f820c0216c0",
+   "bytes": 671844,
+   "file": "assets/meadow/fair/ferris_wheel.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/bEdE4rmZy9",
+   "download": "https://static.poly.pizza/3edc2bd9-3378-4b43-a50d-d5e1f858562b.glb",
+   "title": "White Horse",
+   "creator": "Quaternius",
+   "licence": "CC0 1.0",
+   "sha256": "18e866e6ea2789701d0c1948bcedabe10dd0065507e15a1721d81b6fe61606b1",
+   "bytes": 1109444,
+   "file": "assets/meadow/fair/white_horse.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/4NizXJZsuO2",
+   "download": "https://static.poly.pizza/6113848a-df98-4e37-928f-42d1d67c6feb.glb",
+   "title": "Carnival Booth",
+   "creator": "sirkitree",
+   "licence": "CC-BY 3.0",
+   "sha256": "818fec378e7058982beff5d9c731d44d00e66f44a1d8bde3eabf4f6e8e8a4b9f",
+   "bytes": 51448,
+   "file": "assets/meadow/fair/carnival_booth.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/1T9untmohmj",
+   "download": "https://static.poly.pizza/4ff230cb-9f40-4f65-907d-59b9ed41abe0.glb",
+   "title": "Popcorn Cart",
+   "creator": "Don Carson",
+   "licence": "CC-BY 3.0",
+   "sha256": "11ee5475fa691e64c003012ef2d4f31d017600e53d5ea9b1f806588c1d1b5c27",
+   "bytes": 910676,
+   "file": "assets/meadow/fair/popcorn_cart.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/8azSIUgP0ow",
+   "download": "https://static.poly.pizza/4feb9a6e-8399-47f5-864b-b48516ec7c0f.glb",
+   "title": "Hot air balloon",
+   "creator": "Poly by Google",
+   "licence": "CC-BY 3.0",
+   "sha256": "79441fbc96168e60f1e3d15d24682d2aa8173c804a644fc329f45e34543cb033",
+   "bytes": 50464,
+   "file": "assets/meadow/fair/hot_air_balloon_red.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/7Fej0Jd3_Di",
+   "download": "https://static.poly.pizza/776312e5-40ed-40bf-9d26-5fe5ee4e5ce8.glb",
+   "title": "Hot air balloon",
+   "creator": "Poly by Google",
+   "licence": "CC-BY 3.0",
+   "sha256": "57fee045a0fb017a5328abb713e544639c79d614930edc91760cb009c5f3bb04",
+   "bytes": 78560,
+   "file": "assets/meadow/fair/hot_air_balloon_blue.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/ZSQ65S4lEu",
+   "download": "https://static.poly.pizza/41095798-4ff6-4567-8654-026703a51f32.glb",
+   "title": "Post Lantern",
+   "creator": "Kay Lousberg",
+   "licence": "CC0 1.0",
+   "sha256": "709608a21d2abd373521cec841e972bf84619de38195970bdb121be3f9824637",
+   "bytes": 44024,
+   "file": "assets/meadow/fair/post_lantern.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/3jzk3YShv1",
+   "download": "https://static.poly.pizza/31b8c80d-3607-4f84-a857-749419e4742e.glb",
+   "title": "Hanging Lantern",
+   "creator": "Kay Lousberg",
+   "licence": "CC0 1.0",
+   "sha256": "7e85a7265542f682bd1b954ec7e525b3edf473edb7f40303e315c93cc39bcf61",
+   "bytes": 36684,
+   "file": "assets/meadow/fair/hanging_lantern.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/eRag_AC3KiS",
+   "download": "https://static.poly.pizza/a0f6c39f-44cb-41bf-9d47-d9be49c0c58e.glb",
+   "title": "Balloons",
+   "creator": "Jarlan Perez",
+   "licence": "CC-BY 3.0",
+   "sha256": "bbd94169d463899273318d137acd7d0e5203a9efdba00a84f04892665ad64518",
+   "bytes": 162472,
+   "file": "assets/meadow/fair/balloons.glb"
+  },
+  {
+   "page": "https://poly.pizza/m/aubwCF1Xf-v",
+   "download": "https://static.poly.pizza/c2d620a4-d476-4c09-9adc-573749b62fb1.glb",
+   "title": "High striker",
+   "creator": "Zgeal",
+   "licence": "CC-BY 3.0",
+   "sha256": "3467609c766a3e329d2a048db8eab8bdedd1a277ee3dd186a67ef660dc5ef0fb",
+   "bytes": 30384,
+   "file": "assets/meadow/fair/high_striker.glb"
+  }
+ ]
+}

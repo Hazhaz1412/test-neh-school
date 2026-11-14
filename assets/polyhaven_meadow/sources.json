@@ -9,7 +9,12 @@
   "shrub_01": "https://polyhaven.com/a/shrub_01",
   "leafy_grass": "https://polyhaven.com/a/leafy_grass",
   "GothicBed_01": "https://polyhaven.com/a/GothicBed_01",
-  "island_tree_01": "https://polyhaven.com/a/island_tree_01"
+  "island_tree_01": "https://polyhaven.com/a/island_tree_01",
+  "qwantani_night_puresky": "https://polyhaven.com/a/qwantani_night_puresky",
+  "herringbone_pavement": "https://polyhaven.com/a/herringbone_pavement",
+  "red_bricks_04": "https://polyhaven.com/a/red_bricks_04",
+  "roof_slates_03": "https://polyhaven.com/a/roof_slates_03",
+  "grass_path_2": "https://polyhaven.com/a/grass_path_2"
  },
  "files": [
   {
@@ -230,6 +235,84 @@
    "file": "assets/polyhaven_meadow/shrub_01/textures/shrub_01_diff_1k.png",
    "sha256": "a004955124b7144267129ab60ea540d2957d417dd7bf3bd3fb555d5b4977cbf5",
    "note": "Blender re-export of the Poly Haven diffuse with its alpha, see derived.shrub_01"
+  },
+  {
+   "file": "assets/polyhaven_meadow/qwantani_night_puresky_2k.hdr",
+   "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/qwantani_night_puresky_2k.hdr",
+   "sha256": "d458fe7f20969d89eedbb7ae12d346abf68c86d844235696e7d70baad3e04cf0",
+   "bytes": 5461210
+  },
+  {
+   "file": "assets/polyhaven_meadow/herringbone_pavement_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_pavement/herringbone_pavement_diff_1k.jpg",
+   "sha256": "43df163ee6bea7848c3f2b25250ff20eac27b8d59e359950605e2a3d3528b1fe",
+   "bytes": 893967
+  },
+  {
+   "file": "assets/polyhaven_meadow/herringbone_pavement_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_pavement/herringbone_pavement_nor_gl_1k.jpg",
+   "sha256": "ab445c0ba95ade69040d73bae4f08764beadaa7d3c92552d6b5f36bc6aeb13ff",
+   "bytes": 952271
+  },
+  {
+   "file": "assets/polyhaven_meadow/herringbone_pavement_rough_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_pavement/herringbone_pavement_rough_1k.jpg",
+   "sha256": "333cd5751264abc64a0dfe5ee869a58ecb521a8d4937129b85903794c40ba837",
+   "bytes": 358997
+  },
+  {
+   "file": "assets/polyhaven_meadow/red_bricks_04_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_bricks_04/red_bricks_04_diff_1k.jpg",
+   "sha256": "c3a51662fd3e859242d949843e88e8ca7ae50dd3bb57c4cad5b544d0a16111cd",
+   "bytes": 283965
+  },
+  {
+   "file": "assets/polyhaven_meadow/red_bricks_04_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_bricks_04/red_bricks_04_nor_gl_1k.jpg",
+   "sha256": "cb9d3da93ef192ddbe5f649b15bd940fe2631bb8715002ff31a0f19294b354da",
+   "bytes": 339216
+  },
+  {
+   "file": "assets/polyhaven_meadow/red_bricks_04_rough_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_bricks_04/red_bricks_04_rough_1k.jpg",
+   "sha256": "793b7206535ccdfe285d4f90366019cb13c56bae9cdcefab6bb49065155875dd",
+   "bytes": 234867
+  },
+  {
+   "file": "assets/polyhaven_meadow/roof_slates_03_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_03/roof_slates_03_diff_1k.jpg",
+   "sha256": "ad7caff0fae22a67c2429021129840d3d9247ec4370bafadc2c031e1693fe8a9",
+   "bytes": 654296
+  },
+  {
+   "file": "assets/polyhaven_meadow/roof_slates_03_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_03/roof_slates_03_nor_gl_1k.jpg",
+   "sha256": "0eb010215ea6e2de800adf6cf86fd5fb9e9a24b0d12d1297bb4b8d56b205c87d",
+   "bytes": 788841
+  },
+  {
+   "file": "assets/polyhaven_meadow/roof_slates_03_rough_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_03/roof_slates_03_rough_1k.jpg",
+   "sha256": "7c0ba13dd4695647e2ac6fd0dbceb457497ce853d879a1d1d860a6301832bf8f",
+   "bytes": 12644
+  },
+  {
+   "file": "assets/polyhaven_meadow/grass_path_2_diff_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_path_2/grass_path_2_diff_1k.jpg",
+   "sha256": "7f30b163739435c11f500f3818c7bb4922bab5f2734cc9ba6dd36817f0c9a8ab",
+   "bytes": 716010
+  },
+  {
+   "file": "assets/polyhaven_meadow/grass_path_2_nor_gl_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_path_2/grass_path_2_nor_gl_1k.jpg",
+   "sha256": "4f6e911619d4c79a6bc340a64eac1e5fcbae8e54ea2674ed1892f6a9a1dfb5fa",
+   "bytes": 831959
+  },
+  {
+   "file": "assets/polyhaven_meadow/grass_path_2_rough_1k.jpg",
+   "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_path_2/grass_path_2_rough_1k.jpg",
+   "sha256": "2aaf4400e7892d643a4f64d7347f2a0ca65051b5cb0c1b5d0ef383a65a5fa172",
+   "bytes": 335245
   }
  ],
  "derived": {

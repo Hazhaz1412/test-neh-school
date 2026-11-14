@@ -219,4 +219,22 @@ Cảnh `scenes/dream_meadow.tscn`, dựng trong `scripts/meadow/dream_meadow.gd`
 - **Fantozzi's Footsteps (Grass/Sand & Stone)**, CC0: https://opengameart.org/content/fantozzis-footsteps-grasssand-stone. Dùng sáu tiếng bước "Sand" (nghe như bước trên cỏ), lưu thành `assets/audio/steps/grass_0*.ogg`, nguồn ở `grass_sources.json`.
 - Dùng lại: cột điện Modular Electricity Poles (`assets/polyhaven_dream/`), nhạc `dream_ambient.ogg`, `memory.wav`.
 - Tự viết trong shader, không có file ảnh: cỏ (`meadow_grass.gdshader`, mỗi ngọn được đặt bằng hash của INSTANCE_ID), các tia sáng, bong bóng, trời pha hai HDRI, hậu kỳ dreamcore (`dreamcore_post.gdshader`).
-- Đã cân nhắc và loại: Jacaranda Tree (208 MB), các cụm cỏ Grass Medium (hơn 1 triệu đa giác mỗi cụm, không rải nổi cả cánh đồng).
+- Ban đêm (sau khi nằm lên giường):
+  - HDRI Qwantani Night (Pure Sky), Poly Haven, CC0: https://polyhaven.com/a/qwantani_night_puresky. Ảnh này được phơi sáng như ban ngày, trong shader hạ xuống khoảng 3% và ám xanh; sao là do shader vẽ thêm.
+  - Texture Herringbone Pavement, Poly Haven, CC0: https://polyhaven.com/a/herringbone_pavement, lát vòng tròn giữa khu vui chơi.
+  - Ngôi nhà trên trần dùng texture Poly Haven CC0: Red Bricks 04 (https://polyhaven.com/a/red_bricks_04) cho tường, Roof Slates 03 (https://polyhaven.com/a/roof_slates_03) cho mái, Grass Path 2 (https://polyhaven.com/a/grass_path_2) cho lối đất. Bụi cây và bồ công anh dùng lại Shrub 01 và Dandelion 01.
+  - Nhạc "Roll Up" của Yubatake, **CC-BY 4.0, phải ghi tên tác giả**: https://opengameart.org/content/roll-up. Lưu ở `assets/music/fair_rollup.ogg` (chuyển từ FLAC sang Ogg), nguồn ở `assets/music/fair_sources.json`. Đây là tiếng nhạc khu vui chơi đánh thức nhân vật.
+  - Model khu vui chơi lấy từ Poly Pizza, giữ nguyên GLB, nằm ở `assets/meadow/fair/`, nguồn và hash ở `sources.json` cùng thư mục. Các model **CC-BY 3.0 phải ghi tên tác giả trong credits**:
+  - Ferris wheel — Poly by Google, CC-BY 3.0: https://poly.pizza/m/5KiVEnXN5Cw (`assets/meadow/fair/ferris_wheel.glb`)
+  - White Horse — Quaternius, CC0 1.0: https://poly.pizza/m/bEdE4rmZy9 (`assets/meadow/fair/white_horse.glb`)
+  - Carnival Booth — sirkitree, CC-BY 3.0: https://poly.pizza/m/4NizXJZsuO2 (`assets/meadow/fair/carnival_booth.glb`)
+  - Popcorn Cart — Don Carson, CC-BY 3.0: https://poly.pizza/m/1T9untmohmj (`assets/meadow/fair/popcorn_cart.glb`)
+  - Hot air balloon — Poly by Google, CC-BY 3.0: https://poly.pizza/m/8azSIUgP0ow (`assets/meadow/fair/hot_air_balloon_red.glb`)
+  - Hot air balloon — Poly by Google, CC-BY 3.0: https://poly.pizza/m/7Fej0Jd3_Di (`assets/meadow/fair/hot_air_balloon_blue.glb`)
+  - Post Lantern — Kay Lousberg, CC0 1.0: https://poly.pizza/m/ZSQ65S4lEu (`assets/meadow/fair/post_lantern.glb`)
+  - Hanging Lantern — Kay Lousberg, CC0 1.0: https://poly.pizza/m/3jzk3YShv1 (`assets/meadow/fair/hanging_lantern.glb`)
+  - Balloons — Jarlan Perez, CC-BY 3.0: https://poly.pizza/m/eRag_AC3KiS (`assets/meadow/fair/balloons.glb`)
+  - High striker — Zgeal, CC-BY 3.0: https://poly.pizza/m/aubwCF1Xf-v (`assets/meadow/fair/high_striker.glb`)
+  - Tự dựng bằng code: vòng ngựa gỗ (ngựa là White Horse của Quaternius), lều xiếc, mái sọc (`carousel_roof.gdshader`), mi mắt khi chớp (`eyelids.gdshader`), đom đóm, dây bóng đèn.
+- Đã cân nhắc và loại: Jacaranda Tree (208 MB), các cụm cỏ Grass Medium (hơn 1 triệu đa giác mỗi cụm, không rải nổi cả cánh đồng), "Big T" trên Poly Pizza (hóa ra là một nhân vật, không phải lều xiếc), dây đèn Holiday Lights (tọa độ hỏng, đã xóa).
+

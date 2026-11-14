@@ -1,0 +1,17 @@
+{
+ "downloaded": "2026-11-14",
+ "files": [
+  {
+   "file": "assets/music/fair_rollup.ogg",
+   "title": "Roll Up",
+   "author": "Yubatake",
+   "page": "https://opengameart.org/content/roll-up",
+   "download": "https://opengameart.org/sites/default/files/rollup.zip",
+   "archive_sha256": "660527ce1af61fe830d294449255eecae0d03a401ff5c5192bb7d79c5c1a4664",
+   "source_sha256": "ffb5e8ffbacc6db4104a2dd6cc612ec935dcbd570d708643236fe2b472be0296",
+   "license": "CC-BY 4.0 (credit: Yubatake)",
+   "note": "RollUp.flac converted to Ogg Vorbis q5 with ffmpeg; nothing else changed.",
+   "sha256": "48bd25b807caf58738a1dc5f8ab4666fd174ab02dc1affc4291fac36db1e9927"
+  }
+ ]
+}

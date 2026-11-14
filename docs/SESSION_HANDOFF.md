@@ -51,14 +51,20 @@ R xếp lại bảng của đảo hiện tại. Rơi xuống vực thì về đ�
 Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.tscn`, chương "Đêm 1 · Đồng cỏ"; nằm lên giường xong thì sang `town.tscn` như trước. Đang dev nên tạm nối như vậy.
 
 - Mở đầu trong tối: đồng cỏ đồi lượn dưới trời u ám, chỉ có một chỗ sáng ở xa 90 m, nơi các tia sáng ánh cầu vồng rọi xuống một cái cây và một cái giường. Hàng cột điện đi xa dần vào sương.
+- Tia sáng (`meadow_beam.gdshader`): 12 dải quad luôn xoay mặt về phía mắt, sáng theo hình chuông ngang dải, đáy mềm theo depth buffer nên hòa vào cỏ, không còn cạnh hay góc. Quầng sáng trên cỏ là một Decal tròn mờ dần, chỉ chiếu lớp 1; cây và giường đặt ở lớp 2 để không bị hắt xám.
 - Bước vào vùng sáng thì trong 7 giây trời chuyển sang xanh mây trắng, bong bóng bay lên, cá bơi lượn trên không quanh cây; xa hơn có cá đuối và cá voi.
-- E cạnh giường để nằm xuống, nhìn lên tán cây, trắng dần rồi sang sáng hôm sau.
+- E cạnh giường để nằm xuống, nhìn lên tán cây. Mắt chớp rồi nhắm hẳn. Trong lúc nhắm, trời chuyển sang đêm đầy sao và nhạc khu vui chơi nổi lên; mắt chớp mở ra vì tiếng nhạc.
+- Ban đêm (`scripts/meadow/land_fold.gd`): đồng cỏ hóa ra là đáy của một cái hộp cỏ. Nhìn dọc trục x, hộp là hình vuông cạnh 220 m, góc bo bán kính 36 m, dài 2,4 km mỗi bên. Theo thứ tự: đáy là đồng cỏ có giường; tường là khu vui chơi (vòng đu quay, vòng ngựa gỗ, lều xiếc, quầy, xe bỏng ngô, trò đập búa, khinh khí cầu); trần có lối đất đèn lồng dẫn tới một ngôi nhà gạch đỏ bình thường; tường bên kia đi xuống lại đáy, thành một vòng khép kín. Trọng lực luôn hướng về mặt gần nhất (`up_at`: từ người chơi về hình chữ nhật lõi), xoay dần từng bước, nên qua góc không thấy dốc; validator đo dốc lớn nhất dưới chân dưới 1°. Đứng ở đâu ngửa đầu lên cũng thấy mặt đối diện; trên trần nhìn lên là đồng cỏ có giường. Sương đêm xanh nhạt (mật độ 0.0036) làm các mặt xa tan vào sương cho cảm giác vô tận; người dùng chê bản hộp 96 m là chật. Trăng không đổ bóng, vì có bóng thì các mặt che tối lẫn nhau.
+- Shift để chạy trong mơ (7,5 m/s). Chạy từ giường tới cửa nhà mất khoảng 42 giây. Ra xa quá 170 m theo trục x thì bị đẩy nhẹ lại.
+- Cỏ và đất trên các mặt hộp dùng chung shader với đồng cỏ (chế độ box, toạ độ u dọc x, s vòng quanh hộp). Kích thước hộp nằm ở `land_fold.gd` và được đưa vào shader bằng `box_uniforms`; `ground_height` làm phẳng hai mép đáy và bỏ đồi trong lòng hộp (sửa ở shader thì sửa cả `dream_meadow.gd`).
+- Ngôi nhà dựng bằng code, texture Poly Haven. Cạnh cửa bấm E để mở: cửa xoay vào bóng tối, rồi tạm sang `town.tscn`. Bên trong là "một thế giới rộng lớn đối lập với ngôi nhà nhỏ", sẽ làm sau; điểm neo là Marker3D `Inside` trong node `House`.
+- Trò chơi ở khu vui chơi làm sau: chỗ đã chừa là các Marker3D `GameStall1..3`, `GameStriker`, `GameCarousel` trong node `Fair`. Lều xiếc giờ chỉ để trang trí.
 - Không thua, không đếm giờ. Nhảy lơ lửng như giấc mơ mặt nước (dùng chung `dream_player.gd`, `lucid = true`). Đi xa hơn 150 m thì bị giữ lại nhẹ nhàng ở mép.
 - Người dùng muốn cảm giác liminal space / dreamcore. Hậu kỳ `dreamcore_post.gdshader` gồm: nhòe rìa, quầng sáng, lệch màu, nâng vùng tối thành tím nhạt, hạt phim, viền tối. Thêm DOF làm mờ cảnh xa.
 - Cỏ: ba lớp MultiMesh (8 / 16 / 32 m) chỉ mang số lượng; vị trí từng ngọn do shader tính, cùng hàm `ground_height()` với collider (sửa một bên thì phải sửa bên kia). Validator so collider với mặt đất vẽ ra.
 - Đang dev nên chương này có `"open": true` trong `game_progress.gd`: luôn mở trong menu Chọn chương, không cần thắng Đêm 1.
 - Tối ưu (đo bằng `tools/bench_meadow.gd`, `MEADOW_QUALITY=0|1|2`): mức đồ họa trong Cài đặt quyết định lượng cỏ, tầm cỏ dày, SSAO, DOF, tầm bóng; mức Nhẹ còn vẽ 3D ở 75% rồi FSR phóng lên và tắt bóng của cây. Bồ công anh và bụi cây đã giảm lưới. Trời chỉ tính lại bản đồ phản chiếu khi độ sáng đổi. Trên RTX 3060 ở chỗ nặng nhất (cạnh cây, ban ngày): Nhẹ 367 FPS, Cân bằng 233, Cao 177 (trước khi tối ưu: 160).
-- Kiểm tra: `tools/validate_meadow.gd`. Ảnh: `tools/capture_meadow.gd` ra `docs/meadow-*.png`.
+- Kiểm tra: `tools/validate_meadow.gd` (gồm cả đi thật qua chỗ gập tới lều). Ảnh: `tools/capture_meadow.gd` ra `docs/meadow-*.png`, cảnh đêm là `meadow-night-*`. Trên RTX 3060, mức Cân bằng ban đêm được 171–206 FPS.
 
 ## Cách chạy
 

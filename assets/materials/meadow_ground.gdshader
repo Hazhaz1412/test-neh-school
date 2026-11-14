@@ -5,6 +5,11 @@ uniform sampler2D albedo_tex : source_color, filter_linear_mipmap_anisotropic, r
 uniform sampler2D normal_tex : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec3 green : source_color = vec3(0.13, 0.27, 0.06);
 uniform vec3 far_green : source_color = vec3(0.24, 0.44, 0.1);
+// Night: only the box's floor is kept of the meadow (world z from keep_z.x to keep_z.y).
+uniform vec2 keep_z = vec2(-1e9, 1e9);
+// The fold's own ground: its UV is (x, s) along the fold; laid out to carry on the meadow's (x, z).
+uniform bool fold_uv = false;
+uniform float fold_bend_z = -8.0;
 varying vec3 world_pos;
 
 void vertex() {
@@ -26,6 +31,11 @@ float noise(vec2 p) {
 
 void fragment() {
 	vec2 p = world_pos.xz;
+	if (fold_uv) {
+		p = vec2(UV.x, fold_bend_z - UV.y);
+	} else if (p.y < keep_z.x || p.y > keep_z.y) {
+		discard;
+	}
 	vec3 photo = texture(albedo_tex, p / 3.0).rgb;
 	float big = noise(p * 0.02) * 0.6 + noise(p * 0.11) * 0.4;
 	vec3 tint = mix(green, far_green, big);

@@ -39,7 +39,7 @@ func run() -> void:
 	player = meadow.player
 	meadow.state = "walk"
 	meadow.fade.color.a = 0.0
-	look(eye(0, 90), Vector3(0, 6, 0))
+	look(eye(0, 46), Vector3(0, 6, 0))
 	await shot("start")
 	look(eye(1.5, 24), Vector3(0, 2.5, 0))
 	await shot("approach")
@@ -61,4 +61,63 @@ func run() -> void:
 	meadow.lie_down()
 	for i in range(220): await process_frame
 	await shot("lie", 1)
+	# The blink, night, getting up.
+	while meadow.state == "lie": await process_frame
+	await create_timer(1.0).timeout
+	await shot("blink-shut", 1)
+	await create_timer(3.2).timeout
+	await shot("blink-open", 1)
+	while meadow.state != "walk": await process_frame
+	await shot("night-wake")
+	var fold: Node3D = meadow.fold
+	var wall_from: float = fold.arc
+	var ceiling_from: float = fold.arc * 2.0 + fold.wall
+	# Down the box along x, to the horizon.
+	look_on(meadow.on_ground(0, 20), Vector3.UP, -PI / 2, 0.15)
+	await shot("night-box-along")
+	# Straight up from beside the bed: the ceiling's meadow and the house hanging from it.
+	look_on(meadow.on_ground(3, 3), Vector3.UP, 0.0, 1.3)
+	await shot("night-look-up")
+	# On the wall, just past the corner: the fair ahead.
+	on_box(fold, 3.6, wall_from + 2.0, 0.0, 0.1)
+	await shot("night-fair-ahead")
+	var at_fair: float = fold.fair_s + 8.0
+	on_box(fold, -2.0, at_fair, 0.5, 0.1)
+	await shot("night-fair")
+	on_box(fold, -2.0, at_fair, -0.7, 0.05)
+	await shot("night-carousel")
+	# Above the fair, looking back down at the meadow and the bed, standing like a wall.
+	var above: float = fold.fair_s + 26.0
+	on_box(fold, 1.0, above, PI, -0.2)
+	await shot("night-look-back")
+	# On the ceiling: the path to the house, then the sky overhead is the meadow.
+	var on_top: float = ceiling_from + 4.0
+	on_box(fold, 0.0, on_top, 0.0, 0.05)
+	await shot("night-house-path")
+	on_box(fold, 0.0, on_top, 0.0, 1.35)
+	await shot("night-ceiling-up")
+	var close: float = fold.house_s - 9.0
+	on_box(fold, -0.9, close, 0.0, 0.12)
+	await shot("night-house")
+	meadow.open_house()
+	await create_timer(2.0).timeout
+	await shot("night-door", 1)
 	quit()
+
+# Stand on the box at (u, s), yaw 0 facing on round it (the way a walker coming from the bed faces).
+func on_box(fold: Node3D, u: float, s: float, yaw: float, pitch: float) -> void:
+	player.set_physics_process(false)
+	var up: Vector3 = fold.up_of(s)
+	var back: Vector3 = -fold.along_of(s)
+	player.frame = Basis(up.cross(back), up, back)
+	player.global_position = fold.point(u, s) + up * 0.02
+	player.yaw = yaw
+	player.pitch = pitch
+
+# Stand with feet at `feet` in a turned gravity frame (`up`), facing `yaw` within it.
+func look_on(feet: Vector3, up: Vector3, yaw: float, pitch: float) -> void:
+	player.set_physics_process(false)
+	player.frame = Basis(Quaternion(Vector3.UP, up)) if up != Vector3.UP else Basis.IDENTITY
+	player.global_position = feet + up * 0.02
+	player.yaw = yaw
+	player.pitch = pitch

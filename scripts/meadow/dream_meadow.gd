@@ -4,7 +4,13 @@ extends Node3D
 # cloud has opened and shafts of light come down, faintly rainbow-edged, onto a lone tree and a
 # bed standing in the grass. Walking into the light turns the whole dream: the sky clears to
 # blue with fair-weather clouds, soap bubbles drift up, and fish swim through the air round the
-# tree, a manta and a whale further up. Lying down on the bed ends the dream (the next morning).
+# tree, a manta and a whale further up. Lying down on the bed, the eyes close. Fairground music
+# wakes them: the same meadow at night, fireflies in the grass, and it has become the floor of a
+# box of meadow (land_fold.gd): a few steps on the ground bends up into a wall with the
+# fairground on it, over the top into a ceiling with a path to a little house, and down the far
+# wall back to the bed. Gravity turns with the ground, so there is no seam to feel; looking up is
+# looking at the meadow on the other side. The fairground's games and the inside of the house
+# come later; for now the house's door is the way on.
 # Nothing chases and nothing can be lost. Jumps are the dream's light, floating ones.
 # Assets: ASSETS.md, "Giấc mơ — đồng cỏ".
 signal brightened
@@ -25,7 +31,7 @@ const POLES := "res://assets/polyhaven_dream/modular_electricity_poles/modular_e
 const POLE_PRESETS := {"preset_01_": -2.5, "preset_02_": -4.5, "preset_03_": -6.5}
 const NEXT_SCENE := "res://scenes/town.tscn"
 # The one bright place is the origin; the player wakes this far away, facing it.
-const START := Vector3(0, 0, 90)
+const START := Vector3(0, 0, 46)
 const LIGHT_RADIUS := 7.0
 const WALK_LIMIT := 150.0
 const TREE_AT := Vector2(-2.2, -1.6)
@@ -33,6 +39,13 @@ const TREE_SCALE := 2.3
 const BED_AT := Vector2(2.4, 1.2)
 const BED_TURN := -25.0
 const BED_REACH := 2.6
+const Fold := preload("res://scripts/meadow/land_fold.gd")
+const LID := preload("res://assets/materials/eyelids.gdshader")
+# The blink after lying down: (seconds, how open the eyes are), eased between.
+const BLINK := [[0.0, 1.0], [1.6, 0.0], [3.6, 0.0], [4.2, 0.45], [4.6, 0.0], [5.4, 0.8], [5.7, 0.05], [7.0, 1.0]]
+const NIGHT_AT := 2.4
+const RISE_FROM := 7.0
+const RISE_TIME := 2.2
 const BRIGHTEN_TIME := 7.0
 # The Quaternius fish are modelled head towards -Z... set from the look check (tools/capture_meadow.gd).
 const FISH_HEAD_MINUS_Z := false
@@ -56,6 +69,7 @@ var post: ShaderMaterial
 var focus: CameraAttributesPractical
 var sun: DirectionalLight3D
 var shaft_light: SpotLight3D
+var pool: Decal
 var beams: Array[MeshInstance3D] = []
 var beam_materials: Array[ShaderMaterial] = []
 var bubbles: ShaderMaterial
@@ -79,6 +93,13 @@ var hint_time := 0.0
 var bed: Node3D
 var lie_from: Transform3D
 var lie_to: Transform3D
+var fold: Node3D
+var ground_material: ShaderMaterial
+var night := false
+var lids: ShaderMaterial
+var fireflies: GPUParticles3D
+var grass_layers: Array = []
+var stand_to: Transform3D
 
 static func ground_height(x: float, z: float) -> float:
 	# Must match ground_height() in meadow_grass.gdshader.
@@ -86,8 +107,11 @@ static func ground_height(x: float, z: float) -> float:
 	var roll := 3.2 * sin(x * 0.026 + 0.3) * cos(z * 0.021) + 1.8 * sin(x * 0.047 - z * 0.033 + 1.0) \
 		+ 0.35 * sin(x * 0.11 + 1.3) * sin(z * 0.09 + 0.4)
 	roll *= smoothstep(12.0, 55.0, d)
+	# Flat along both edges of the night box's floor (land_fold.gd), as in the shader.
+	roll *= smoothstep(0.0, 20.0, minf(absf(z - Fold.BEND_Z), absf(z - Fold.FAR_Z)))
 	var a := atan2(z, x)
-	var hills := smoothstep(140.0, 520.0, d)
+	var outside := maxf(Fold.BEND_Z - z, z - Fold.FAR_Z)
+	var hills := smoothstep(140.0, 520.0, d) * smoothstep(10.0, 60.0, outside)
 	hills = hills * hills * (34.0 + 16.0 * sin(a * 3.0 + 0.7) + 8.0 * sin(a * 7.0 + 2.1))
 	return roll + hills
 
@@ -108,6 +132,12 @@ func _ready() -> void:
 	_light_shafts()
 	_tree_and_bed()
 	_flowers()
+	fold = Fold.new()
+	fold.name = "LandFold"
+	add_child(fold)
+	fold.build(blade_mesh, GRASS_SHARE[quality], CLOSE_GRASS[quality])
+	fold.reached_fair.connect(func() -> void: _say("Khu vui chơi giữa đồng cỏ."))
+	fold.reached_house.connect(func() -> void: _say("Một ngôi nhà nhỏ."))
 	_poles()
 	_bubbles()
 	_fish()
@@ -190,6 +220,8 @@ func _sky() -> void:
 
 # Dark night meadow at 0, clear blue day at 1.
 func _apply_brightness() -> void:
+	if night:
+		return
 	var b := smoothstep(0.0, 1.0, bright)
 	# Every change to the sky's parameters re-renders its reflection map: only when it moved.
 	if absf(b - shown_bright) < 0.0005:
@@ -210,9 +242,11 @@ func _apply_brightness() -> void:
 	sun.light_color = Color(0.55, 0.65, 1.0).lerp(Color(1.0, 0.95, 0.86), b)
 	sun.light_energy = lerpf(0.12, 1.5, b)
 	if shaft_light != null:
-		shaft_light.light_energy = lerpf(14.0, 2.0, b)
+		shaft_light.light_energy = lerpf(12.0, 2.0, b)
+	if pool != null:
+		pool.emission_energy = lerpf(0.35, 0.0, b)
 	for m in beam_materials:
-		m.set_shader_parameter("strength", lerpf(0.03, 0.008, b) * m.get_meta("weight", 1.0))
+		m.set_shader_parameter("strength", lerpf(0.11, 0.025, b) * m.get_meta("weight", 1.0))
 	if bubbles != null:
 		bubbles.set_shader_parameter("appear", smoothstep(0.3, 1.0, bright))
 
@@ -248,6 +282,7 @@ func _ground() -> void:
 	floor_mesh.name = "Ground"
 	floor_mesh.mesh = tool.commit()
 	floor_mesh.material_override = material
+	ground_material = material
 	floor_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(floor_mesh)
 	var heights := PackedFloat32Array()
@@ -275,11 +310,13 @@ func _grass() -> void:
 	var close := _blade_layer(8.0, int(4800 * share), 0.42, 0.032, 4, 165.0, 0.0, near_end)
 	var mid := _blade_layer(16.0, int(5600 * share), 0.48, 0.06 / sqrt(share), 2, 170.0, near_end - 4.0, 75.0)
 	var far := _blade_layer(32.0, int(3600 * share), 0.62, 0.15 / sqrt(share), 1, 245.0, 66.0, 235.0)
+	grass_layers = [close, mid, far]
 	for layer in [close, mid, far]:
 		layer.material.set_shader_parameter("clear_a", Vector4(TREE_AT.x, 0, TREE_AT.y, 0.9))
 		layer.material.set_shader_parameter("clear_b", Vector4(BED_AT.x, 0, BED_AT.y, 1.25))
 
-func _blade_layer(chunk: float, count: int, height: float, width: float, segments: int, reach: float, from: float, to: float) -> Dictionary:
+# One grass blade, a tapering strip `segments` long, one unit tall; UV.y runs root to tip.
+func blade_mesh(segments: int) -> ArrayMesh:
 	var blade := SurfaceTool.new()
 	blade.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var rows: Array = []
@@ -295,12 +332,16 @@ func _blade_layer(chunk: float, count: int, height: float, width: float, segment
 			blade.set_uv(Vector2(float(corner[1]), row[2]))
 			blade.set_normal(Vector3.BACK)
 			blade.add_vertex(row[corner[1]])
+	return blade.commit()
+
+func _blade_layer(chunk: float, count: int, height: float, width: float, segments: int, reach: float, from: float, to: float) -> Dictionary:
 	var material := ShaderMaterial.new()
 	material.shader = GRASS
 	material.set_shader_parameter("chunk", chunk)
 	material.set_shader_parameter("blade_height", height)
 	material.set_shader_parameter("blade_width", width)
-	var mesh := blade.commit()
+	Fold.box_uniforms(material)
+	var mesh := blade_mesh(segments)
 	mesh.surface_set_material(0, material)
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
@@ -341,34 +382,67 @@ func _light_shafts() -> void:
 	shaft_light = SpotLight3D.new()
 	shaft_light.position = Vector3(0, 45, 0)
 	shaft_light.rotation_degrees.x = -90
-	shaft_light.spot_angle = 10.0
-	shaft_light.spot_angle_attenuation = 0.6
+	# A wide, soft pool rather than a hard disc of light.
+	shaft_light.spot_angle = 16.0
+	shaft_light.spot_angle_attenuation = 1.6
 	shaft_light.spot_range = 70.0
 	shaft_light.light_color = Color(1.0, 0.95, 0.78)
 	shaft_light.shadow_enabled = false
 	add_child(shaft_light)
-	# radius at the ground, brightness, offset, lean (degrees). They widen upwards, a fan of rays.
-	var shafts := [[6.0, 0.55, Vector3(0, 0, 0), 0.0], [3.6, 0.9, Vector3(1.5, 0, -1.0), 5.0], [2.4, 0.9, Vector3(-1.2, 0, 1.4), -6.0],
-		[8.5, 0.3, Vector3(0, 0, 0), 3.0], [1.5, 0.8, Vector3(2.5, 0, 2.0), -3.5], [2.0, 0.7, Vector3(-2.5, 0, -2.0), 7.5]]
+	# And a glow laid on the grass itself, bright in the middle and fading out to nothing, so the
+	# place reads as lit from far off with no edge to the pool.
+	var glow := GradientTexture2D.new()
+	glow.fill = GradientTexture2D.FILL_RADIAL
+	glow.fill_from = Vector2(0.5, 0.5)
+	glow.fill_to = Vector2(1.0, 0.5)
+	glow.width = 256
+	glow.height = 256
+	var ramp := Gradient.new()
+	# Emission takes the colour, not the alpha: the fade has to go to black.
+	ramp.set_color(0, Color(1.0, 0.95, 0.82))
+	ramp.set_color(1, Color(0, 0, 0))
+	ramp.add_point(0.35, Color(0.55, 0.52, 0.45))
+	ramp.add_point(0.7, Color(0.12, 0.11, 0.1))
+	glow.gradient = ramp
+	pool = Decal.new()
+	# Low, so it lights the grass and not the tree trunk or the bed standing in it.
+	pool.size = Vector3(22, 1.6, 22)
+	pool.texture_emission = glow
+	pool.emission_energy = 0.35
+	pool.upper_fade = 0.3
+	pool.lower_fade = 0.3
+	# Only the ground and grass (layer 1); the tree and the bed are on layer 2 (_tree_and_bed).
+	pool.cull_mask = 1
+	add_child(pool)
+	pool.global_position = on_ground(0, 0)
+	# Many soft rays of different widths round the hole's centre, leaning a little apart: width,
+	# brightness, where it meets the ground, lean (degrees about x and z), bell sharpness.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	var shafts := [[16.0, 0.45, Vector2(0, 0), Vector2(0, 0), 5.0], [9.0, 0.7, Vector2(0.5, -0.4), Vector2(1.5, -1.0), 7.0],
+		[5.0, 0.9, Vector2(-1.2, 1.0), Vector2(-2.5, 1.5), 9.0], [24.0, 0.25, Vector2(0, 0), Vector2(0.5, 0.5), 4.0]]
+	for i in range(8):
+		shafts.append([rng.randf_range(1.2, 3.5), rng.randf_range(0.5, 0.9), Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3)),
+			Vector2(rng.randf_range(-5, 5), rng.randf_range(-5, 5)), rng.randf_range(8.0, 14.0)])
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE
 	for i in range(shafts.size()):
 		var plan: Array = shafts[i]
-		var cylinder := CylinderMesh.new()
-		cylinder.top_radius = plan[0] * 2.4
-		cylinder.bottom_radius = plan[0]
-		cylinder.height = 150.0
-		cylinder.cap_top = false
-		cylinder.cap_bottom = false
-		cylinder.radial_segments = 48
 		var material := ShaderMaterial.new()
 		material.shader = BEAM
 		material.set_meta("weight", plan[1])
 		material.set_shader_parameter("phase", i * 0.21)
+		material.set_shader_parameter("sharpness", plan[4])
 		var beam := MeshInstance3D.new()
-		beam.mesh = cylinder
+		beam.mesh = quad
 		beam.material_override = material
 		beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		beam.position = plan[2] + Vector3(0, 74.5, 0)
-		beam.rotation_degrees = Vector3(plan[3], i * 47.0, plan[3] * 0.6)
+		beam.extra_cull_margin = 200.0
+		# The quad's height runs along its local y: scale it to the ray's width and length.
+		var lean := Basis.from_euler(Vector3(deg_to_rad(plan[3].x), 0, deg_to_rad(plan[3].y)))
+		var length := 160.0
+		var foot := Vector3(plan[2].x, 0, plan[2].y)
+		beam.transform = Transform3D(lean * Basis.from_scale(Vector3(plan[0], length, 1.0)), foot + lean * Vector3(0, length / 2, 0))
 		add_child(beam)
 		beams.append(beam)
 		beam_materials.append(material)
@@ -389,6 +463,9 @@ func _tree_and_bed() -> void:
 	bed.position = on_ground(BED_AT.x, BED_AT.y)
 	bed.rotation_degrees.y = BED_TURN
 	add_child(bed)
+	for node in [tree, bed]:
+		for mesh: VisualInstance3D in (node as Node3D).find_children("*", "VisualInstance3D", true, false):
+			mesh.layers = 2
 	var body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
@@ -417,7 +494,7 @@ func _flowers() -> void:
 		var a := rng.randf() * TAU
 		var r := rng.randf_range(2.5, 9.5)
 		var at := Vector2(cos(a), sin(a)) * r
-		if at.distance_to(BED_AT) < 1.8 or at.distance_to(TREE_AT) < 1.4:
+		if at.distance_to(BED_AT) < 1.8 or at.distance_to(TREE_AT) < 1.4 or at.y < Fold.BEND_Z + 0.5:
 			continue
 		var flower: Node3D = load(DANDELION).instantiate()
 		flower.position = on_ground(at.x, at.y)
@@ -439,24 +516,25 @@ func _poles() -> void:
 	var wire := StandardMaterial3D.new()
 	wire.albedo_color = Color(0.05, 0.05, 0.06)
 	wire.roughness = 0.6
-	var line_x := -34.0
+	# One line along x, the way the night box runs, so at night it goes off down the box to the
+	# horizon both ways; by day it crosses the meadow behind where the dream starts.
+	var line_z := 34.0
 	var tops: Array = []
 	var prefixes := POLE_PRESETS.keys()
 	var i := 0
-	var z := 260.0
-	while z > -360.0:
-		var x := line_x + sin(z * 0.01) * 6.0
+	var x := -420.0
+	while x < 420.0:
+		var z := line_z + sin(x * 0.01) * 3.0
 		var at := on_ground(x, z)
 		var pole := _pole(prefixes[i % prefixes.size()])
 		pole.position = at - Vector3(0, 0.15, 0)
 		pole.scale = Vector3.ONE * 1.5
-		pole.rotation.y = -PI / 2
 		pole.rotation_degrees.z = (i % 3 - 1) * 1.2
 		add_child(pole)
 		_solid_cylinder(at, 0.25, 9.0)
 		var arm := Vector3(0, 0, 0.75)
-		tops.append([at + Vector3(0, 8.58, 0) - arm.rotated(Vector3.UP, PI / 2), at + Vector3(0, 8.58, 0) + arm.rotated(Vector3.UP, PI / 2), at + Vector3(0, 6.83, 0)])
-		z -= 46.0
+		tops.append([at + Vector3(0, 8.58, 0) - arm, at + Vector3(0, 8.58, 0) + arm, at + Vector3(0, 6.83, 0)])
+		x += 46.0
 		i += 1
 	var wires := SurfaceTool.new()
 	wires.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -609,6 +687,14 @@ func _hud() -> void:
 	look.add_child(screen)
 	hud = CanvasLayer.new()
 	add_child(hud)
+	lids = ShaderMaterial.new()
+	lids.shader = LID
+	lids.set_shader_parameter("open", 1.0)
+	var eyelids := ColorRect.new()
+	eyelids.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	eyelids.material = lids
+	eyelids.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(eyelids)
 	hint = _label(-80, 20)
 	prompt = _label(-130, 22)
 	fade = ColorRect.new()
@@ -642,9 +728,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_E:
 		if near_bed():
 			lie_down()
+		elif night and state == "walk" and fold.near_door(player.global_position):
+			open_house()
 
 func near_bed() -> bool:
-	if state != "walk" or player == null:
+	if state != "walk" or player == null or night:
 		return false
 	var flat := Vector2(player.global_position.x - bed.global_position.x, player.global_position.z - bed.global_position.z)
 	return flat.length() < BED_REACH
@@ -666,6 +754,9 @@ func _process(delta: float) -> void:
 		"wake": _wake()
 		"walk": _walk()
 		"lie": _lie()
+		"blink": _blink()
+		"rise": _rise_up()
+		"door": _door()
 		"leave": _leave()
 
 # Eyes opening in the dark grass.
@@ -682,7 +773,11 @@ func _walk() -> void:
 	var p := player.global_position
 	# The meadow goes on for ever; past the limit the dream turns you gently back.
 	var flat := Vector2(p.x, p.z)
-	if flat.length() > WALK_LIMIT:
+	if night:
+		# The box goes on along x for ever; past WALK_X the dream turns you back the way you came.
+		if absf(p.x) > Fold.WALK_X and player.velocity.x * signf(p.x) > -0.5:
+			player.velocity.x = -signf(p.x) * 0.5
+	elif flat.length() > WALK_LIMIT:
 		var outward := flat.normalized()
 		var move := Vector2(player.velocity.x, player.velocity.z)
 		# No speed outwards, and a slow drift back in (set, never added up frame on frame).
@@ -697,7 +792,10 @@ func _walk() -> void:
 		brightened.emit()
 		_say("")
 	music.volume_db = lerpf(-20.0, -11.0, bright)
-	prompt.text = "E · Nằm xuống" if near_bed() else ""
+	if night:
+		fold.check_walker(player.global_position)
+		fireflies.global_position = player.global_position
+	prompt.text = "E · Nằm xuống" if near_bed() else ("E · Mở cửa" if night and fold.near_door(player.global_position) else "")
 	prompt.modulate.a = 1.0 if prompt.text != "" else 0.0
 
 func lie_down() -> void:
@@ -722,13 +820,151 @@ func lie_down() -> void:
 func _lie() -> void:
 	var t := smoothstep(0.0, 3.0, state_time)
 	player.camera.global_transform = Transform3D(lie_from.basis.slerp(lie_to.basis, t), lie_from.origin.lerp(lie_to.origin, t))
-	if state_time > 9.0:
+	if state_time > 5.0:
+		state = "blink"
+		state_time = 0.0
+
+func eyes_open(t: float) -> float:
+	for i in range(BLINK.size() - 1):
+		var a: Array = BLINK[i]
+		var b: Array = BLINK[i + 1]
+		if t <= b[0]:
+			return lerpf(a[1], b[1], smoothstep(a[0], b[0], t))
+	return 1.0
+
+# The eyes close on the day; while they are shut it turns night, and they blink open on stars.
+func _blink() -> void:
+	player.camera.global_transform = lie_to
+	lids.set_shader_parameter("open", eyes_open(state_time))
+	# The meadow's own music goes; behind closed eyes a fairground starts up, and the eyes open to it.
+	music.volume_db = lerpf(-11.0, -40.0, clampf(state_time / 2.0, 0, 1))
+	if state_time > NIGHT_AT and not night:
+		make_night()
+	if night:
+		fold.music.volume_db = lerpf(-30.0, 0.0, clampf((state_time - NIGHT_AT) / 2.5, 0, 1))
+	if state_time > RISE_FROM:
+		state = "rise"
+		state_time = 0.0
+		# Up off the bed, on the side towards the fold.
+		var stand := bed.global_transform * Vector3(1.35, 0, 0.2)
+		stand.y = ground_height(stand.x, stand.z)
+		# Facing the way the music comes from: the fold, and the fair standing up on it.
+		stand_to = Transform3D(Basis.from_euler(Vector3(0.38, 0.0, 0)), stand + Vector3(0, player.EYE, 0))
+
+func _rise_up() -> void:
+	var t := smoothstep(0.0, RISE_TIME, state_time)
+	player.camera.global_transform = Transform3D(lie_to.basis.slerp(stand_to.basis, t), lie_to.origin.lerp(stand_to.origin, t))
+	if state_time > RISE_TIME:
+		state = "walk"
+		state_time = 0.0
+		player.global_position = stand_to.origin - Vector3(0, player.EYE, 0)
+		player.velocity = Vector3.ZERO
+		player.yaw = 0.0
+		player.pitch = 0.38
+		player.eye = player.EYE
+		player.camera.position = Vector3(0, player.EYE, 0)
+		player.camera.rotation = Vector3(0.38, 0, 0)
+		player.gravity_field = fold.up_at
+		player.set_physics_process(true)
+		player.set_process(true)
+		player.enabled = true
+		_say("Tiếng nhạc… từ đâu vậy?\nShift · chạy")
+
+# Night falls all at once behind closed eyes: stars, a low moon-blue light, fireflies, and the fold.
+func make_night() -> void:
+	night = true
+	sky_material.set_shader_parameter("night", 1.0)
+	sky_material.set_shader_parameter("night_sky", load(M + "qwantani_night_puresky_2k.hdr"))
+	environment.ambient_light_energy = 0.55
+	environment.tonemap_exposure = 1.25
+	# A pale night haze: the far faces of the box melt into it, so it never ends anywhere.
+	environment.fog_density = 0.0036
+	environment.fog_aerial_perspective = 0.0
+	environment.fog_light_color = Color(0.2, 0.25, 0.4)
+	environment.fog_light_energy = 1.0
+	environment.adjustment_saturation = 1.05
+	# Moonlight with no shadows: inside the box every face would otherwise shade the others into
+	# the dark. Slanted along the box so every face catches a little of it.
+	sun.light_color = Color(0.62, 0.72, 1.0)
+	sun.light_energy = 0.45
+	sun.shadow_enabled = false
+	sun.basis = Basis.looking_at(Vector3(0.75, -0.45, 0.45).normalized(), Vector3.UP)
+	shaft_light.visible = false
+	pool.visible = false
+	for beam in beams:
+		beam.visible = false
+	bubbles.set_shader_parameter("appear", 0.0)
+	for fish in fishes:
+		fish.node.queue_free()
+	fishes.clear()
+	post.set_shader_parameter("lift", 0.05)
+	post.set_shader_parameter("lift_tint", Color(0.2, 0.22, 0.45))
+	post.set_shader_parameter("gain_tint", Color(0.95, 0.95, 1.0))
+	post.set_shader_parameter("halo", 0.6)
+	# Only the box's floor is left of the meadow: no ground and no grass past its edges.
+	ground_material.set_shader_parameter("keep_z", Vector2(Fold.BEND_Z, Fold.FAR_Z))
+	for layer in grass_layers:
+		layer.material.set_shader_parameter("keep_z", Vector2(Fold.BEND_Z + 0.3, Fold.FAR_Z - 0.3))
+	fold.show_fold()
+	_fireflies()
+
+func _fireflies() -> void:
+	fireflies = GPUParticles3D.new()
+	fireflies.amount = 140
+	fireflies.lifetime = 7.0
+	fireflies.preprocess = 7.0
+	fireflies.local_coords = false
+	fireflies.visibility_aabb = AABB(Vector3(-30, -5, -30), Vector3(60, 15, 60))
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(22, 1.2, 22)
+	process.direction = Vector3(0, 1, 0)
+	process.spread = 180.0
+	process.initial_velocity_min = 0.05
+	process.initial_velocity_max = 0.35
+	process.gravity = Vector3.ZERO
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 0.6
+	process.turbulence_noise_scale = 4.0
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	fade.add_point(0.2, Color(1, 1, 1, 1))
+	fade.add_point(0.8, Color(1, 1, 1, 1))
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	process.color_ramp = ramp
+	fireflies.process_material = process
+	var dot := QuadMesh.new()
+	dot.size = Vector2(0.07, 0.07)
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow.vertex_color_use_as_albedo = true
+	glow.albedo_color = Color(3.0, 2.6, 0.9)
+	dot.material = glow
+	fireflies.draw_pass_1 = dot
+	add_child(fireflies)
+	fireflies.global_position = player.global_position
+
+# The door swings in on the dark inside of the house; a moment later it is the next morning
+# (until the inside exists).
+func open_house() -> void:
+	fold.open_door()
+	player.enabled = false
+	prompt.modulate.a = 0.0
+	state = "door"
+	state_time = 0.0
+	_say("")
+
+func _door() -> void:
+	if state_time > 2.6:
 		state = "leave"
 		state_time = 0.0
 
-# Asleep in the dream: everything goes white, and it is the next morning.
+# Into the house: everything goes white, and it is the next morning (until the games exist).
 func _leave() -> void:
-	player.camera.global_transform = lie_to
 	fade.color = Color(1.0, 0.98, 0.94, clampf(state_time / 3.0, 0, 1))
 	music.volume_db = lerpf(-11.0, -40.0, clampf(state_time / 3.5, 0, 1))
 	if state_time > 3.8 and not has_meta("left"):
