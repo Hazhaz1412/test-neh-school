@@ -74,6 +74,48 @@ Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.t
   - Lớp hiển thị: vỏ nhà = 4 và màn cổng = 8, cả hai bị ẩn khỏi camera cổng. Phòng = 16, hành tinh = 32, bản sao phòng = 64; mỗi nhóm có đèn riêng, trăng chỉ chiếu 1|2|4.
   - Đi qua là `carry()`: dời vị trí, xoay `frame`, xoay vận tốc.
 - Chỗ cho minigame giải đố sau này: căn phòng, kệ sách, đồng hồ, hành tinh.
+- Khu vui chơi (bản to):
+  - Quảng trường bán kính 34 m (`PLAZA`), tâm cách chân tường 42 m (`FAIR_AT`).
+  - Đu quay cao 40 m, vòng ngựa gỗ, lều xiếc, đu dây xoay (`_swing_ride`), 8 quầy, 2 xe bỏng ngô, trò đập búa, 18 cột đèn lồng có dây bóng đèn và dây cờ đuôi nheo, 5 khinh khí cầu, pháo hoa nổ ngẫu nhiên kèm ánh chớp (`_tick_fireworks`).
+  - Lối đi xuyên quảng trường (x từ -2 đến 5 theo trục z cục bộ) được giữ trống, không có vật cản.
+- Đu quay (`scripts/meadow/ferris_wheel.gd`, thay cho GLB tĩnh):
+  - Dựng bằng code: 12 cabin luôn treo thẳng, bình thường quay chậm.
+  - Đứng ở bục rồi bấm E thì đu quay quay tới khi một cabin dừng đúng bục, người chơi ngồi vào. Vẫn nhìn quanh được; người ngồi tự nghiêng ra mép cabin theo hướng đang nhìn.
+  - Lên 15 giây, lượn qua đỉnh 25 giây, xuống 15 giây, cả vòng khoảng 57 giây.
+  - Gần đỉnh thì hiện một vòm sao bán kính 140 m quanh trục, chỉ nửa trên đường chân trời của tường, có Ngân Hà và mặt trăng. Pháo hoa nổ dày quanh đỉnh (`_tick_fireworks`).
+  - Máy đấm lực dời ra (-12, 0, 3).
+  - Ô vuông tối thấy xa xa từ khu vui chơi là ngôi nhà trên trần nhìn qua sương, không phải lỗi.
+- Bóng đen (`scripts/meadow/fair_crowd.gd`):
+  - 25 người đứng theo 11 nhóm, cộng 4 người đi dạo dọc lối đi. Thân là người Rocketbox tô đen, không có collider.
+  - Mỗi nhóm nói lần lượt vài câu, mỗi câu trong một hộp thoại trên đầu người nói. Nói hết thì nghỉ 7–15 giây rồi lặp lại.
+  - Hộp thoại chỉ hiện khi người chơi đứng cách người nói dưới 7 m (`HEAR`). Chữ và hộp dùng alpha cut nên không bị DOF làm nhòe. Kích thước hộp lấy theo chữ đã dàn trang.
+  - Lời thoại nằm trong `GROUPS`.
+- Di chuyển trong đồng cỏ bớt trơn: `floor_grip` 16 và `air_grip` 5 (mặc định của `dream_player.gd` vẫn là 5 và 3 cho giấc mơ mặt nước). Trong căn phòng khổng lồ dùng tiếng bước trên gỗ của Kenney.
+- Tàu lượn siêu tốc (`scripts/meadow/roller_coaster.gd`, bản thường, dựng để chuẩn bị):
+  - Đường ray là một `Curve3D` khép kín dài khoảng 750 m, nằm phía đông quảng trường (x từ 42 đến 300, z từ -30 đến 25, hệ toạ độ của khu vui chơi). Ray, xương sống, thanh ngang, cột đỡ và đèn LED dọc ray đều đùn ra theo khung của đường cong (`frame_at`).
+  - Lộ trình: ga, đoạn phóng (đẩy 14 m/s² lên 40 m/s), dốc top hat cao 64 m, vòng lộn ngược bán kính 14 m, vòng xoắn nghiêng nửa vòng, ba gò nảy, khúc cua dài về ga.
+  - Tàu 4 toa và sàn ga là của Kenney. Bấm E ở bục cạnh toa đầu là ngồi ghế đầu (`SEAT`); chạy theo trọng lực và lực cản, góc nhìn mở rộng theo tốc độ, phanh vào ga. Cả vòng khoảng 69 giây.
+  - Chuyến bay giấc mơ (`scripts/meadow/coaster_dream.gd`):
+    - Lối vào: trên dốc top hat, ở độ cao 30 m có một vòng ánh sáng. Tàu đi qua là chớp trắng và sang đường ray vô tận. Đường ray này nằm ở `DREAM_AT` (y = 15000), dùng lớp hiển thị 128 và môi trường riêng.
+    - Đường ray: là spline Catmull-Rom sinh dần 1000 m phía trước tàu và xóa 220 m phía sau, mỗi khúc dài 120 m. Tàu chạy 40–88 m/s tùy dốc.
+    - Bốn vùng nối mượt vào nhau, xen giữa là đoạn chuyển 260 m:
+      - biển đêm (sóng phát sáng, cột đá, phao đèn), tới 1100 m;
+      - dưới đáy biển (sứa, tảo, cá voi, cá đuối, cá barramundi lấy từ đồng cỏ), tới 2200 m;
+      - mây hoàng hôn (biển mây bên dưới, đèn trời bay lên), tới 3300 m;
+      - vũ trụ (thiên thạch, hành tinh có vành, tinh vân), tới 4500 m.
+    - Lối ra: ở 4440 m có một lỗ khóa ánh sáng, đưa tàu về khúc cua cuối trước ga.
+    - Đoạn mây: người dùng chê mây che tầm nhìn. Giờ 70% số mây nằm dưới ray 32–70 m làm biển mây, phần còn lại cách ray từ 45 m trở ra; sương mỏng (0.0009); mặt trời lệch sang bên; hành tinh chỉ hiện khi gần tới vũ trụ.
+  - Minigame "bắt mảnh ký ức":
+    - 12 mảnh pha lê đặt dọc đường (`SHARDS`): bên cạnh, trên đầu, dưới ray.
+    - Nhìn thẳng vào một mảnh khoảng 0,18 giây (hoặc bay xuyên qua nó) là nhặt được: mảnh lóe trắng, bay về phía mắt, có tiếng chuông.
+    - Góc trên bên phải hiện "✦ Mảnh ký ức n/12"; giữa màn hình có tâm ngắm nhỏ.
+    - Các mảnh đã nhặt được lưu vào `user://progress.cfg`, mục `meadow/memory_shards`, để sau này dùng cho việc thoát khỏi vòng lặp.
+  - Âm thanh và hiệu ứng khi đi tàu:
+    - Âm thanh: gió và tiếng rung to dần theo tốc độ, tiếng phóng, tiếng cổng sáng, tiếng vụt khi lướt qua vật thể, tiếng rơi xuống và trồi lên mặt nước, nhạc nền riêng khi đi tàu.
+    - Hình: góc nhìn rộng ra theo tốc độ, camera rung, vệt tốc độ ở rìa màn hình, tia lửa ở bánh xe, bọt nước, chớp trắng; hiệu ứng mờ dịu bớt trong lúc bay.
+  - Nhạc khu vui chơi giờ nhỏ dần khi đi xa (`unit_size` 12, `max_distance` 150) và tắt hẳn khi đi tàu.
+  - Validator: bot tự quay đầu nhìn các mảnh và nhặt đủ 12/12; cả vòng đi tàu khoảng 134 giây.
+- Mẫu đu quay miễn phí xoay được: đã tìm (Poly Pizza, OpenGameArt, các chợ asset) nhưng không có bản CC0 nào tách được vòng quay và cabin; bản đẹp đều trả phí. Vì vậy vẫn dùng đu quay dựng bằng code, cabin treo ra ngoài vành để không che tầm nhìn.
 - Trò chơi ở khu vui chơi làm sau: chỗ đã chừa là các Marker3D `GameStall1..3`, `GameStriker`, `GameCarousel` trong node `Fair`. Lều xiếc giờ chỉ để trang trí.
 - Không thua, không đếm giờ. Nhảy lơ lửng như giấc mơ mặt nước (dùng chung `dream_player.gd`, `lucid = true`). Đi xa hơn 150 m thì bị giữ lại nhẹ nhàng ở mép.
 - Người dùng muốn cảm giác liminal space / dreamcore. Hậu kỳ `dreamcore_post.gdshader` gồm: nhòe rìa, quầng sáng, lệch màu, nâng vùng tối thành tím nhạt, hạt phim, viền tối. Thêm DOF làm mờ cảnh xa.

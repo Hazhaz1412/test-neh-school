@@ -115,6 +115,11 @@ var told_room := false
 var told_planet := false
 # Built without a player, hud or the box: the doorway's view of the meadow's start.
 var preview := false
+var speed_lines: ShaderMaterial
+var reticle: Label
+var shard_count: Label
+var flash_rect: ColorRect
+var shard_pop := 0.0
 var first_meadow: Node3D
 
 static func ground_height(x: float, z: float) -> float:
@@ -154,6 +159,11 @@ func _ready() -> void:
 		fold.build(blade_mesh, GRASS_SHARE[quality], CLOSE_GRASS[quality])
 		fold.reached_fair.connect(func() -> void: _say("Khu vui chơi giữa đồng cỏ."))
 		fold.reached_house.connect(func() -> void: _say("Một ngôi nhà nhỏ."))
+		fold.wheel.ride_over.connect(_off_wheel)
+		fold.coaster.ride_over.connect(_off_wheel)
+		fold.coaster.flash.connect(func(strength: float) -> void: flash_rect.color.a = maxf(flash_rect.color.a, strength))
+		fold.coaster.shard_taken.connect(_on_shard)
+		fold.coaster.dream_changed.connect(_on_dream)
 		inside = Inside.new()
 		inside.name = "HouseInside"
 		add_child(inside)
@@ -201,11 +211,18 @@ func _make_player(at: Transform3D, look_up: float) -> void:
 	grass_steps.volume_db = -16
 	player.add_child(grass_steps)
 	player.ground_steps = grass_steps
+	# The giant room's floorboards: Kenney's wooden footsteps (assets/audio/steps/wood_sources.json).
 	wood_steps = AudioStreamPlayer.new()
-	wood_steps.stream = load("res://assets/audio/footstep.wav")
-	wood_steps.volume_db = -20
-	wood_steps.pitch_scale = 0.9
+	var boards := AudioStreamRandomizer.new()
+	for i in range(5):
+		boards.add_stream(-1, load("res://assets/audio/steps/wood_0%d.ogg" % i))
+	boards.random_pitch = 1.06
+	boards.random_volume_offset_db = 2.0
+	wood_steps.stream = boards
+	wood_steps.volume_db = -12
 	player.add_child(wood_steps)
+	player.floor_grip = 16.0
+	player.air_grip = 5.0
 
 # The planet house's doorway: a second meadow, as it is at the very start (dark, the one bright
 # place far ahead), in a world of its own, built when the glass ball is touched.
@@ -791,6 +808,32 @@ func _hud() -> void:
 	eyelids.material = lids
 	eyelids.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(eyelids)
+	speed_lines = ShaderMaterial.new()
+	speed_lines.shader = preload("res://assets/materials/speed_lines.gdshader")
+	var streaks := ColorRect.new()
+	streaks.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	streaks.material = speed_lines
+	streaks.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(streaks)
+	reticle = Label.new()
+	reticle.text = "◦"
+	reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	reticle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reticle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reticle.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	reticle.grow_vertical = Control.GROW_DIRECTION_BOTH
+	reticle.add_theme_font_size_override("font_size", 26)
+	reticle.modulate = Color(1, 1, 1, 0)
+	hud.add_child(reticle)
+	shard_count = Label.new()
+	shard_count.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	shard_count.position += Vector2(-260, 30)
+	shard_count.size = Vector2(230, 40)
+	shard_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	shard_count.add_theme_font_size_override("font_size", 24)
+	shard_count.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	shard_count.modulate = Color(1, 1, 1, 0)
+	hud.add_child(shard_count)
 	hint = _label(-80, 20)
 	prompt = _label(-130, 22)
 	fade = ColorRect.new()
@@ -798,6 +841,11 @@ func _hud() -> void:
 	fade.color = Color(0.0, 0.0, 0.02, 1.0)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(fade)
+	flash_rect = ColorRect.new()
+	flash_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	flash_rect.color = Color(1.0, 0.98, 0.95, 0.0)
+	flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(flash_rect)
 
 func _label(lift: float, size: int) -> Label:
 	var label := Label.new()
@@ -830,6 +878,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var at := player.global_position
 			if fold.near_door(at):
 				open_house()
+			elif fold.wheel.near_board(at):
+				ride_wheel()
+			elif fold.coaster.near_board(at):
+				ride_coaster()
 			elif inside.near_globe(at):
 				touch_globe()
 			elif inside.near_planet_door(at):
@@ -847,6 +899,8 @@ func in_light() -> bool:
 func _process(delta: float) -> void:
 	clock += delta
 	state_time += delta
+	if flash_rect != null and flash_rect.color.a > 0.0:
+		flash_rect.color.a = move_toward(flash_rect.color.a, 0.0, delta * 1.4)
 	hint_time += delta
 	if lit:
 		bright = clampf((clock - bright_from) / BRIGHTEN_TIME, 0.0, 1.0)
@@ -863,6 +917,8 @@ func _process(delta: float) -> void:
 		"blink": _blink()
 		"rise": _rise_up()
 		"zoom": _zoom()
+		"ride": _riding()
+		"coaster": _coasting(delta)
 		"leave": _leave()
 
 # Eyes opening in the dark grass.
@@ -907,6 +963,10 @@ func _walk() -> void:
 	if night:
 		if fold.near_door(p) or inside.near_planet_door(p):
 			prompt.text = "E · Mở cửa"
+		elif fold.wheel.near_board(p):
+			prompt.text = "E · Lên đu quay"
+		elif fold.coaster.near_board(p):
+			prompt.text = "E · Lên tàu lượn"
 		elif inside.near_globe(p):
 			prompt.text = "E · Chạm vào quả cầu"
 	prompt.modulate.a = 1.0 if prompt.text != "" else 0.0
@@ -1075,6 +1135,69 @@ func _fireflies() -> void:
 	fireflies.draw_pass_1 = dot
 	add_child(fireflies)
 	fireflies.global_position = player.global_position
+
+# The Ferris wheel: sit in a cabin and go up, very slowly, into a sky full of stars (ferris_wheel.gd
+# does the ride; the head still turns to look round).
+func ride_wheel() -> void:
+	state = "ride"
+	state_time = 0.0
+	prompt.modulate.a = 0.0
+	_say("")
+	fold.wheel.ride(player)
+
+func _riding() -> void:
+	if not has_meta("told_top") and fold.wheel.height_share() > 0.9:
+		set_meta("told_top", true)
+		_say("Trên này… thấy cả bầu trời.")
+	_clear_view(smoothstep(0.3, 0.75, fold.wheel.height_share()))
+
+# Up high on the wheel the dream's haze lifts: no soft edges, colour fringes, grain or far blur,
+# so the stars are sharp. 0 is the dream's usual look, 1 the clearest.
+func _clear_view(k: float) -> void:
+	post.set_shader_parameter("aberration", lerpf(0.004, 0.0004, k))
+	post.set_shader_parameter("soft_edges", lerpf(0.55, 0.05, k))
+	post.set_shader_parameter("halo", lerpf(0.6, 0.12, k))
+	post.set_shader_parameter("grain", lerpf(0.045, 0.012, k))
+	post.set_shader_parameter("vignette", lerpf(0.32, 0.18, k))
+	focus.dof_blur_far_enabled = quality > 0 and k < 0.05
+
+# The roller coaster (roller_coaster.gd does the ride).
+func ride_coaster() -> void:
+	state = "coaster"
+	state_time = 0.0
+	prompt.modulate.a = 0.0
+	_say("")
+	fold.coaster.ride(player)
+
+# On the roller coaster: the fair's music gone, streaks at the edges with speed, the white of the
+# dream's gateways fading.
+func _coasting(delta: float) -> void:
+	fold.music.volume_db = move_toward(fold.music.volume_db, -80.0, delta * 40.0)
+	var coaster: Node3D = fold.coaster
+	speed_lines.set_shader_parameter("amount", clampf((coaster.speed - 25.0) / 45.0, 0.0, 1.0))
+	_clear_view(0.5 if coaster.phase == "dream" else 0.0)
+	shard_pop = maxf(shard_pop - delta * 2.0, 0.0)
+	shard_count.scale = Vector2.ONE * (1.0 + shard_pop * 0.35)
+
+func _on_shard(count: int, total: int) -> void:
+	shard_count.text = "✦ Mảnh ký ức %d/%d" % [count, total]
+	shard_pop = 1.0
+	if count == total:
+		_say("Đủ cả rồi…")
+
+func _on_dream(on: bool) -> void:
+	reticle.modulate.a = 0.75 if on else 0.0
+	shard_count.modulate.a = 1.0 if on else 0.0
+	if on:
+		shard_count.text = "✦ Mảnh ký ức 0/%d" % fold.coaster.dream.SHARDS.size()
+		_say("Nhìn vào những mảnh sáng để nhặt.")
+
+func _off_wheel() -> void:
+	_clear_view(0.0)
+	speed_lines.set_shader_parameter("amount", 0.0)
+	fold.music.volume_db = 0.0
+	state = "walk"
+	state_time = 0.0
 
 # The door swings in, and the doorway already shows what is inside: the walk goes on through it.
 func open_house() -> void:

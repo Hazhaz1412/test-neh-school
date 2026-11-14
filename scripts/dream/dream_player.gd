@@ -50,6 +50,10 @@ var ground_steps: AudioStreamPlayer
 # road that curls up a wall is walked like flat ground (meadow's road to the sky).
 var frame := Basis.IDENTITY
 var gravity_field: Callable
+# How fast speed comes up and dies away, on the ground and in the air (a lucid dream). The water
+# dream keeps its wading drag; the meadow grips far more, so walking starts and stops crisply.
+var floor_grip := 5.0
+var air_grip := 3.0
 signal landed(at: Vector3, fall_speed: float)
 
 func _ready() -> void:
@@ -133,7 +137,7 @@ func _physics_process(delta: float) -> void:
 	# Everything below is worked out in the player's own frame (y is up), then turned back.
 	var local := frame.transposed() * velocity
 	# Water drags: speed comes up and dies away softly. In the air there is less to push against.
-	var grip := 5.0 if on_floor else (3.0 if lucid else 2.0)
+	var grip := floor_grip if on_floor else (air_grip if lucid else 2.0)
 	if not on_floor and not lucid:
 		walk = AIR_DRIFT
 	local.x = move_toward(local.x, direction.x * walk, delta * grip)

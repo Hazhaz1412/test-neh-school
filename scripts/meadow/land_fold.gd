@@ -43,9 +43,9 @@ const GRASS_HALF := 64.0
 # Walkers are kept this close to x = 0 (the floor's collider ends at 200).
 const WALK_X := 170.0
 # Along the wall, where the fair's middle is; along the ceiling, where the house is.
-const FAIR_AT := 24.0
+const FAIR_AT := 42.0
 const HOUSE_AT := 18.0
-const PLAZA := 20.0
+const PLAZA := 34.0
 const PATH_HALF := 1.2
 const DOOR_REACH := 2.0
 # The house's size and its door: a real opening, DOOR_W wide, its floor DOOR_FLOOR up (the top
@@ -57,6 +57,13 @@ const DOOR_W := 1.1
 const DOOR_FLOOR := 0.36
 const DOOR_TOP := 2.54
 const Portal := preload("res://scripts/meadow/portal.gd")
+const Crowd := preload("res://scripts/meadow/fair_crowd.gd")
+const Wheel := preload("res://scripts/meadow/ferris_wheel.gd")
+const Coaster := preload("res://scripts/meadow/roller_coaster.gd")
+# Where the Ferris wheel stands in the fair, and which way it faces.
+const WHEEL_AT := Vector3(-27, 0, -12)
+const WHEEL_TURN := 65.0
+const FLAG := preload("res://assets/materials/meadow_flag.gdshader")
 
 var arc := R * PI / 2
 var wall := SIZE - 2.0 * R
@@ -82,6 +89,15 @@ var told_house := false
 var tent_door: Node3D
 var music: AudioStreamPlayer3D
 var grass_materials: Array[ShaderMaterial] = []
+var crowd: Node3D
+var wheel: Node3D
+var coaster: Node3D
+var swing: Node3D
+var swing_arms: Array[Node3D] = []
+var fireworks: Array[GPUParticles3D] = []
+var firework_flash: OmniLight3D
+var next_firework := 3.0
+var rng := RandomNumberGenerator.new()
 
 # The box at distance s round it: [ground (y, z), up (y, z)]. Must match tube() in the shader.
 func tube(s: float) -> Array:
@@ -161,8 +177,10 @@ func build(blade: Callable, share: float, near_end: float) -> void:
 	var loop: AudioStreamOggVorbis = load(MUSIC)
 	loop.loop = true
 	music.stream = loop
-	music.unit_size = 28.0
+	# Loud in the fair, quieter quickly as you walk away, gone a little way off.
+	music.unit_size = 12.0
 	music.max_db = 2.0
+	music.max_distance = 150.0
 	music.volume_db = -80.0
 	music.attenuation_filter_cutoff_hz = 9000.0
 	fair.add_child(music)
@@ -395,7 +413,11 @@ func _bulb_strings() -> void:
 
 # The fairground on the wall, built in its own frame: local y is the wall's up (+Z in the world),
 # local -Z carries on round the box (+Y in the world). Its middle is FAIR_AT up the wall.
+# A paved circle PLAZA across; the way through it (x from -2 to 5, along z) is kept clear of
+# anything solid, from the bed's side up to the path to the house.
+const LANTERNS := 18
 func _fair() -> void:
+	rng.seed = 2026
 	fair = Node3D.new()
 	fair.name = "Fair"
 	var centre := point(0.0, fair_s)
@@ -407,7 +429,7 @@ func _fair() -> void:
 	floor_mesh.top_radius = PLAZA
 	floor_mesh.bottom_radius = PLAZA
 	floor_mesh.height = 0.06
-	floor_mesh.radial_segments = 96
+	floor_mesh.radial_segments = 128
 	var plaza := MeshInstance3D.new()
 	plaza.mesh = floor_mesh
 	var tiles := paving.duplicate()
@@ -417,15 +439,21 @@ func _fair() -> void:
 	plaza.position.y = 0.0
 	fair.add_child(plaza)
 	_fair_lamps()
-	var wheel := _fit("ferris_wheel", 30.0)
-	wheel.position = Vector3(-22, 0, -12)
-	wheel.rotation.y = deg_to_rad(65)
+	wheel = Wheel.new()
+	wheel.name = "FerrisWheel"
+	wheel.position = WHEEL_AT
+	wheel.rotation.y = deg_to_rad(WHEEL_TURN)
 	fair.add_child(wheel)
-	_solid(fair, Vector3(-22, 0, -12), Vector3(10, 30, 6), deg_to_rad(65))
-	_carousel(Vector3(12, 0, 2))
-	# Off to the side of the way through, so the path up from the fair runs clear of it.
-	_big_top(Vector3(22, 0, -28))
-	var stalls := [[Vector3(-14, 0, 16), 40.0], [Vector3(-26, 0, 6), 75.0], [Vector3(24, 0, 14), -45.0]]
+	wheel.build()
+	coaster = Coaster.new()
+	coaster.name = "RollerCoaster"
+	fair.add_child(coaster)
+	coaster.build()
+	_carousel(Vector3(15, 0, 10))
+	_big_top(Vector3(20, 0, -21))
+	_swing_ride(Vector3(-14, 0, 16))
+	var stalls := [[Vector3(-21, 0, 25), 40.0], [Vector3(-30, 0, 13), 75.0], [Vector3(25, 0, 23), -45.0], [Vector3(30, 0, 5), -80.0],
+			[Vector3(-12, 0, 30), 15.0], [Vector3(12, 0, 29), -20.0], [Vector3(-21, 0, -25), 140.0], [Vector3(9, 0, -29), 180.0]]
 	for i in range(stalls.size()):
 		var booth := _fit("carnival_booth", 3.2)
 		booth.position = stalls[i][0]
@@ -439,18 +467,27 @@ func _fair() -> void:
 		mark.name = "GameStall%d" % (i + 1)
 		mark.position = stalls[i][0]
 		fair.add_child(mark)
-	var cart := _fit("popcorn_cart", 2.2)
-	cart.position = Vector3(-4, 0, 14)
-	cart.rotation.y = deg_to_rad(-20)
-	fair.add_child(cart)
-	_solid(fair, Vector3(-4, 0, 14), Vector3(1.8, 2.2, 1.2), deg_to_rad(-20))
+		var light := OmniLight3D.new()
+		light.position = stalls[i][0] + Vector3(0, 2.6, 0) + Vector3(0, 0, 2.2).rotated(Vector3.UP, deg_to_rad(stalls[i][1]))
+		light.light_color = [Color(1.0, 0.7, 0.45), Color(1.0, 0.55, 0.7), Color(0.7, 0.8, 1.0)][i % 3]
+		light.omni_range = 9.0
+		light.light_energy = 1.4
+		light.omni_attenuation = 1.0
+		fair.add_child(light)
+	for plan: Array in [[Vector3(-4, 0, 18), -20.0], [Vector3(9, 0, -10), 160.0]]:
+		var cart := _fit("popcorn_cart", 2.2)
+		cart.position = plan[0]
+		cart.rotation.y = deg_to_rad(plan[1])
+		fair.add_child(cart)
+		_solid(fair, plan[0], Vector3(1.8, 2.2, 1.2), deg_to_rad(plan[1]))
 	var striker := _fit("high_striker", 6.0)
-	striker.position = Vector3(-8, 0, -6)
+	striker.position = Vector3(-12, 0, 3)
 	striker.rotation.y = deg_to_rad(20)
 	fair.add_child(striker)
-	_solid(fair, Vector3(-8, 0, -6), Vector3(1.6, 6.0, 1.4), deg_to_rad(20))
-	for plan: Array in [[Vector3(-14, 9, -8), Color(1.0, 0.72, 0.5), 26.0, 2.2], [Vector3(12, 7, 2), Color(1.0, 0.6, 0.65), 20.0, 1.8],
-			[Vector3(0, 12, 6), Color(0.95, 0.85, 0.75), 34.0, 1.6], [Vector3(-12, 6, 16), Color(0.7, 0.8, 1.0), 18.0, 1.2]]:
+	_solid(fair, Vector3(-12, 0, 3), Vector3(1.6, 6.0, 1.4), deg_to_rad(20))
+	for plan: Array in [[Vector3(-18, 12, -10), Color(1.0, 0.72, 0.5), 34.0, 2.4], [Vector3(15, 8, 10), Color(1.0, 0.6, 0.65), 22.0, 1.8],
+			[Vector3(0, 16, 4), Color(0.95, 0.85, 0.75), 46.0, 2.0], [Vector3(-14, 8, 18), Color(0.7, 0.8, 1.0), 22.0, 1.6],
+			[Vector3(18, 9, -14), Color(1.0, 0.75, 0.5), 26.0, 1.6], [Vector3(0, 7, 26), Color(1.0, 0.8, 0.6), 26.0, 1.4]]:
 		var lamp := OmniLight3D.new()
 		lamp.position = plan[0]
 		lamp.light_color = plan[1]
@@ -460,13 +497,226 @@ func _fair() -> void:
 		fair.add_child(lamp)
 	var game := Marker3D.new()
 	game.name = "GameStriker"
-	game.position = Vector3(-8, 0, -4)
+	game.position = Vector3(-12, 0, 5)
 	fair.add_child(game)
-	for plan: Array in [["hot_air_balloon_red", Vector3(-30, 26, -40), 14.0], ["hot_air_balloon_blue", Vector3(34, 34, -20), 12.0], ["hot_air_balloon_red", Vector3(10, 40, 12), 10.0]]:
+	var swing_mark := Marker3D.new()
+	swing_mark.name = "GameSwing"
+	swing_mark.position = Vector3(-14, 0, 16)
+	fair.add_child(swing_mark)
+	for plan in [["hot_air_balloon_red", Vector3(-34, 30, -46), 14.0], ["hot_air_balloon_blue", Vector3(40, 38, -22), 12.0], ["hot_air_balloon_red", Vector3(12, 46, 16), 10.0],
+			["hot_air_balloon_blue", Vector3(-46, 40, 20), 11.0], ["hot_air_balloon_red", Vector3(30, 54, 40), 9.0]]:
 		var balloon := _fit(plan[0], plan[2])
 		balloon.position = plan[1]
 		fair.add_child(balloon)
 		balloons.append({"node": balloon, "home": plan[1], "phase": balloons.size() * 2.1})
+	_fireworks()
+	crowd = Crowd.new()
+	crowd.name = "Crowd"
+	crowd.process_mode = Node.PROCESS_MODE_DISABLED
+	fair.add_child(crowd)
+	crowd.build()
+
+# A chair-o-plane: a striped canopy turning on a tall mast, twelve seats on long chains flung out
+# as it spins.
+func _swing_ride(at: Vector3) -> void:
+	var ride := Node3D.new()
+	ride.name = "SwingRide"
+	ride.position = at
+	fair.add_child(ride)
+	var cream := StandardMaterial3D.new()
+	cream.albedo_color = Color(0.92, 0.88, 0.8)
+	cream.roughness = 0.5
+	var tower := CylinderMesh.new()
+	tower.top_radius = 0.35
+	tower.bottom_radius = 0.6
+	tower.height = 11.0
+	_mesh(ride, tower, Vector3(0, 5.5, 0), cream)
+	swing = Node3D.new()
+	swing.name = "Spin"
+	swing.position = Vector3(0, 11.0, 0)
+	ride.add_child(swing)
+	var stripes := ShaderMaterial.new()
+	stripes.shader = load("res://assets/materials/carousel_roof.gdshader")
+	stripes.set_shader_parameter("stripes", 16.0)
+	var canopy := CylinderMesh.new()
+	canopy.top_radius = 0.3
+	canopy.bottom_radius = 4.6
+	canopy.height = 2.2
+	canopy.radial_segments = 32
+	_mesh(swing, canopy, Vector3(0, 0.6, 0), stripes)
+	var chain := CylinderMesh.new()
+	chain.top_radius = 0.02
+	chain.bottom_radius = 0.02
+	chain.height = 5.0
+	chain.radial_segments = 4
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.25, 0.25, 0.28)
+	dark.metallic = 0.8
+	var seat := BoxMesh.new()
+	seat.size = Vector3(0.6, 0.12, 0.55)
+	var seat_paints := [Color(0.85, 0.2, 0.2), Color(0.95, 0.75, 0.25), Color(0.25, 0.5, 0.85)]
+	var glow := _bulb_mesh()
+	var tint := StandardMaterial3D.new()
+	tint.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tint.albedo_color = Color(3.0, 2.3, 1.2)
+	for i in range(12):
+		var a := TAU * i / 12.0
+		var hang := Node3D.new()
+		hang.position = Vector3(cos(a), 0, sin(a)) * 4.2
+		hang.rotation.y = -a + PI / 2
+		swing.add_child(hang)
+		var arm := Node3D.new()
+		hang.add_child(arm)
+		swing_arms.append(arm)
+		for side: float in [-0.25, 0.25]:
+			_mesh(arm, chain, Vector3(side, -2.5, 0), dark)
+		var paint := StandardMaterial3D.new()
+		paint.albedo_color = seat_paints[i % 3]
+		_mesh(arm, seat, Vector3(0, -5.0, 0), paint)
+		var bead := MeshInstance3D.new()
+		bead.mesh = glow
+		bead.scale = Vector3.ONE * 0.18
+		bead.position = Vector3(cos(a), -0.45, sin(a)) * Vector3(4.6, 1.0, 4.6)
+		bead.material_override = tint
+		swing.add_child(bead)
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 8.0, 0)
+	light.light_color = Color(1.0, 0.75, 0.5)
+	light.light_energy = 2.0
+	light.omni_range = 16.0
+	ride.add_child(light)
+	_solid(ride, Vector3.ZERO, Vector3(1.2, 11.0, 1.2), 0.0)
+
+# Little triangular flags on strings between the lanterns round the edge of the plaza.
+func _bunting(posts: Array[Vector3]) -> void:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for corner: Vector3 in [Vector3(-0.22, 0, 0), Vector3(0.22, 0, 0), Vector3(0, -0.5, 0)]:
+		tool.set_normal(Vector3.BACK)
+		tool.add_vertex(corner)
+	var flag := tool.commit()
+	var paint := ShaderMaterial.new()
+	paint.shader = FLAG
+	flag.surface_set_material(0, paint)
+	var placed: Array[Transform3D] = []
+	var colours: Array[Color] = []
+	var palette := [Color(0.9, 0.2, 0.25), Color(0.98, 0.8, 0.3), Color(0.3, 0.6, 0.95), Color(0.95, 0.95, 0.9), Color(0.4, 0.8, 0.45)]
+	for i in range(posts.size()):
+		var from: Vector3 = posts[i] + Vector3(0, 3.0, 0)
+		var to: Vector3 = posts[(i + 1) % posts.size()] + Vector3(0, 3.0, 0)
+		var along := (to - from).normalized()
+		var count := 9
+		for k in range(1, count):
+			var t := k / float(count)
+			var at := from.lerp(to, t) + Vector3(0, -0.9 * 4.0 * t * (1.0 - t), 0)
+			placed.append(Transform3D(Basis(along, Vector3.UP, along.cross(Vector3.UP)), at))
+			colours.append(palette[(i * 3 + k) % palette.size()])
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.use_colors = true
+	multi.mesh = flag
+	multi.instance_count = placed.size()
+	for i in range(placed.size()):
+		multi.set_instance_transform(i, placed[i])
+		multi.set_instance_color(i, colours[i])
+	var holder := MultiMeshInstance3D.new()
+	holder.name = "Bunting"
+	holder.multimesh = multi
+	holder.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	fair.add_child(holder)
+
+# Fireworks over the fair now and then: a burst of sparks in one colour, falling and fading, and
+# a flash of its light on the meadow below.
+func _fireworks() -> void:
+	var spark := QuadMesh.new()
+	spark.size = Vector2(0.8, 0.8)
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	glow.vertex_color_use_as_albedo = true
+	glow.albedo_texture = _spark_texture()
+	spark.material = glow
+	for i in range(8):
+		var burst := GPUParticles3D.new()
+		burst.name = "Firework%d" % i
+		burst.one_shot = true
+		burst.emitting = false
+		burst.explosiveness = 0.95
+		burst.amount = 180
+		burst.lifetime = 2.6
+		burst.local_coords = true
+		burst.visibility_aabb = AABB(Vector3(-30, -30, -30), Vector3(60, 60, 60))
+		var process := ParticleProcessMaterial.new()
+		process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+		process.emission_sphere_radius = 0.3
+		process.direction = Vector3(0, 1, 0)
+		process.spread = 180.0
+		process.initial_velocity_min = 9.0
+		process.initial_velocity_max = 12.0
+		process.gravity = Vector3(0, -3.0, 0)
+		process.damping_min = 2.0
+		process.damping_max = 3.0
+		process.scale_min = 0.6
+		process.scale_max = 1.2
+		burst.process_material = process
+		burst.draw_pass_1 = spark
+		burst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		fair.add_child(burst)
+		fireworks.append(burst)
+	firework_flash = OmniLight3D.new()
+	firework_flash.omni_range = 70.0
+	firework_flash.light_energy = 0.0
+	firework_flash.omni_attenuation = 1.0
+	fair.add_child(firework_flash)
+
+func _spark_texture() -> GradientTexture2D:
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 1))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	var texture := GradientTexture2D.new()
+	texture.gradient = fade
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(1.0, 0.5)
+	texture.width = 32
+	texture.height = 32
+	return texture
+
+func _tick_fireworks(delta: float) -> void:
+	if fireworks.is_empty():
+		return
+	firework_flash.light_energy = move_toward(firework_flash.light_energy, 0.0, delta * 5.0)
+	next_firework -= delta
+	if next_firework > 0.0:
+		return
+	# Up on the Ferris wheel the sky fills with them, all round the top of the ride.
+	var on_top: bool = wheel != null and wheel.height_share() > 0.55
+	next_firework = rng.randf_range(0.5, 1.4) if on_top else rng.randf_range(2.0, 5.5)
+	for burst in fireworks:
+		if burst.emitting:
+			continue
+		var hue := rng.randf()
+		var colour := Color.from_hsv(hue, 0.6, 1.0) * 4.0
+		var process: ParticleProcessMaterial = burst.process_material
+		var ramp := Gradient.new()
+		ramp.set_color(0, Color(4, 4, 4, 1))
+		ramp.set_color(1, Color(colour.r, colour.g, colour.b, 0))
+		ramp.add_point(0.15, Color(colour.r, colour.g, colour.b, 1))
+		var texture := GradientTexture1D.new()
+		texture.gradient = ramp
+		process.color_ramp = texture
+		burst.position = Vector3(rng.randf_range(-36, 36), rng.randf_range(38, 60), rng.randf_range(-40, 12))
+		if on_top:
+			var hub := WHEEL_AT + Vector3(0, Wheel.HUB, 0)
+			var around := Vector3(rng.randfn(), 0, rng.randfn()).normalized() * rng.randf_range(35.0, 80.0)
+			burst.position = hub + around + Vector3(0, rng.randf_range(25.0, 70.0), 0)
+		burst.restart()
+		firework_flash.position = burst.position
+		firework_flash.light_color = Color.from_hsv(hue, 0.45, 1.0)
+		firework_flash.light_energy = 3.0
+		break
 
 # Lamps round the paved circle, and strings of bulbs across it from a mast in the middle.
 func _fair_lamps() -> void:
@@ -475,25 +725,28 @@ func _fair_lamps() -> void:
 	var pole := CylinderMesh.new()
 	pole.top_radius = 0.12
 	pole.bottom_radius = 0.18
-	pole.height = 11.0
+	pole.height = 14.0
 	mast.mesh = pole
 	var paint := StandardMaterial3D.new()
 	paint.albedo_color = Color(0.85, 0.82, 0.78)
 	mast.material_override = paint
-	mast.position = Vector3(0, 5.5, 0)
+	mast.position = Vector3(0, 7.0, 0)
 	fair.add_child(mast)
-	_solid(fair, Vector3(0, 0, 0), Vector3(0.5, 11, 0.5), 0.0)
-	var mast_top := fair.to_global(Vector3(0, 11, 0))
-	for i in range(12):
-		var a := TAU * i / 12.0
+	_solid(fair, Vector3(0, 0, 0), Vector3(0.5, 14, 0.5), 0.0)
+	var mast_top := fair.to_global(Vector3(0, 14, 0))
+	var posts: Array[Vector3] = []
+	for i in range(LANTERNS):
+		var a := TAU * i / float(LANTERNS)
 		var at := Vector3(cos(a), 0, sin(a)) * (PLAZA - 1.0)
+		posts.append(at)
 		var post := _fit("post_lantern", 3.2)
 		post.position = at
 		post.rotation.y = -a - PI / 2
 		fair.add_child(post)
 		var lamp := fair.to_global(at + Vector3(0, 2.7, 0) - Vector3(cos(a), 0, sin(a)) * 0.45)
 		_glow(fair, lamp, Color(1.0, 0.8, 0.5), i % 3 == 0)
-		_string(mast_top, fair.to_global(at + Vector3(0, 3.1, 0)), 1.2, 22, down)
+		_string(mast_top, fair.to_global(at + Vector3(0, 3.1, 0)), 1.6, 30, down)
+	_bunting(posts)
 
 # A sagging string of little coloured bulbs between two points.
 func _string(from: Vector3, to: Vector3, sag: float, count: int, down: Vector3) -> void:
@@ -898,6 +1151,7 @@ func show_fold() -> void:
 	visible = true
 	set_collision(true)
 	music.play()
+	crowd.process_mode = Node.PROCESS_MODE_INHERIT
 
 func set_collision(on: bool) -> void:
 	for body: CollisionObject3D in find_children("*", "CollisionObject3D", true, false):
@@ -915,6 +1169,12 @@ func _process(delta: float) -> void:
 	if opening:
 		door_open = move_toward(door_open, 1.0, delta * 0.6)
 		door_hinge.rotation.y = smoothstep(0.0, 1.0, door_open) * deg_to_rad(100)
+	if swing != null:
+		swing.rotation.y += delta * 0.9
+		var tilt := deg_to_rad(32.0 + sin(clock * 0.4) * 6.0)
+		for arm in swing_arms:
+			arm.rotation.x = tilt
+	_tick_fireworks(delta)
 	for balloon in balloons:
 		var node: Node3D = balloon.node
 		node.position = balloon.home + Vector3(sin(clock * 0.05 + balloon.phase) * 6.0, sin(clock * 0.3 + balloon.phase) * 1.2, cos(clock * 0.04 + balloon.phase) * 6.0)

@@ -1,0 +1,133 @@
+{
+ "downloaded": "2026-11-14",
+ "files": [
+  {
+   "file": "assets/audio/coaster/wind_loop.ogg",
+   "from": "wind whoosh loop, SketchMan3",
+   "page": "https://opengameart.org/content/wind-whoosh-loop",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "0cfdbd3f21ed449689a9024264edf267d0037a6495813a7010827672ec191dac"
+  },
+  {
+   "file": "assets/audio/coaster/underwater_pad.ogg",
+   "from": "Underwater Ambient Pad, isaiah658",
+   "page": "https://opengameart.org/content/underwater-ambient-pad",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "5f40c6b20ac4e7b6944f176ecbfd24c5839257e5c818fecca33d7ddb147a20e7"
+  },
+  {
+   "file": "assets/audio/coaster/swish_1.ogg",
+   "from": "Swishes Sound Pack (swish-1.wav)",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "license": "CC0",
+   "changes": "WAV to Ogg Vorbis (ffmpeg)",
+   "sha256": "1df4cc9cd6fee783cb9c8c7b1f9f34e7e03dc13589a236d59a40eb04706774d5"
+  },
+  {
+   "file": "assets/audio/coaster/swish_3.ogg",
+   "from": "Swishes Sound Pack (swish-3.wav)",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "license": "CC0",
+   "changes": "WAV to Ogg Vorbis (ffmpeg)",
+   "sha256": "d02afc43849bc5924d68eac8d0781fe936408adee635fbb968e21251b20e3080"
+  },
+  {
+   "file": "assets/audio/coaster/swish_5.ogg",
+   "from": "Swishes Sound Pack (swish-5.wav)",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "license": "CC0",
+   "changes": "WAV to Ogg Vorbis (ffmpeg)",
+   "sha256": "9842979d2418842ece7e4e27f2b2f9087b2b81623f87237244fafe5659fc4f78"
+  },
+  {
+   "file": "assets/audio/coaster/swish_8.ogg",
+   "from": "Swishes Sound Pack (swish-8.wav)",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "license": "CC0",
+   "changes": "WAV to Ogg Vorbis (ffmpeg)",
+   "sha256": "80081a4537805b287bdffcd4ad060004f0f68a39a73a87e01e41616aa7043fc0"
+  },
+  {
+   "file": "assets/audio/coaster/swish_10.ogg",
+   "from": "Swishes Sound Pack (swish-10.wav)",
+   "page": "https://opengameart.org/content/swishes-sound-pack",
+   "license": "CC0",
+   "changes": "WAV to Ogg Vorbis (ffmpeg)",
+   "sha256": "6519aa776721a16529376e6d6a235d210723af4974f613b35090d492305f11d1"
+  },
+  {
+   "file": "assets/audio/coaster/splash_01.ogg",
+   "from": "6 short water splashes, qubodup (water_splash-01.flac)",
+   "page": "https://opengameart.org/content/6-short-water-splashes",
+   "license": "CC0 (public domain sources from pdsounds.org)",
+   "changes": "FLAC to Ogg Vorbis (ffmpeg)",
+   "sha256": "093d61678ed16f648b01de98f143fef796562b4649167180fc21a96403211e54"
+  },
+  {
+   "file": "assets/audio/coaster/splash_03.ogg",
+   "from": "6 short water splashes, qubodup (water_splash-03.flac)",
+   "page": "https://opengameart.org/content/6-short-water-splashes",
+   "license": "CC0 (public domain sources from pdsounds.org)",
+   "changes": "FLAC to Ogg Vorbis (ffmpeg)",
+   "sha256": "c34f18fbe2d1197952190474061df8ba55336e64354a2699e0add95c6be83ba2"
+  },
+  {
+   "file": "assets/audio/coaster/splash_05.ogg",
+   "from": "6 short water splashes, qubodup (water_splash-05.flac)",
+   "page": "https://opengameart.org/content/6-short-water-splashes",
+   "license": "CC0 (public domain sources from pdsounds.org)",
+   "changes": "FLAC to Ogg Vorbis (ffmpeg)",
+   "sha256": "331fcdd1e1cae420e830249b7337d686e5b55925cb9a7c246c1c7fa36d186514"
+  },
+  {
+   "file": "assets/audio/coaster/rumble.ogg",
+   "from": "Sci-fi Sounds by Kenney (spaceEngineLow_000.ogg)",
+   "page": "https://kenney.nl/assets/sci-fi-sounds",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "d7deee8d7217ce63aab802ad7365a59cacfd243392dc1bd03b0a9d454aa494df"
+  },
+  {
+   "file": "assets/audio/coaster/launch.ogg",
+   "from": "Sci-fi Sounds by Kenney (thrusterFire_000.ogg)",
+   "page": "https://kenney.nl/assets/sci-fi-sounds",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "0fdc474d93f209debf1fc4ea77765a669dcb7676db31b4d8a0a509685bccf374"
+  },
+  {
+   "file": "assets/audio/coaster/warp.ogg",
+   "from": "Sci-fi Sounds by Kenney (forceField_001.ogg)",
+   "page": "https://kenney.nl/assets/sci-fi-sounds",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "5574e69dd04e5f59322c5ddffde5978f077b09170ae5e29cec0bd9901828cd90"
+  },
+  {
+   "file": "assets/audio/coaster/warp_boom.ogg",
+   "from": "Sci-fi Sounds by Kenney (lowFrequency_explosion_000.ogg)",
+   "page": "https://kenney.nl/assets/sci-fi-sounds",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "3cb48d86dab63140cfb9aaeea4d4a6846abaca5831d157d8adbec0490da26343"
+  },
+  {
+   "file": "assets/audio/coaster/memory_glass.ogg",
+   "from": "Interface Sounds by Kenney (glass_003.ogg)",
+   "page": "https://kenney.nl/assets/interface-sounds",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "9a6f16e3c2eff6fe5d017a4755a28306b14555728831cd00d70308e8f9689566"
+  },
+  {
+   "file": "assets/music/coaster_gumdrop_plains.ogg",
+   "from": "Gumdrop Plains (2024 version), bobjt",
+   "page": "https://opengameart.org/content/gumdrop-plains",
+   "license": "CC0",
+   "changes": "unchanged",
+   "sha256": "b8497289f886f140ed9f1c06ff87ab529781f1b15519e3a970ec7707e1f06207"
+  }
+ ]
+}

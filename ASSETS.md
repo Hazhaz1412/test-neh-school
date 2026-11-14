@@ -225,7 +225,7 @@ Cảnh `scenes/dream_meadow.tscn`, dựng trong `scripts/meadow/dream_meadow.gd`
   - Ngôi nhà trên trần dùng texture Poly Haven CC0: Red Bricks 04 (https://polyhaven.com/a/red_bricks_04) cho tường, Roof Slates 03 (https://polyhaven.com/a/roof_slates_03) cho mái, Grass Path 2 (https://polyhaven.com/a/grass_path_2) cho lối đất. Bụi cây và bồ công anh dùng lại Shrub 01 và Dandelion 01.
   - Nhạc "Roll Up" của Yubatake, **CC-BY 4.0, phải ghi tên tác giả**: https://opengameart.org/content/roll-up. Lưu ở `assets/music/fair_rollup.ogg` (chuyển từ FLAC sang Ogg), nguồn ở `assets/music/fair_sources.json`. Đây là tiếng nhạc khu vui chơi đánh thức nhân vật.
   - Model khu vui chơi lấy từ Poly Pizza, giữ nguyên GLB, nằm ở `assets/meadow/fair/`, nguồn và hash ở `sources.json` cùng thư mục. Các model **CC-BY 3.0 phải ghi tên tác giả trong credits**:
-  - Ferris wheel — Poly by Google, CC-BY 3.0: https://poly.pizza/m/5KiVEnXN5Cw (`assets/meadow/fair/ferris_wheel.glb`)
+  - Ferris wheel — Poly by Google, CC-BY 3.0: https://poly.pizza/m/5KiVEnXN5Cw (`assets/meadow/fair/ferris_wheel.glb`) — **không còn dùng** (2026-11-14): đu quay giờ dựng bằng code trong `scripts/meadow/ferris_wheel.gd` để quay và ngồi được; file vẫn để trong thư mục.
   - White Horse — Quaternius, CC0 1.0: https://poly.pizza/m/bEdE4rmZy9 (`assets/meadow/fair/white_horse.glb`)
   - Carnival Booth — sirkitree, CC-BY 3.0: https://poly.pizza/m/4NizXJZsuO2 (`assets/meadow/fair/carnival_booth.glb`)
   - Popcorn Cart — Don Carson, CC-BY 3.0: https://poly.pizza/m/1T9untmohmj (`assets/meadow/fair/popcorn_cart.glb`)
@@ -237,5 +237,22 @@ Cảnh `scenes/dream_meadow.tscn`, dựng trong `scripts/meadow/dream_meadow.gd`
   - High striker — Zgeal, CC-BY 3.0: https://poly.pizza/m/aubwCF1Xf-v (`assets/meadow/fair/high_striker.glb`)
   - Tự dựng bằng code: vòng ngựa gỗ (ngựa là White Horse của Quaternius), lều xiếc, mái sọc (`carousel_roof.gdshader`), mi mắt khi chớp (`eyelids.gdshader`), đom đóm, dây bóng đèn.
 - Bên trong ngôi nhà (`scripts/meadow/house_inside.gd`): model **Poly Haven, CC0 1.0**, lấy ngày 2026-11-14 bằng `tools/fetch_house_assets.py`, nằm trong `assets/polyhaven_house/`; URL và SHA-256 ghi ở `assets/polyhaven_house/sources.json`. Gồm ArmChair 01, Coffee Table Round 01, Wooden Bookshelf Worn, Book Encyclopedia Set 01, Vintage Grandfather Clock 01, Hanging Picture Frame 01, Vintage Oil Lamp, Potted Plant 01, Mantel Clock 01 (trang `https://polyhaven.com/a/<tên>`). Dùng lại Sofa 01 và texture Laminate Floor 02 của `assets/polyhaven_town/`, cùng HDRI đêm Qwantani cho ô cửa sổ. Tự viết trong shader: giấy dán tường, thảm, sách, kính quả cầu, cỏ hành tinh, màn hình cổng (`house_*.gdshader`, `planet_grass.gdshader`, `portal_screen.gdshader`).
+- Tiếng bước chân trên sàn gỗ trong căn phòng khổng lồ: **Impact Sounds** của Kenney, CC0 (https://kenney.nl/assets/impact-sounds), file `footstep_wood_000..004`, lưu thành `assets/audio/steps/wood_0*.ogg`; nguồn và hash ở `wood_sources.json`.
+- Tàu lượn siêu tốc (`scripts/meadow/roller_coaster.gd`):
+  - Đoàn tàu, sàn ga, hàng rào là **Coaster Kit** của Kenney, CC0 (https://kenney.nl/assets/coaster-kit), giữ nguyên GLB trong `assets/meadow/coaster/`; hash ở `sources.json`.
+  - Đường ray, cột đỡ, đèn và mái ga dựng bằng code.
+- Âm thanh và nhạc của chuyến bay tàu lượn: nguồn, giấy phép và hash từng file ở `assets/audio/coaster/sources.json`.
+  - Tất cả đều CC0:
+    - "wind whoosh loop" của SketchMan3 (https://opengameart.org/content/wind-whoosh-loop): tiếng gió.
+    - "Underwater Ambient Pad" của isaiah658 (https://opengameart.org/content/underwater-ambient-pad): dưới biển.
+    - "Swishes Sound Pack" (https://opengameart.org/content/swishes-sound-pack): tiếng vụt qua vật thể.
+    - "6 short water splashes" của qubodup (https://opengameart.org/content/6-short-water-splashes): tiếng lao xuống nước.
+    - Sci-fi Sounds của Kenney (https://kenney.nl/assets/sci-fi-sounds): tiếng phóng, rung, cổng sáng.
+    - Interface Sounds của Kenney (https://kenney.nl/assets/interface-sounds): tiếng nhặt mảnh ký ức.
+    - Nhạc nền khi đi tàu: "Gumdrop Plains" của bobjt (https://opengameart.org/content/gumdrop-plains), lưu ở `assets/music/coaster_gumdrop_plains.ogg`.
+  - Đã chuyển WAV và FLAC sang Ogg; các file khác giữ nguyên.
+  - Hiệu ứng hình tự viết: trời bay (`dream_flight_sky.gdshader`), biển (`dream_sea.gdshader`), mảnh ký ức (`memory_shard.gdshader`), vệt tốc độ (`speed_lines.gdshader`), tia lửa bánh xe, bọt nước, sứa, đá trên biển, đèn trời, thiên thạch, hành tinh, cổng ánh sáng.
+- Đu quay chơi được (`ferris_wheel.gd`) và bầu trời sao trên đỉnh (`star_dome.gdshader`: sao, dải Ngân Hà, mặt trăng) đều tự dựng bằng code, không dùng asset ngoài.
+- Bóng đen ở khu vui chơi: dùng lại người MIT Rocketbox của khu phố (`assets/rocketbox/townsfolk/`, MIT), tô bằng `shadow_figure.gdshader`. Hộp thoại (`speech_bubble.gdshader`), dây cờ (`meadow_flag.gdshader`), đu dây xoay và pháo hoa đều tự dựng bằng code.
 - Đã cân nhắc và loại: Jacaranda Tree (208 MB), các cụm cỏ Grass Medium (hơn 1 triệu đa giác mỗi cụm, không rải nổi cả cánh đồng), "Big T" trên Poly Pizza (hóa ra là một nhân vật, không phải lều xiếc), dây đèn Holiday Lights (tọa độ hỏng, đã xóa).
 

@@ -1,0 +1,33 @@
+{
+ "pack": "Impact Sounds 1.0 by Kenney",
+ "page": "https://kenney.nl/assets/impact-sounds",
+ "license": "CC0 1.0 http://creativecommons.org/publicdomain/zero/1.0/",
+ "downloaded": "2026-11-14",
+ "files": [
+  {
+   "file": "assets/audio/steps/wood_00.ogg",
+   "from": "Audio/footstep_wood_000.ogg",
+   "sha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+  },
+  {
+   "file": "assets/audio/steps/wood_01.ogg",
+   "from": "Audio/footstep_wood_001.ogg",
+   "sha256": "e4f68e1c9fd55b4dc8ca89ed2bbab6f200171bc54bdc18aa96b80d8e7336f462"
+  },
+  {
+   "file": "assets/audio/steps/wood_02.ogg",
+   "from": "Audio/footstep_wood_002.ogg",
+   "sha256": "9ff095b05cee5eec40b081defe3f0eef7232bb16d4865ce03b9f6dbab875cfdd"
+  },
+  {
+   "file": "assets/audio/steps/wood_03.ogg",
+   "from": "Audio/footstep_wood_003.ogg",
+   "sha256": "2a68a083daa9eda08fed0ea5da5280dfbe0de226196c576be02f95259dd139d9"
+  },
+  {
+   "file": "assets/audio/steps/wood_04.ogg",
+   "from": "Audio/footstep_wood_004.ogg",
+   "sha256": "b33e0854e2b3f6b6492e25c25ef8f90447a332f7c6bb25dd02edced9581d3441"
+  }
+ ]
+}

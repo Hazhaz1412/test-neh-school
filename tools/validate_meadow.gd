@@ -192,6 +192,75 @@ func run() -> void:
 	ray.exclude = [p.get_rid()]
 	var overhead := p.get_world_3d().direct_space_state.intersect_ray(ray)
 	check(not overhead.is_empty() and absf(overhead.position.y - meadow.ground_height(overhead.position.x, overhead.position.z)) < 0.5, "looking up from the ceiling, the meadow with the bed is overhead")
+	# The Ferris wheel: board it, ride up into the stars, stay up there a while, come back down.
+	var keep_at := p.global_position
+	var keep_frame: Basis = p.frame
+	var wheel: Node3D = fold.wheel
+	p.frame = wheel.global_basis.orthonormalized()
+	p.global_position = wheel.to_global(wheel.PLATFORM + Vector3(0, 0.45, 0.6))
+	p.velocity = Vector3.ZERO
+	await frames(20)
+	check(wheel.near_board(p.global_position), "at the Ferris wheel: E to get on")
+	var striker: Vector3 = fold.fair.get_node("GameStriker").global_position
+	check(striker.distance_to(wheel.global_position) > 12.0, "the high striker stands well clear of the wheel (%.0f m)" % striker.distance_to(wheel.global_position))
+	meadow.ride_wheel()
+	var top_time := 0.0
+	var highest := 0.0
+	var sky := 0.0
+	var ride := 0.0
+	while meadow.state == "ride" and ride < wheel.ride_length() + 5.0:
+		await process_frame
+		var dt := get_root().get_process_delta_time()
+		ride += dt
+		var up_there: float = fold.fair.to_local(p.global_position).y
+		highest = maxf(highest, up_there)
+		if up_there > wheel.HUB + wheel.RADIUS * 0.8:
+			top_time += dt
+		sky = maxf(sky, wheel.dome_paint.get_shader_parameter("appear"))
+	check(highest > wheel.HUB + wheel.RADIUS - wheel.HANG - 0.5, "carried up to the top of the wheel (%.0f m up)" % highest)
+	check(top_time >= 20.0, "and kept up there to look round for a while (%.0f s)" % top_time)
+	check(sky > 0.95, "a sky full of stars opens up at the top")
+	check(meadow.state == "walk" and wheel.riding < 0, "the ride ends (%.0f s)" % ride)
+	await frames(20)
+	check(p.is_on_floor() and wheel.to_local(p.global_position).distance_to(wheel.PLATFORM) < 3.0, "stepped off where it started")
+	# The roller coaster: launched, over the top hat, through the loop, back into the station.
+	var coaster: Node3D = fold.coaster
+	p.frame = coaster.global_basis.orthonormalized()
+	p.global_position = coaster.to_global(coaster.boarding() + Vector3(0, 0.2, 0))
+	p.velocity = Vector3.ZERO
+	await frames(20)
+	check(coaster.near_board(p.global_position), "at the roller coaster's station: E to get on")
+	meadow.ride_coaster()
+	var coaster_time := 0.0
+	var fair_music_low := 0.0
+	var max_speed := 0.0
+	var shards_seen := 0
+	while meadow.state == "coaster" and coaster_time < 200.0:
+		await process_frame
+		coaster_time += get_root().get_process_delta_time()
+		max_speed = maxf(max_speed, coaster.speed)
+		fair_music_low = minf(fair_music_low, fold.music.volume_db)
+		# The bot looks at the nearest shard ahead, as a player would.
+		if coaster.phase == "dream":
+			var best := INF
+			for at_shard: Vector3 in coaster.dream.shard_positions():
+				var gap := at_shard.distance_to(p.camera.global_position)
+				if gap < best and gap < 90.0:
+					best = gap
+					var to: Vector3 = p.frame.transposed() * (at_shard - p.camera.global_position)
+					p.yaw = atan2(-to.x, -to.z)
+					p.pitch = clampf(atan2(to.y, Vector2(to.x, to.z).length()), -1.3, 1.3)
+	check(meadow.state == "walk" and not coaster.riding, "the coaster ride ends back at the station (%.0f s)" % coaster_time)
+	check(max_speed > 60.0, "very fast out in the dream (top speed %.0f m/s)" % max_speed)
+	check(fair_music_low < -60.0, "the fair's music goes quiet on the ride")
+	check(coaster.dreamed, "through the ring of light into the dream flight")
+	check(coaster.caught > 0, "and caught memory shards on the way (%d)" % coaster.caught)
+	await frames(20)
+	check(p.is_on_floor(), "stepped off onto the platform")
+	p.frame = keep_frame
+	p.global_position = keep_at
+	p.velocity = Vector3.ZERO
+	await frames(10)
 	for marker in ["GameStall1", "GameStall2", "GameStall3", "GameStriker", "GameCarousel"]:
 		check(fold.fair.has_node(marker), "a place kept for a game: " + marker)
 	check(fold.house.has_node("Inside"), "a place kept for the inside of the house")

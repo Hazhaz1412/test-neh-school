@@ -86,6 +86,14 @@ func run() -> void:
 	await shot("night-fair")
 	on_box(fold, -2.0, at_fair, -0.7, 0.05)
 	await shot("night-carousel")
+	# Among the shadows at the fair, while they talk.
+	await create_timer(5.0).timeout
+	on_box(fold, 2.0, fold.fair_s + 6.0, PI + 0.5, 0.08)
+	await shot("night-crowd-a", 60)
+	on_box(fold, 2.0, fold.fair_s + 6.0, PI - 0.5, 0.08)
+	await shot("night-crowd-b", 60)
+	on_box(fold, 0.0, fold.fair_s - 30.0, 0.0, 0.18)
+	await shot("night-fair-wide", 60)
 	# Above the fair, looking back down at the meadow and the bed, standing like a wall.
 	var above: float = fold.fair_s + 26.0
 	on_box(fold, 1.0, above, PI, -0.2)
