@@ -9,8 +9,10 @@ extends Node3D
 # box of meadow (land_fold.gd): a few steps on the ground bends up into a wall with the
 # fairground on it, over the top into a ceiling with a path to a little house, and down the far
 # wall back to the bed. Gravity turns with the ground, so there is no seam to feel; looking up is
-# looking at the meadow on the other side. The fairground's games and the inside of the house
-# come later; for now the house's door is the way on.
+# looking at the meadow on the other side. The fairground's games come later. The house's door
+# opens on its inside (house_inside.gd): a giant room, a glass ball, a tiny planet. The planet's
+# little house opens on this meadow as it first was, dark, and stepping through it starts over
+# (`again`); this time lying down on the bed wakes the player for real.
 # Nothing chases and nothing can be lost. Jumps are the dream's light, floating ones.
 # Assets: ASSETS.md, "Giấc mơ — đồng cỏ".
 signal brightened
@@ -30,6 +32,10 @@ const POST := preload("res://assets/materials/dreamcore_post.gdshader")
 const POLES := "res://assets/polyhaven_dream/modular_electricity_poles/modular_electricity_poles_1k.gltf"
 const POLE_PRESETS := {"preset_01_": -2.5, "preset_02_": -4.5, "preset_03_": -6.5}
 const NEXT_SCENE := "res://scenes/town.tscn"
+const SELF := "res://scenes/dream_meadow.tscn"
+# Set once through the planet house's door: the dream is the dark meadow from the start again,
+# and this time lying down on its bed wakes the player for real.
+var again := false
 # The one bright place is the origin; the player wakes this far away, facing it.
 const START := Vector3(0, 0, 46)
 const LIGHT_RADIUS := 7.0
@@ -40,6 +46,7 @@ const BED_AT := Vector2(2.4, 1.2)
 const BED_TURN := -25.0
 const BED_REACH := 2.6
 const Fold := preload("res://scripts/meadow/land_fold.gd")
+const Inside := preload("res://scripts/meadow/house_inside.gd")
 const LID := preload("res://assets/materials/eyelids.gdshader")
 # The blink after lying down: (seconds, how open the eyes are), eased between.
 const BLINK := [[0.0, 1.0], [1.6, 0.0], [3.6, 0.0], [4.2, 0.45], [4.6, 0.0], [5.4, 0.8], [5.7, 0.05], [7.0, 1.0]]
@@ -100,6 +107,15 @@ var lids: ShaderMaterial
 var fireflies: GPUParticles3D
 var grass_layers: Array = []
 var stand_to: Transform3D
+var inside: Node3D
+var where := "box"
+var wood_steps: AudioStreamPlayer
+var grass_steps: AudioStreamPlayer
+var told_room := false
+var told_planet := false
+# Built without a player, hud or the box: the doorway's view of the meadow's start.
+var preview := false
+var first_meadow: Node3D
 
 static func ground_height(x: float, z: float) -> float:
 	# Must match ground_height() in meadow_grass.gdshader.
@@ -119,39 +135,63 @@ static func on_ground(x: float, z: float) -> Vector3:
 	return Vector3(x, ground_height(x, z), z)
 
 func _ready() -> void:
-	preload("res://scripts/game_progress.gd").mark("meadow")
 	if quality < 0:
 		quality = int(Settings.read("quality"))
 	quality = clampi(quality, 0, 2)
-	# On the lightest setting draw the 3D at three quarters and let FSR scale it up.
-	get_viewport().scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if quality == 0 else Viewport.SCALING_3D_MODE_BILINEAR
-	get_viewport().scaling_3d_scale = 0.75 if quality == 0 else 1.0
+	if not preview:
+		preload("res://scripts/game_progress.gd").mark("meadow")
+		_scaling()
 	_sky()
 	_ground()
 	_grass()
 	_light_shafts()
 	_tree_and_bed()
 	_flowers()
-	fold = Fold.new()
-	fold.name = "LandFold"
-	add_child(fold)
-	fold.build(blade_mesh, GRASS_SHARE[quality], CLOSE_GRASS[quality])
-	fold.reached_fair.connect(func() -> void: _say("Khu vui chơi giữa đồng cỏ."))
-	fold.reached_house.connect(func() -> void: _say("Một ngôi nhà nhỏ."))
+	if not preview:
+		fold = Fold.new()
+		fold.name = "LandFold"
+		add_child(fold)
+		fold.build(blade_mesh, GRASS_SHARE[quality], CLOSE_GRASS[quality])
+		fold.reached_fair.connect(func() -> void: _say("Khu vui chơi giữa đồng cỏ."))
+		fold.reached_house.connect(func() -> void: _say("Một ngôi nhà nhỏ."))
+		inside = Inside.new()
+		inside.name = "HouseInside"
+		add_child(inside)
+		inside.build(fold, blade_mesh, quality, GRASS_SHARE[quality])
 	_poles()
 	_bubbles()
 	_fish()
+	if preview:
+		# Only the dark meadow as it first opens, for the planet house's doorway to look into.
+		shown_bright = -1.0
+		_apply_brightness()
+		return
 	_sound()
 	_hud()
+	_make_player(Transform3D(Basis.IDENTITY, on_ground(START.x, START.z) + Vector3(0, 0.05, 0)), 0.08)
+	# Once everything that follows the light exists, set it all once.
+	shown_bright = -1.0
+	_apply_brightness()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+# On the lightest setting draw the 3D at three quarters and let FSR scale it up.
+func _scaling() -> void:
+	get_viewport().scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if quality == 0 else Viewport.SCALING_3D_MODE_BILINEAR
+	get_viewport().scaling_3d_scale = 0.75 if quality == 0 else 1.0
+
+# The player at `at` (facing its -Z), head tilted `look_up`.
+func _make_player(at: Transform3D, look_up: float) -> void:
 	player = Player.new()
 	add_child(player)
 	player.lucid = true
-	player.global_position = on_ground(START.x, START.z) + Vector3(0, 0.05, 0)
-	player.yaw = 0.0
-	player.pitch = 0.08
+	player.global_position = at.origin
+	var ahead := -at.basis.z
+	player.yaw = atan2(-ahead.x, -ahead.z)
+	player.pitch = look_up
+	player.camera.rotation.x = look_up
 	player.enabled = false
 	player.camera.far = 3000.0
-	var grass_steps := AudioStreamPlayer.new()
+	grass_steps = AudioStreamPlayer.new()
 	var steps := AudioStreamRandomizer.new()
 	for i in range(1, 7):
 		steps.add_stream(-1, load("res://assets/audio/steps/grass_0%d.ogg" % i))
@@ -161,12 +201,68 @@ func _ready() -> void:
 	grass_steps.volume_db = -16
 	player.add_child(grass_steps)
 	player.ground_steps = grass_steps
-	# Once everything that follows the light exists, set it all once.
+	wood_steps = AudioStreamPlayer.new()
+	wood_steps.stream = load("res://assets/audio/footstep.wav")
+	wood_steps.volume_db = -20
+	wood_steps.pitch_scale = 0.9
+	player.add_child(wood_steps)
+
+# The planet house's doorway: a second meadow, as it is at the very start (dark, the one bright
+# place far ahead), in a world of its own, built when the glass ball is touched.
+func _build_first_meadow() -> void:
+	if first_meadow != null:
+		return
+	first_meadow = load(SELF).instantiate()
+	first_meadow.preview = true
+	first_meadow.quality = quality
+	var arrive := Node3D.new()
+	arrive.name = "Arrive"
+	# Stepping out of the doorway is stepping onto the start, facing the light.
+	arrive.transform = Transform3D(Basis(Vector3.UP, PI), on_ground(START.x, START.z))
+	first_meadow.add_child(arrive)
+	inside.link_first_meadow(first_meadow, arrive, player)
+	inside.portal_planet.crossed.connect(_into_first_meadow)
+
+# Through the planet house's door: that meadow becomes the dream (no loading, the same frame),
+# the walker stands where the doorway put it, and it is the meadow from the start again; this
+# time its bed wakes the player.
+func _into_first_meadow(door: Node3D) -> void:
+	var move: Transform3D = door.mapping()
+	var body := move * Transform3D(player.global_basis, player.global_position)
+	var head: float = player.pitch
+	var speed: Vector3 = move.basis * player.velocity
+	var next := first_meadow
+	next.get_parent().remove_child(next)
+	var tree := get_tree()
+	var root := tree.root
+	root.remove_child(self)
+	root.add_child(next)
+	tree.current_scene = next
+	next.begin_again(body, head, speed)
+	queue_free()
+
+func begin_again(body: Transform3D, head: float, speed: Vector3) -> void:
+	preview = false
+	again = true
+	_scaling()
+	_sound()
+	_hud()
+	var flat := Vector3(-body.basis.z.x, 0, -body.basis.z.z).normalized()
+	_make_player(Transform3D(Basis.looking_at(flat, Vector3.UP), body.origin), head)
+	player.velocity = Vector3(speed.x, 0, speed.z)
+	player.enabled = true
+	fade.color.a = 0.0
+	music.volume_db = -20.0
+	state = "walk"
+	state_time = 0.0
 	shown_bright = -1.0
 	_apply_brightness()
+	_say("Lại là đồng cỏ này…")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _exit_tree() -> void:
+	if preview:
+		return
 	get_viewport().scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	get_viewport().scaling_3d_scale = 1.0
 
@@ -721,6 +817,8 @@ func _say(text: String) -> void:
 	hint_time = 0.0
 
 func _unhandled_input(event: InputEvent) -> void:
+	if preview:
+		return
 	if event is InputEventMouseButton and event.pressed and state != "leave":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
@@ -728,8 +826,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_E:
 		if near_bed():
 			lie_down()
-		elif night and state == "walk" and fold.near_door(player.global_position):
-			open_house()
+		elif night and state == "walk":
+			var at := player.global_position
+			if fold.near_door(at):
+				open_house()
+			elif inside.near_globe(at):
+				touch_globe()
+			elif inside.near_planet_door(at):
+				inside.open_planet_door()
 
 func near_bed() -> bool:
 	if state != "walk" or player == null or night:
@@ -748,6 +852,8 @@ func _process(delta: float) -> void:
 		bright = clampf((clock - bright_from) / BRIGHTEN_TIME, 0.0, 1.0)
 	_apply_brightness()
 	_tick_fish(delta)
+	if preview:
+		return
 	if hint.modulate.a > 0.0 and hint_time > 8.0:
 		hint.modulate.a = move_toward(hint.modulate.a, 0.0, delta * 0.5)
 	match state:
@@ -756,7 +862,7 @@ func _process(delta: float) -> void:
 		"lie": _lie()
 		"blink": _blink()
 		"rise": _rise_up()
-		"door": _door()
+		"zoom": _zoom()
 		"leave": _leave()
 
 # Eyes opening in the dark grass.
@@ -774,10 +880,12 @@ func _walk() -> void:
 	# The meadow goes on for ever; past the limit the dream turns you gently back.
 	var flat := Vector2(p.x, p.z)
 	if night:
+		_follow_zone()
+	if night and where == "box":
 		# The box goes on along x for ever; past WALK_X the dream turns you back the way you came.
 		if absf(p.x) > Fold.WALK_X and player.velocity.x * signf(p.x) > -0.5:
 			player.velocity.x = -signf(p.x) * 0.5
-	elif flat.length() > WALK_LIMIT:
+	elif not night and flat.length() > WALK_LIMIT:
 		var outward := flat.normalized()
 		var move := Vector2(player.velocity.x, player.velocity.z)
 		# No speed outwards, and a slow drift back in (set, never added up frame on frame).
@@ -795,7 +903,12 @@ func _walk() -> void:
 	if night:
 		fold.check_walker(player.global_position)
 		fireflies.global_position = player.global_position
-	prompt.text = "E · Nằm xuống" if near_bed() else ("E · Mở cửa" if night and fold.near_door(player.global_position) else "")
+	prompt.text = "E · Nằm xuống" if near_bed() else ""
+	if night:
+		if fold.near_door(p) or inside.near_planet_door(p):
+			prompt.text = "E · Mở cửa"
+		elif inside.near_globe(p):
+			prompt.text = "E · Chạm vào quả cầu"
 	prompt.modulate.a = 1.0 if prompt.text != "" else 0.0
 
 func lie_down() -> void:
@@ -809,13 +922,16 @@ func lie_down() -> void:
 	prompt.modulate.a = 0.0
 	_say("")
 	lie_from = player.camera.global_transform
-	# Head on the pillow, looking up past the tree into the sky full of fish.
+	lie_to = _pillow_view()
+
+# Head on the pillow, looking up past the tree into the sky full of fish.
+func _pillow_view() -> Transform3D:
 	var head := bed.global_transform * Vector3(0, 0.95, -0.65)
 	var tree_at := on_ground(TREE_AT.x, TREE_AT.y)
 	var up_at := head + (Vector3(tree_at.x, head.y, tree_at.z) - head).normalized() * 4.0 + Vector3(0, 9.0, 0)
 	# Head turned a little towards the tree: its trunk rises from the bottom of the view.
 	var crown := Vector3(tree_at.x - head.x, 0, tree_at.z - head.z).normalized()
-	lie_to = Transform3D(Basis.looking_at(up_at - head, crown), head)
+	return Transform3D(Basis.looking_at(up_at - head, crown), head)
 
 func _lie() -> void:
 	var t := smoothstep(0.0, 3.0, state_time)
@@ -838,18 +954,27 @@ func _blink() -> void:
 	lids.set_shader_parameter("open", eyes_open(state_time))
 	# The meadow's own music goes; behind closed eyes a fairground starts up, and the eyes open to it.
 	music.volume_db = lerpf(-11.0, -40.0, clampf(state_time / 2.0, 0, 1))
-	if state_time > NIGHT_AT and not night:
+	if state_time > NIGHT_AT and not night and not again:
 		make_night()
 	if night:
 		fold.music.volume_db = lerpf(-30.0, 0.0, clampf((state_time - NIGHT_AT) / 2.5, 0, 1))
-	if state_time > RISE_FROM:
-		state = "rise"
+	if again and state_time > NIGHT_AT:
+		# This time the eyes stay shut, and open on the real morning.
+		again = false
+		state = "leave"
 		state_time = 0.0
-		# Up off the bed, on the side towards the fold.
-		var stand := bed.global_transform * Vector3(1.35, 0, 0.2)
-		stand.y = ground_height(stand.x, stand.z)
-		# Facing the way the music comes from: the fold, and the fair standing up on it.
-		stand_to = Transform3D(Basis.from_euler(Vector3(0.38, 0.0, 0)), stand + Vector3(0, player.EYE, 0))
+		return
+	if state_time > RISE_FROM:
+		_get_up()
+
+func _get_up() -> void:
+	state = "rise"
+	state_time = 0.0
+	# Up off the bed, on the side towards the fold.
+	var stand := bed.global_transform * Vector3(1.35, 0, 0.2)
+	stand.y = ground_height(stand.x, stand.z)
+	# Facing the way the music comes from: the fold, and the fair standing up on it.
+	stand_to = Transform3D(Basis.from_euler(Vector3(0.38, 0.0, 0)), stand + Vector3(0, player.EYE, 0))
 
 func _rise_up() -> void:
 	var t := smoothstep(0.0, RISE_TIME, state_time)
@@ -864,7 +989,7 @@ func _rise_up() -> void:
 		player.eye = player.EYE
 		player.camera.position = Vector3(0, player.EYE, 0)
 		player.camera.rotation = Vector3(0.38, 0, 0)
-		player.gravity_field = fold.up_at
+		player.gravity_field = inside.up_at
 		player.set_physics_process(true)
 		player.set_process(true)
 		player.enabled = true
@@ -906,6 +1031,9 @@ func make_night() -> void:
 	for layer in grass_layers:
 		layer.material.set_shader_parameter("keep_z", Vector2(Fold.BEND_Z + 0.3, Fold.FAR_Z - 0.3))
 	fold.show_fold()
+	# The moon lights only the box: the room and the planet have their own lamps.
+	sun.light_cull_mask = 1 | 2 | Inside.Portal.SHELL
+	inside.connect_portals(player, environment)
 	_fireflies()
 
 func _fireflies() -> void:
@@ -948,22 +1076,88 @@ func _fireflies() -> void:
 	add_child(fireflies)
 	fireflies.global_position = player.global_position
 
-# The door swings in on the dark inside of the house; a moment later it is the next morning
-# (until the inside exists).
+# The door swings in, and the doorway already shows what is inside: the walk goes on through it.
 func open_house() -> void:
 	fold.open_door()
-	player.enabled = false
+	inside.start_music()
 	prompt.modulate.a = 0.0
-	state = "door"
+
+# Which world the player is in (the box, the room, the planet): that world's light, air and
+# footsteps, and a word the first time.
+func _follow_zone() -> void:
+	var now: String = inside.zone(player.global_position)
+	if now == where:
+		return
+	where = now
+	var camera: Camera3D = player.camera
+	match where:
+		"box":
+			camera.environment = null
+			camera.far = 3000.0
+			player.ground_steps = grass_steps
+			fireflies.visible = true
+			inside.music.volume_db = -80.0
+		"room":
+			camera.environment = inside.room_environment
+			camera.far = 3000.0
+			player.ground_steps = wood_steps
+			fireflies.visible = false
+			inside.music.pitch_scale = 0.62
+			inside.music.volume_db = -24.0
+			if not told_room:
+				told_room = true
+				_say("Bên trong… rộng quá.")
+		"planet":
+			camera.environment = inside.planet_environment
+			camera.far = 7000.0
+			player.ground_steps = grass_steps
+			fireflies.visible = false
+			inside.music.pitch_scale = 0.5
+			inside.music.volume_db = -28.0
+			if not told_planet:
+				told_planet = true
+				_say("Một hành tinh nhỏ xíu.")
+
+# Touching the glass ball: the eye leaves the body and falls into it, down to the tiny planet,
+# which turns out to be the real one.
+func touch_globe() -> void:
+	state = "zoom"
 	state_time = 0.0
+	player.enabled = false
+	player.set_physics_process(false)
+	player.set_process(false)
+	prompt.modulate.a = 0.0
 	_say("")
+	inside.zoom_begin(player.camera.global_transform)
+	_build_first_meadow()
 
-func _door() -> void:
-	if state_time > 2.6:
-		state = "leave"
-		state_time = 0.0
+func _zoom() -> void:
+	var step: Dictionary = inside.zoom(state_time)
+	var camera: Camera3D = player.camera
+	camera.global_transform = step.camera
+	camera.near = step.near
+	inside.room_environment.fog_density = step.fog
+	if state_time < inside.zoom_length():
+		return
+	inside.room_environment.fog_density = Inside.FOG
+	camera.near = 0.05
+	player.global_position = inside.landing()
+	player.frame = Basis.IDENTITY
+	player.up_direction = Vector3.UP
+	player.velocity = Vector3.ZERO
+	player.yaw = 0.0
+	player.pitch = -0.05
+	player.camera.position = Vector3(0, player.EYE, 0)
+	player.camera.rotation = Vector3(-0.05, 0, 0)
+	player.global_basis = Basis.IDENTITY
+	player.set_physics_process(true)
+	player.set_process(true)
+	player.enabled = true
+	state = "walk"
+	state_time = 0.0
+	_follow_zone()
 
-# Into the house: everything goes white, and it is the next morning (until the games exist).
+# Asleep on the meadow's bed the second time: everything goes white, and it is the next morning.
 func _leave() -> void:
 	fade.color = Color(1.0, 0.98, 0.94, clampf(state_time / 3.0, 0, 1))
 	music.volume_db = lerpf(-11.0, -40.0, clampf(state_time / 3.5, 0, 1))

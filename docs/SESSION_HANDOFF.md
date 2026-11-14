@@ -48,7 +48,7 @@ R xếp lại bảng của đảo hiện tại. Rơi xuống vực thì về đ�
 
 ## Giấc mơ đồng cỏ (2026-11-14)
 
-Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.tscn`, chương "Đêm 1 · Đồng cỏ"; nằm lên giường xong thì sang `town.tscn` như trước. Đang dev nên tạm nối như vậy.
+Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.tscn`, chương "Đêm 1 · Đồng cỏ". Kết màn: qua cửa nhà trên hành tinh về lại đồng cỏ tối, nằm lên giường lần hai thì sang `town.tscn`.
 
 - Mở đầu trong tối: đồng cỏ đồi lượn dưới trời u ám, chỉ có một chỗ sáng ở xa 90 m, nơi các tia sáng ánh cầu vồng rọi xuống một cái cây và một cái giường. Hàng cột điện đi xa dần vào sương.
 - Tia sáng (`meadow_beam.gdshader`): 12 dải quad luôn xoay mặt về phía mắt, sáng theo hình chuông ngang dải, đáy mềm theo depth buffer nên hòa vào cỏ, không còn cạnh hay góc. Quầng sáng trên cỏ là một Decal tròn mờ dần, chỉ chiếu lớp 1; cây và giường đặt ở lớp 2 để không bị hắt xám.
@@ -57,7 +57,23 @@ Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.t
 - Ban đêm (`scripts/meadow/land_fold.gd`): đồng cỏ hóa ra là đáy của một cái hộp cỏ. Nhìn dọc trục x, hộp là hình vuông cạnh 220 m, góc bo bán kính 36 m, dài 2,4 km mỗi bên. Theo thứ tự: đáy là đồng cỏ có giường; tường là khu vui chơi (vòng đu quay, vòng ngựa gỗ, lều xiếc, quầy, xe bỏng ngô, trò đập búa, khinh khí cầu); trần có lối đất đèn lồng dẫn tới một ngôi nhà gạch đỏ bình thường; tường bên kia đi xuống lại đáy, thành một vòng khép kín. Trọng lực luôn hướng về mặt gần nhất (`up_at`: từ người chơi về hình chữ nhật lõi), xoay dần từng bước, nên qua góc không thấy dốc; validator đo dốc lớn nhất dưới chân dưới 1°. Đứng ở đâu ngửa đầu lên cũng thấy mặt đối diện; trên trần nhìn lên là đồng cỏ có giường. Sương đêm xanh nhạt (mật độ 0.0036) làm các mặt xa tan vào sương cho cảm giác vô tận; người dùng chê bản hộp 96 m là chật. Trăng không đổ bóng, vì có bóng thì các mặt che tối lẫn nhau.
 - Shift để chạy trong mơ (7,5 m/s). Chạy từ giường tới cửa nhà mất khoảng 42 giây. Ra xa quá 170 m theo trục x thì bị đẩy nhẹ lại.
 - Cỏ và đất trên các mặt hộp dùng chung shader với đồng cỏ (chế độ box, toạ độ u dọc x, s vòng quanh hộp). Kích thước hộp nằm ở `land_fold.gd` và được đưa vào shader bằng `box_uniforms`; `ground_height` làm phẳng hai mép đáy và bỏ đồi trong lòng hộp (sửa ở shader thì sửa cả `dream_meadow.gd`).
-- Ngôi nhà dựng bằng code, texture Poly Haven. Cạnh cửa bấm E để mở: cửa xoay vào bóng tối, rồi tạm sang `town.tscn`. Bên trong là "một thế giới rộng lớn đối lập với ngôi nhà nhỏ", sẽ làm sau; điểm neo là Marker3D `Inside` trong node `House`.
+- Ngôi nhà dựng bằng code (`build_house` trong `land_fold.gd`, dùng lại cho nhà trên hành tinh). Cửa là lỗ thật xuyên tường. Bấm E thì cửa xoay vào trong, khung cửa đã hiện sẵn bên trong nhà, cứ thế đi xuyên qua (`portal.gd`).
+- Bên trong nhà (`scripts/meadow/house_inside.gd`, đặt ở y = -6000):
+  - Phòng khách to gấp 16 lần: trần 42 m, giấy dán tường vàng, sàn gỗ, thảm, sofa, ghế bành, đồng hồ quả lắc, kệ sách, cửa sổ trời đêm, rèm, và cánh cửa bé tí dưới chân tường (cửa ra).
+  - Cầu thang xoắn bằng 24 chồng sách dẫn lên bàn trà. Trên bàn có đèn dầu và quả cầu thủy tinh; trong quả cầu là hành tinh tí hon có một mặt trời tí hon.
+  - Bấm E vào quả cầu thì mắt rơi vào trong, độ cao giảm theo hàm mũ (kiểu "powers of ten"), rồi đứng trên hành tinh thật bán kính 45 m (`PLANET_AT`, ở z = -12000).
+  - Quanh hành tinh có bản sao cả căn phòng phóng to K = 45 lần, ánh sáng phóng theo, nên khung hình cuối cú rơi khớp đúng khung hình đứng trên hành tinh, không bị cắt cảnh.
+  - Trên hành tinh có nhà gạch, cây và giường. Giường chỉ để trang trí, không ngủ được (người dùng yêu cầu).
+  - Cửa nhà gạch mở ra cảnh đầu tiên của màn: đồng cỏ tối, một chỗ sáng ở xa.
+    - Lúc chạm quả cầu, game dựng thêm một bản `dream_meadow` ở chế độ `preview` (không có người chơi, HUD, hộp hay phần trong nhà) trong World3D riêng nằm bên trong SubViewport của cổng (`portal.gd`, `hand_over`).
+    - Bước qua cửa thì chính bản đó được gắn lên làm cảnh hiện tại (`_into_first_meadow` rồi `begin_again`), không nạp lại nên không khựng. Người chơi đứng ở điểm xuất phát, quay về phía chỗ sáng.
+    - Lần này (`again`) giường không dẫn sang ban đêm: nhắm mắt là tỉnh dậy thật, sang `town.tscn`.
+- Cổng (`portal.gd`):
+  - Camera phụ render vào SubViewport (HDR, chưa tonemap, để môi trường của mắt chỉnh màu một lần), hiện theo screen-space lên một hộp lộn trong ra sau khung cửa.
+  - Chỉ render khi cửa trong tầm nhìn và gần (dưới 160 m).
+  - Lớp hiển thị: vỏ nhà = 4 và màn cổng = 8, cả hai bị ẩn khỏi camera cổng. Phòng = 16, hành tinh = 32, bản sao phòng = 64; mỗi nhóm có đèn riêng, trăng chỉ chiếu 1|2|4.
+  - Đi qua là `carry()`: dời vị trí, xoay `frame`, xoay vận tốc.
+- Chỗ cho minigame giải đố sau này: căn phòng, kệ sách, đồng hồ, hành tinh.
 - Trò chơi ở khu vui chơi làm sau: chỗ đã chừa là các Marker3D `GameStall1..3`, `GameStriker`, `GameCarousel` trong node `Fair`. Lều xiếc giờ chỉ để trang trí.
 - Không thua, không đếm giờ. Nhảy lơ lửng như giấc mơ mặt nước (dùng chung `dream_player.gd`, `lucid = true`). Đi xa hơn 150 m thì bị giữ lại nhẹ nhàng ở mép.
 - Người dùng muốn cảm giác liminal space / dreamcore. Hậu kỳ `dreamcore_post.gdshader` gồm: nhòe rìa, quầng sáng, lệch màu, nâng vùng tối thành tím nhạt, hạt phim, viền tối. Thêm DOF làm mờ cảnh xa.

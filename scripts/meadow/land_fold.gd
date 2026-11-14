@@ -14,7 +14,7 @@ extends Node3D
 # The fairground: a Ferris wheel, a carousel built here round Quaternius's horse, a circus tent
 # built here too, stalls, a popcorn cart, a high striker, lamps and hot-air balloons; the games
 # come later (Marker3D "Game*"). The house is built here too, from Poly Haven textures; its
-# inside comes later, for now its door is the way on.
+# door is a doorway into its inside (house_inside.gd).
 # Every model and texture and its licence: assets/meadow/fair/sources.json, ASSETS.md.
 signal reached_fair
 signal reached_house
@@ -48,6 +48,15 @@ const HOUSE_AT := 18.0
 const PLAZA := 20.0
 const PATH_HALF := 1.2
 const DOOR_REACH := 2.0
+# The house's size and its door: a real opening, DOOR_W wide, its floor DOOR_FLOOR up (the top
+# step), its top DOOR_TOP, centred DOOR_X along the front.
+const HOUSE_W := 6.4
+const HOUSE_D := 5.6
+const DOOR_X := -0.9
+const DOOR_W := 1.1
+const DOOR_FLOOR := 0.36
+const DOOR_TOP := 2.54
+const Portal := preload("res://scripts/meadow/portal.gd")
 
 var arc := R * PI / 2
 var wall := SIZE - 2.0 * R
@@ -57,6 +66,7 @@ var house_s := 0.0
 var fair: Node3D
 var house: Node3D
 var door_hinge: Node3D
+var door_frame: Node3D
 var door_open := 0.0
 var opening := false
 var bulbs: Array[Transform3D] = []
@@ -702,7 +712,8 @@ func _path() -> void:
 # An ordinary little house on the ceiling: red brick, a slate roof with its gable to the path, a
 # chimney, a white door between two steps and bushes, a window beside it with a box of flowers,
 # a round attic window, warm light behind the glass. Built in its own frame: local y is the
-# ceiling's up (down in the world), local +Z faces back along the path.
+# ceiling's up (down in the world), local +Z faces back along the path. Its door is a doorway
+# (portal.gd) into the house's inside (house_inside.gd), set up by dream_meadow.gd.
 func _house() -> void:
 	house = Node3D.new()
 	house.name = "House"
@@ -710,6 +721,20 @@ func _house() -> void:
 	var back := -along_of(house_s)
 	house.transform = Transform3D(Basis(up.cross(back), up, back), point(0, house_s))
 	add_child(house)
+	var parts := build_house(house, Portal.SHELL, 1, true)
+	door_hinge = parts.hinge
+	door_frame = parts.frame
+	var mark := Marker3D.new()
+	mark.name = "Inside"
+	house.add_child(mark)
+
+# The house, into `parent` (its floor at the origin, front to +Z). The shell (walls, roof,
+# windows, the door) is drawn on `shell_layer`, the rest (steps, bushes, flowers) on
+# `yard_layer`; the shell is left out of what a doorway's camera sees, so looking out of the
+# house through its door is never blocked by the house. The door is a real opening through
+# the front wall, as deep as a portal's screen, and the collider leaves it open.
+# Returns {hinge: the door's hinge, frame: the doorway's frame for a portal, lamp}.
+func build_house(parent: Node3D, shell_layer: int, yard_layer: int, collide: bool) -> Dictionary:
 	var brick := _textured(BRICK)
 	brick.uv1_triplanar = true
 	brick.uv1_scale = Vector3.ONE * 0.45
@@ -728,77 +753,105 @@ func _house() -> void:
 	glass.emission = Color(1.0, 0.78, 0.45)
 	glass.emission_energy_multiplier = 0.7
 	glass.roughness = 0.1
-	const W := 6.4
-	const D := 5.6
+	var shell := Node3D.new()
+	shell.name = "Shell"
+	parent.add_child(shell)
+	var yard := Node3D.new()
+	yard.name = "Yard"
+	parent.add_child(yard)
+	const W := HOUSE_W
+	const D := HOUSE_D
 	const H := 3.6
 	const RIDGE := 2.6
-	_block(house, Vector3(W, H, D), Vector3(0, H / 2, 0), brick)
-	_block(house, Vector3(W + 0.2, 0.25, D + 0.2), Vector3(0, 0.12, 0), stone)
+	const T := Portal.DEPTH + 0.02
+	var left := DOOR_X - DOOR_W / 2
+	var right := DOOR_X + DOOR_W / 2
+	# The walls, with the doorway cut through the front one.
+	var walls: Array[AABB] = [
+		AABB(Vector3(-W / 2, 0, -D / 2), Vector3(W, H, D - T)),
+		AABB(Vector3(-W / 2, 0, D / 2 - T), Vector3(left + W / 2, H, T)),
+		AABB(Vector3(right, 0, D / 2 - T), Vector3(W / 2 - right, H, T)),
+		AABB(Vector3(left, DOOR_TOP, D / 2 - T), Vector3(DOOR_W, H - DOOR_TOP, T)),
+		AABB(Vector3(left, 0, D / 2 - T), Vector3(DOOR_W, DOOR_FLOOR, T))]
+	for part in walls:
+		_block(shell, part.size, part.get_center(), brick)
+	_block(shell, Vector3(W + 0.2, 0.25, D + 0.2), Vector3(0, 0.12, 0), stone)
 	# Gables front and back, then the two slopes of the roof, with a white edge.
 	for z: float in [D / 2, -D / 2]:
-		_prism(house, W, RIDGE, 0.0, H, z, brick)
+		_prism(shell, W, RIDGE, 0.0, H, z, brick)
 	var slope := Vector2(W / 2 + 0.45, RIDGE + 0.3).length()
 	var tilt := atan2(RIDGE + 0.3, W / 2 + 0.45)
 	for side: float in [-1.0, 1.0]:
-		var roof := _block(house, Vector3(slope, 0.18, D + 0.8), Vector3(side * (W / 4 + 0.1), H + RIDGE / 2 + 0.05, 0), slate)
+		var roof := _block(shell, Vector3(slope, 0.18, D + 0.8), Vector3(side * (W / 4 + 0.1), H + RIDGE / 2 + 0.05, 0), slate)
 		roof.rotation.z = -side * tilt
-		var trim := _block(house, Vector3(slope, 0.08, 0.14), Vector3(side * (W / 4 + 0.1), H + RIDGE / 2 - 0.03, D / 2 + 0.42), white)
+		var trim := _block(shell, Vector3(slope, 0.08, 0.14), Vector3(side * (W / 4 + 0.1), H + RIDGE / 2 - 0.03, D / 2 + 0.42), white)
 		trim.rotation.z = -side * tilt
-	_block(house, Vector3(0.9, 2.2, 0.9), Vector3(W / 2 - 1.1, H + RIDGE - 0.2, -D / 4), brick)
-	_block(house, Vector3(1.05, 0.15, 1.05), Vector3(W / 2 - 1.1, H + RIDGE + 0.95, -D / 4), stone)
-	# The door, on its hinge so it can swing in.
+	_block(shell, Vector3(0.9, 2.2, 0.9), Vector3(W / 2 - 1.1, H + RIDGE - 0.2, -D / 4), brick)
+	_block(shell, Vector3(1.05, 0.15, 1.05), Vector3(W / 2 - 1.1, H + RIDGE + 0.95, -D / 4), stone)
+	# The door frame round the opening, and the door on its hinge so it can swing in.
 	var front := D / 2 + 0.02
-	_block(house, Vector3(1.4, 2.5, 0.08), Vector3(-0.9, 1.45, front), white)
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0, 0, 0)
-	dark.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_block(house, Vector3(1.1, 2.2, 0.02), Vector3(-0.9, 1.36, front + 0.03), dark)
-	door_hinge = Node3D.new()
-	door_hinge.position = Vector3(-1.45, 0.26, front + 0.06)
-	house.add_child(door_hinge)
-	var leaf := _block(door_hinge, Vector3(1.1, 2.2, 0.06), Vector3(0.55, 1.1, 0), white)
+	_block(shell, Vector3(0.12, DOOR_TOP - DOOR_FLOOR + 0.12, 0.1), Vector3(left - 0.06, (DOOR_TOP + DOOR_FLOOR) / 2 + 0.06, front), white)
+	_block(shell, Vector3(0.12, DOOR_TOP - DOOR_FLOOR + 0.12, 0.1), Vector3(right + 0.06, (DOOR_TOP + DOOR_FLOOR) / 2 + 0.06, front), white)
+	_block(shell, Vector3(DOOR_W + 0.36, 0.12, 0.1), Vector3(DOOR_X, DOOR_TOP + 0.06, front), white)
+	var hinge := Node3D.new()
+	hinge.name = "Hinge"
+	hinge.position = Vector3(left, DOOR_FLOOR, front - 0.04)
+	shell.add_child(hinge)
+	var leaf := _block(hinge, Vector3(DOOR_W - 0.02, DOOR_TOP - DOOR_FLOOR - 0.02, 0.06), Vector3(DOOR_W / 2, (DOOR_TOP - DOOR_FLOOR) / 2, 0), white)
 	for row in range(3):
-		_block(leaf, Vector3(0.75, 0.48 if row > 0 else 0.3, 0.03), Vector3(0, 0.62 - row * 0.62, 0.04), white)
-	var knob := _block(door_hinge, Vector3(0.07, 0.07, 0.08), Vector3(0.95, 1.05, 0.07), stone)
+		_block(leaf, Vector3(0.72, 0.48 if row > 0 else 0.3, 0.03), Vector3(0, 0.62 - row * 0.62, 0.04), white)
+	var knob := _block(hinge, Vector3(0.07, 0.07, 0.08), Vector3(DOOR_W - 0.15, 0.95, 0.07), stone)
 	knob.name = "Knob"
+	var frame := Node3D.new()
+	frame.name = "Doorway"
+	frame.position = Vector3(DOOR_X, DOOR_FLOOR, D / 2)
+	parent.add_child(frame)
 	# Window beside the door, with its flower box; a smaller one up in the gable.
-	_window(house, Vector3(1.55, 1.7, front), Vector2(1.2, 1.1), white, glass)
-	_block(house, Vector3(1.4, 0.25, 0.3), Vector3(1.55, 0.98, front + 0.15), Color(0.35, 0.22, 0.12))
+	_window(shell, Vector3(1.55, 1.7, front), Vector2(1.2, 1.1), white, glass)
+	_block(shell, Vector3(1.4, 0.25, 0.3), Vector3(1.55, 0.98, front + 0.15), Color(0.35, 0.22, 0.12))
 	for i in range(4):
 		var flower: Node3D = load(DANDELION).instantiate()
 		flower.position = Vector3(1.05 + i * 0.33, 1.1, front + 0.15)
 		flower.scale = Vector3.ONE * 1.3
 		flower.rotation.y = i * 1.7
-		house.add_child(flower)
-	_window(house, Vector3(0, H + 0.9, front), Vector2(0.9, 0.8), white, glass)
+		yard.add_child(flower)
+	_window(shell, Vector3(0, H + 0.9, front), Vector2(0.9, 0.8), white, glass)
 	for x: float in [-W / 2 + 0.5, W / 2 - 0.5]:
-		_window(house, Vector3(x * 0.55, 1.7, -front), Vector2(1.0, 1.0), white, glass, PI)
+		_window(shell, Vector3(x * 0.55, 1.7, -front), Vector2(1.0, 1.0), white, glass, PI)
 	# Two steps up to the door, and a bush either side of them.
-	_block(house, Vector3(1.8, 0.18, 0.5), Vector3(-0.9, 0.09, front + 0.25), stone)
-	_block(house, Vector3(1.5, 0.18, 0.35), Vector3(-0.9, 0.27, front + 0.15), stone)
+	_block(yard, Vector3(1.8, 0.18, 0.5), Vector3(DOOR_X, 0.09, front + 0.25), stone)
+	_block(yard, Vector3(1.5, 0.18, 0.35), Vector3(DOOR_X, 0.27, front + 0.15), stone)
 	for x: float in [-2.4, 0.6]:
 		var bush: Node3D = load(SHRUB).instantiate()
 		bush.position = Vector3(x, 0, front + 0.6)
 		bush.scale = Vector3.ONE * 0.55
-		house.add_child(bush)
+		yard.add_child(bush)
 	var lamp := OmniLight3D.new()
 	lamp.light_color = Color(1.0, 0.8, 0.5)
 	lamp.light_energy = 0.7
 	lamp.omni_range = 11.0
 	lamp.omni_attenuation = 0.7
 	lamp.position = Vector3(0.3, 4.2, front + 3.5)
-	house.add_child(lamp)
-	var body := StaticBody3D.new()
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(W, H + RIDGE, D)
-	shape.shape = box
-	shape.position = Vector3(0, (H + RIDGE) / 2, 0)
-	body.add_child(shape)
-	house.add_child(body)
-	var mark := Marker3D.new()
-	mark.name = "Inside"
-	house.add_child(mark)
+	yard.add_child(lamp)
+	for mesh: VisualInstance3D in shell.find_children("*", "VisualInstance3D", true, false):
+		mesh.layers = shell_layer
+	for mesh: VisualInstance3D in yard.find_children("*", "VisualInstance3D", true, false):
+		if not mesh is Light3D:
+			mesh.layers = yard_layer
+	if collide:
+		var body := StaticBody3D.new()
+		body.name = "HouseBody"
+		walls.append(AABB(Vector3(-W / 2, H, -D / 2), Vector3(W, RIDGE, D)))
+		walls.append(AABB(Vector3(left, 0, D / 2 - T), Vector3(DOOR_W, DOOR_FLOOR, T + 0.06)))
+		for part in walls:
+			var shape := CollisionShape3D.new()
+			var box := BoxShape3D.new()
+			box.size = part.size
+			shape.shape = box
+			shape.position = part.get_center()
+			body.add_child(shape)
+		parent.add_child(body)
+	return {"hinge": hinge, "frame": frame, "lamp": lamp}
 
 func _block(parent: Node3D, size: Vector3, at: Vector3, material: Variant) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
@@ -861,7 +914,7 @@ func _process(delta: float) -> void:
 			horses[i].position.y = 1.0 + sin(clock * 1.6 + i * 1.3) * 0.35
 	if opening:
 		door_open = move_toward(door_open, 1.0, delta * 0.6)
-		door_hinge.rotation.y = -smoothstep(0.0, 1.0, door_open) * deg_to_rad(100)
+		door_hinge.rotation.y = smoothstep(0.0, 1.0, door_open) * deg_to_rad(100)
 	for balloon in balloons:
 		var node: Node3D = balloon.node
 		node.position = balloon.home + Vector3(sin(clock * 0.05 + balloon.phase) * 6.0, sin(clock * 0.3 + balloon.phase) * 1.2, cos(clock * 0.04 + balloon.phase) * 6.0)
@@ -882,7 +935,7 @@ func check_walker(at: Vector3) -> void:
 func near_door(at: Vector3) -> bool:
 	if house == null or opening:
 		return false
-	return house.to_local(at).distance_to(Vector3(-0.9, 0.5, 2.8 + 1.0)) < DOOR_REACH
+	return house.to_local(at).distance_to(Vector3(DOOR_X, 0.5, HOUSE_D / 2 + 1.0)) < DOOR_REACH
 
 func open_door() -> void:
 	opening = true
