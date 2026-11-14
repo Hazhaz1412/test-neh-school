@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ckojq5mhi3taw"
-path="res://.godot/imported/coaster-ride-34.0.png-c5db77b8b3b6afb64741f8978791200c.ctex"
+uid="uid://dsyfknntamqvp"
+path="res://.godot/imported/coaster-endless.png-b6b091b67cb177033c545d1590760a46.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/coaster-ride-34.0.png"
-dest_files=["res://.godot/imported/coaster-ride-34.0.png-c5db77b8b3b6afb64741f8978791200c.ctex"]
+source_file="res://docs/coaster-endless.png"
+dest_files=["res://.godot/imported/coaster-endless.png-b6b091b67cb177033c545d1590760a46.ctex"]
 
 [params]
 

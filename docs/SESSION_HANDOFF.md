@@ -96,14 +96,18 @@ Thắng Đêm 1, bấm Enter ("Về nhà ngủ") là vào `scenes/dream_meadow.t
   - Lộ trình: ga, đoạn phóng (đẩy 14 m/s² lên 40 m/s), dốc top hat cao 64 m, vòng lộn ngược bán kính 14 m, vòng xoắn nghiêng nửa vòng, ba gò nảy, khúc cua dài về ga.
   - Tàu 4 toa và sàn ga là của Kenney. Bấm E ở bục cạnh toa đầu là ngồi ghế đầu (`SEAT`); chạy theo trọng lực và lực cản, góc nhìn mở rộng theo tốc độ, phanh vào ga. Cả vòng khoảng 69 giây.
   - Chuyến bay giấc mơ (`scripts/meadow/coaster_dream.gd`):
-    - Lối vào: trên dốc top hat, ở độ cao 30 m có một vòng ánh sáng. Tàu đi qua là chớp trắng và sang đường ray vô tận. Đường ray này nằm ở `DREAM_AT` (y = 15000), dùng lớp hiển thị 128 và môi trường riêng.
+    - Nhìn từ khu vui chơi, đây chỉ là một tàu lượn bình thường: sau vòng lộn, đường ray chạy dọc tường thêm gần 2 km, nhấp nhô, mất hút vào sương. Không có vòng sáng hay dấu hiệu gì (người dùng muốn đánh lừa người chơi).
+    - Lối vào: trên đoạn chạy ra xa, tàu được tăng tốc lên 52 m/s và lao vào một khối mây. Mây đặc dần trong 300 m. Ở đỉnh một gò bằng phẳng (`SWAP_X` = 922), lúc mây đặc nhất, tàu được chuyển sang đường ray giấc mơ: không chớp trắng, không âm thanh "dịch chuyển". Đường ray giấc mơ nằm ở `DREAM_AT` (y = 15000), lớp hiển thị 128, môi trường riêng.
+    - Hai bên chỗ chuyển nhìn giống hệt nhau: cùng sương xanh đêm, cùng ánh trăng chiếu lên tàu. Mây trôi vụt qua (`mist`) và tiếng gió đi theo toa đầu nên liền mạch.
+    - Đường ray giấc mơ được dựng sẵn từng khúc mỗi khung hình (`prepare_step`) trong lúc tàu còn đang lao ra, nên không bị khựng.
     - Đường ray: là spline Catmull-Rom sinh dần 1000 m phía trước tàu và xóa 220 m phía sau, mỗi khúc dài 120 m. Tàu chạy 40–88 m/s tùy dốc.
     - Bốn vùng nối mượt vào nhau, xen giữa là đoạn chuyển 260 m:
       - biển đêm (sóng phát sáng, cột đá, phao đèn), tới 1100 m;
       - dưới đáy biển (sứa, tảo, cá voi, cá đuối, cá barramundi lấy từ đồng cỏ), tới 2200 m;
       - mây hoàng hôn (biển mây bên dưới, đèn trời bay lên), tới 3300 m;
       - vũ trụ (thiên thạch, hành tinh có vành, tinh vân), tới 4500 m.
-    - Lối ra: ở 4440 m có một lỗ khóa ánh sáng, đưa tàu về khúc cua cuối trước ga.
+    - Lối ra: lỗ khóa ánh sáng ở 4180 m. Sau đó đường ray thẳng và bằng phẳng, tàu giảm dần xuống 30 m/s và chìm vào mây. Tàu ra khỏi mây trên đường về (`RETURN_X` = 699), qua các gò rồi vào ga.
+    - Đường ray thật dựng bằng mảng đỉnh trực tiếp (144 ms lúc nạp cảnh, trước là 424 ms). Đoạn chạy ra xa luôn cao hơn cỏ 0,6–8,6 m, không lún xuống đất.
     - Đoạn mây: người dùng chê mây che tầm nhìn. Giờ 70% số mây nằm dưới ray 32–70 m làm biển mây, phần còn lại cách ray từ 45 m trở ra; sương mỏng (0.0009); mặt trời lệch sang bên; hành tinh chỉ hiện khi gần tới vũ trụ.
   - Minigame "bắt mảnh ký ức":
     - 12 mảnh pha lê đặt dọc đường (`SHARDS`): bên cạnh, trên đầu, dưới ray.

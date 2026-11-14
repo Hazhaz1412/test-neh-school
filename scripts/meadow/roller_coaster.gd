@@ -7,10 +7,10 @@ extends Node3D
 # assets/meadow/coaster/sources.json); the supports, canopy and track are built here.
 # Riding it: stand by the train at the station and press E. The train launches to 40 m/s, runs
 # on gravity (and a little drag), the view widening with speed, then brakes back into the station.
-# Partway up the top hat the track runs through a ring of light: the train is out on the dream's
-# endless track (coaster_dream.gd), over the sea, under it, through the clouds, out into space,
-# catching memory shards, until a keyhole of light brings it back onto the last turn into the
-# station. Sounds: wind and rumble with speed, a launch, the warp, swishes past things, splashes,
+# From the fair it is an ordinary coaster whose track runs on along the wall into the haze. Out
+# there, hidden in the haze (SWAP_X), the train slips onto the dream's endless track (coaster_dream.gd), over the sea, under it, through the clouds, out into space,
+# catching memory shards, until a keyhole of light and haze again bring it back onto the way
+# home, out of the haze, over the hills and into the station. Sounds: wind and rumble with speed, a launch, the warp, swishes past things, splashes,
 # the deep's hum, chimes for shards, and its own music (assets/audio/coaster/sources.json).
 # Built in the fair's frame (local y is the wall's up).
 signal ride_over
@@ -21,9 +21,19 @@ signal dream_changed(on: bool)
 const Dream := preload("res://scripts/meadow/coaster_dream.gd")
 const SOUND := "res://assets/audio/coaster/%s.ogg"
 const MUSIC := "res://assets/music/coaster_gumdrop_plains.ogg"
-const GATE_HEIGHT := 30.0
-const RETURN_BEFORE := 170.0
 const DREAM_SPEED := 58.0
+# The track runs out to FAR_X along the wall. Going out, the train plunges into a bank of cloud
+# and at its thickest, on the crest of a roll at SWAP_X (level, so the horizon never jumps), it
+# is carried over to the dream; coming home it comes out of cloud on the crest at RETURN_X.
+const FAR_X := 1900.0
+const SWAP_X := 922.0
+const RETURN_X := 699.0
+const HAZE_FROM := 300.0
+const HAZE_BACK := 380.0
+# Fog this thick is a white-out a few metres off; only the front of the train shows through.
+const HAZE := 0.5
+const BOOST := 52.0
+const HOLD := 30.0
 const MODEL := "res://assets/meadow/coaster/%s.glb"
 const KIT := 2.4
 const CARS := 4
@@ -61,6 +71,13 @@ var dream_d := 0.0
 var gate_at := 0.0
 var return_at := 0.0
 var dreamed := false
+var hills_at := 0.0
+# The haze closing in before the dream and thinning after it: the eye's own copy of the box's air.
+var haze: Environment
+var haze_base := 0.0
+# How deep in cloud the train is (0 clear, 1 white-out), on either side of the swap.
+var cloud := 0.0
+var mist: GPUParticles3D
 # Shards caught on the last ride.
 var caught := 0
 var was_under := false
@@ -121,16 +138,25 @@ func _layout() -> void:
 		var a := TAU * i / 40.0
 		_add(points, tilts, Vector3(loop.x + 14.0 * sin(a), loop.y - 14.0 * cos(a) + 0.6, z + 5.0 * smoothstep(0.0, 1.0, a / TAU)))
 	z += 5.0
-	for x in range(262, 275, 4):
-		_add(points, tilts, Vector3(x, h + 0.6, z))
-	# A banked helix: half a turn, rising and falling, to come back the other way.
-	var middle := Vector3(276, 0, 0)
+	# Then out along the wall, rolling gently, on and on into the haze until it is lost in it:
+	# from the fair the track seems to go on for ever. (The train leaves it for the dream out in
+	# the haze, at SWAP_X; the far end only has to be there to be seen going away.)
+	for x in range(262, int(FAR_X), 6):
+		# Rolling between 0.6 m and 8.6 m over the grass: never down into it.
+		var roll := (4.0 + 4.0 * sin((x - 262.0) / 70.0 - PI / 2)) * smoothstep(262.0, 420.0, x)
+		_add(points, tilts, Vector3(x, h + 0.6 + roll, z))
+	# A banked helix far out: half a turn, rising and falling, to come back the other way.
+	var middle := Vector3(FAR_X + 1.0, 0, 0)
 	for i in range(1, 31):
 		var t := i / 30.0
 		var a := -PI / 2 + PI * t
 		_add(points, tilts, Vector3(middle.x + 25.0 * cos(a), h + 0.6 + 18.0 * sin(PI * t), middle.z + 25.0 * sin(a)), -0.7 * sin(PI * t))
-	# Three airtime hills, back along the other side.
+	# And all the way back, rolling the other way.
 	z = 25.0
+	for x in range(int(FAR_X) - 2, 280, -6):
+		var roll := (4.0 + 4.0 * sin((x - 280.0) / 64.0 + 1.3)) * smoothstep(280.0, 440.0, x)
+		_add(points, tilts, Vector3(x, h + 0.6 + roll, z))
+	# Three airtime hills, back along the other side.
 	for i in range(1, 46):
 		var t := i / 45.0
 		var x := 276.0 - t * 186.0
@@ -166,51 +192,70 @@ func frame_at(d: float) -> Transform3D:
 
 # --- The track itself --------------------------------------------------------------------------
 
+# Rails, spine and ties, written straight into vertex arrays with their normals, a ring a metre.
 func _track() -> void:
-	var rails := SurfaceTool.new()
-	rails.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var spine := SurfaceTool.new()
-	spine.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var ties := SurfaceTool.new()
-	ties.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var step := 0.5
-	var rings := int(length / step)
-	var previous: Array = []
-	for i in range(rings + 1):
-		var f := frame_at(i * step)
-		var current: Array = [
-			_ring(f, Vector3(-GAUGE, 0, 0), 0.07),
-			_ring(f, Vector3(GAUGE, 0, 0), 0.07),
-			_ring(f, Vector3(0, -0.42, 0), 0.16)]
-		if not previous.is_empty():
-			_tube(rails, previous[0], current[0], f.basis)
-			_tube(rails, previous[1], current[1], f.basis)
-			_tube(spine, previous[2], current[2], f.basis)
-		previous = current
-		if i % 3 == 0:
-			_tie(ties, f)
+	var parts := [[PackedVector3Array(), PackedVector3Array()], [PackedVector3Array(), PackedVector3Array()], [PackedVector3Array(), PackedVector3Array()]]
+	var tubes := [[Vector3(-GAUGE, 0, 0), 0.07, 0], [Vector3(GAUGE, 0, 0), 0.07, 0], [Vector3(0, -0.42, 0), 0.16, 1]]
+	var sides := 6
+	var circle: Array[Vector3] = []
+	for k in range(sides):
+		var a := TAU * k / sides
+		circle.append(Vector3(cos(a), sin(a), 0))
+	var last_rings: Array = []
+	var rings_count := int(ceil(length))
+	for i in range(rings_count + 1):
+		var f := frame_at(i * length / rings_count)
+		var rings: Array = []
+		for tube: Array in tubes:
+			var at := PackedVector3Array()
+			var normal := PackedVector3Array()
+			at.resize(sides)
+			normal.resize(sides)
+			for j in range(sides):
+				var n := f.basis * circle[j]
+				normal[j] = n
+				at[j] = f.origin + f.basis * (tube[0] as Vector3) + n * (tube[1] as float)
+			rings.append([at, normal])
+		if not last_rings.is_empty():
+			for t in range(tubes.size()):
+				var verts: PackedVector3Array = parts[tubes[t][2]][0]
+				var norms: PackedVector3Array = parts[tubes[t][2]][1]
+				var a0s: PackedVector3Array = last_rings[t][0]
+				var an: PackedVector3Array = last_rings[t][1]
+				var b0s: PackedVector3Array = rings[t][0]
+				var bn: PackedVector3Array = rings[t][1]
+				for j in range(sides):
+					var j1 := (j + 1) % sides
+					verts.append_array([a0s[j], b0s[j], b0s[j1], a0s[j], b0s[j1], a0s[j1]])
+					norms.append_array([an[j], bn[j], bn[j1], an[j], bn[j1], an[j1]])
+		last_rings = rings
+		if i % 2 == 0:
+			_tie(parts[2][0], parts[2][1], f)
 	var steel := StandardMaterial3D.new()
-	steel.cull_mode = BaseMaterial3D.CULL_DISABLED
 	steel.albedo_color = Color(0.85, 0.86, 0.9)
 	steel.metallic = 0.8
 	steel.roughness = 0.25
 	var red := StandardMaterial3D.new()
-	red.cull_mode = BaseMaterial3D.CULL_DISABLED
 	red.albedo_color = Color(0.75, 0.1, 0.12)
 	red.metallic = 0.3
 	red.roughness = 0.4
 	var dark := StandardMaterial3D.new()
-	dark.cull_mode = BaseMaterial3D.CULL_DISABLED
 	dark.albedo_color = Color(0.2, 0.2, 0.24)
 	dark.metallic = 0.5
 	_lights()
-	for part: Array in [[rails, steel, "Rails"], [spine, red, "Spine"], [ties, dark, "Ties"]]:
-		var tool: SurfaceTool = part[0]
-		tool.generate_normals()
+	var names := ["Rails", "Spine", "Ties"]
+	var paints := [steel, red, dark]
+	for i in range(3):
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = parts[i][0]
+		arrays[Mesh.ARRAY_NORMAL] = parts[i][1]
+		var shape := ArrayMesh.new()
+		shape.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		var mesh := MeshInstance3D.new()
-		mesh.name = part[2]
-		mesh.mesh = tool.commit()
-		mesh.material_override = part[1]
+		mesh.name = names[i]
+		mesh.mesh = shape
+		mesh.material_override = paints[i]
 		add_child(mesh)
 
 # Coloured bulbs all along both sides of the track, so the whole ride is drawn in light at night.
@@ -244,24 +289,25 @@ func _lights() -> void:
 	bulbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(bulbs)
 
-func _ring(f: Transform3D, offset: Vector3, radius: float) -> PackedVector3Array:
-	var ring := PackedVector3Array()
-	for k in range(6):
-		var a := TAU * k / 6.0
-		ring.append(f * (offset + Vector3(cos(a), sin(a), 0) * radius))
-	return ring
-
-func _tube(tool: SurfaceTool, a: PackedVector3Array, b: PackedVector3Array, _basis: Basis) -> void:
-	for k in range(6):
-		var k1 := (k + 1) % 6
-		for v: Vector3 in [a[k], b[k], b[k1], a[k], b[k1], a[k1]]:
-			tool.add_vertex(v)
-
 # A tie across the rails and a strut down to the spine.
-func _tie(tool: SurfaceTool, f: Transform3D) -> void:
-	_bar(tool, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(GAUGE, -0.05, 0), 0.06, f.basis)
-	_bar(tool, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
-	_bar(tool, f * Vector3(GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
+func _tie(verts: PackedVector3Array, norms: PackedVector3Array, f: Transform3D) -> void:
+	_fast_bar(verts, norms, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(GAUGE, -0.05, 0), 0.06, f.basis)
+	_fast_bar(verts, norms, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
+	_fast_bar(verts, norms, f * Vector3(GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
+
+func _fast_bar(verts: PackedVector3Array, norms: PackedVector3Array, from: Vector3, to: Vector3, thick: float, basis: Basis) -> void:
+	var along := (to - from).normalized()
+	var across := basis.z if absf(basis.z.dot(along)) < 0.9 else basis.x
+	var side := across.cross(along).normalized()
+	var lift := along.cross(side).normalized()
+	var corners := [side + lift, -side + lift, -side - lift, side - lift]
+	var faces := [lift, -side, -lift, side]
+	for k in range(4):
+		var c0: Vector3 = corners[k] * thick
+		var c1: Vector3 = corners[(k + 1) % 4] * thick
+		var n: Vector3 = faces[k]
+		verts.append_array([from + c0, to + c0, to + c1, from + c0, to + c1, from + c1])
+		norms.append_array([n, n, n, n, n, n])
 
 func _bar(tool: SurfaceTool, from: Vector3, to: Vector3, thick: float, basis: Basis) -> void:
 	var along := (to - from).normalized()
@@ -394,32 +440,23 @@ func near_board(at_point: Vector3) -> bool:
 # --- The ride ----------------------------------------------------------------------------------
 
 # The ring of light on the climb: going through it is going into the dream.
+# The two hidden places where the ride leaves the fair's track for the dream and comes back:
+# SWAP_X out along the wall, on the way out (z < 0) and on the way home (z > 0). Nothing marks
+# them; from the fair the track just runs on into the haze.
 func _gateway() -> void:
 	var d := HOME
-	while d < HOME + length and frame_at(d).origin.y < GATE_HEIGHT:
+	var found_out := false
+	var found_back := false
+	while d < HOME + length and not (found_out and found_back):
+		var p := frame_at(d).origin
+		if not found_out and p.z < 0.0 and p.x > SWAP_X:
+			gate_at = fposmod(d, length)
+			found_out = true
+		elif found_out and not found_back and p.z > 0.0 and p.x < RETURN_X:
+			return_at = fposmod(d, length)
+			found_back = true
 		d += 1.0
-	gate_at = fposmod(d, length)
-	return_at = fposmod(HOME - RETURN_BEFORE, length)
-	var f := frame_at(gate_at)
-	var ring := TorusMesh.new()
-	ring.inner_radius = 4.6
-	ring.outer_radius = 5.4
-	ring.rings = 64
-	var glow := StandardMaterial3D.new()
-	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glow.albedo_color = Color(2.2, 1.6, 3.2)
-	var halo := MeshInstance3D.new()
-	halo.name = "Gateway"
-	halo.mesh = ring
-	halo.material_override = glow
-	halo.transform = Transform3D(f.basis * Basis(Vector3.RIGHT, PI / 2), f * Vector3(0, 1.2, 0))
-	add_child(halo)
-	var light := OmniLight3D.new()
-	light.light_color = Color(0.8, 0.6, 1.0)
-	light.light_energy = 3.0
-	light.omni_range = 20.0
-	light.position = f * Vector3(0, 1.2, 0)
-	add_child(light)
+	hills_at = fposmod(return_at + (RETURN_X - 290.0), length)
 
 func _player(name: String, loop: bool, volume: float) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
@@ -499,6 +536,55 @@ func _sparks() -> void:
 	sparks.draw_pass_1 = dot
 	sparks.position = Vector3(0, 0.1, -1.4)
 	cars[0].add_child(sparks)
+	# Wisps of cloud flying past the train, in its own frame so they carry straight across the swap.
+	mist = GPUParticles3D.new()
+	mist.amount = 90
+	mist.lifetime = 0.9
+	mist.local_coords = true
+	mist.amount_ratio = 0.0
+	mist.layers = 1 | Dream.LAYER
+	mist.visibility_aabb = AABB(Vector3(-30, -20, -80), Vector3(60, 40, 120))
+	var drift := ParticleProcessMaterial.new()
+	drift.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	drift.emission_box_extents = Vector3(10, 6, 12)
+	drift.direction = Vector3(0, 0, 1)
+	drift.spread = 4.0
+	drift.initial_velocity_min = 55.0
+	drift.initial_velocity_max = 85.0
+	drift.gravity = Vector3.ZERO
+	drift.scale_min = 0.6
+	drift.scale_max = 1.6
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	fade.add_point(0.3, Color(1, 1, 1, 1))
+	fade.add_point(0.7, Color(1, 1, 1, 1))
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	drift.color_ramp = ramp
+	mist.process_material = drift
+	var wisp := QuadMesh.new()
+	wisp.size = Vector2(9.0, 3.5)
+	var soft := StandardMaterial3D.new()
+	soft.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	soft.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	soft.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	soft.vertex_color_use_as_albedo = true
+	soft.disable_fog = true
+	var puff := GradientTexture2D.new()
+	var round_fade := Gradient.new()
+	round_fade.set_color(0, Color(1, 1, 1, 0.16))
+	round_fade.set_color(1, Color(1, 1, 1, 0))
+	puff.gradient = round_fade
+	puff.fill = GradientTexture2D.FILL_RADIAL
+	puff.fill_from = Vector2(0.5, 0.5)
+	puff.fill_to = Vector2(1.0, 0.5)
+	soft.albedo_texture = puff
+	soft.albedo_color = Color(0.55, 0.62, 0.85)
+	wisp.material = soft
+	mist.draw_pass_1 = wisp
+	mist.position = Vector3(0, 1.5, -45)
+	cars[0].add_child(mist)
 	splash = GPUParticles3D.new()
 	splash.amount = 260
 	splash.lifetime = 1.4
@@ -546,6 +632,14 @@ func ride(walker: CharacterBody3D) -> void:
 	rider.yaw = 0.0
 	rider.pitch = -0.05
 	base_fov = rider.camera.fov
+	var air: Environment = get_world_3d().environment
+	if air == null:
+		var holder := get_tree().root.find_children("*", "WorldEnvironment", true, false)
+		if not holder.is_empty():
+			air = (holder[0] as WorldEnvironment).environment
+	haze = air.duplicate()
+	haze.fog_sky_affect = 1.0
+	haze_base = air.fog_density
 	_play("launch")
 	music.volume_db = -30.0
 	music.play()
@@ -575,7 +669,10 @@ func _process(delta: float) -> void:
 	rider.camera.v_offset = randf_range(-shake, shake)
 	wind.volume_db = lerpf(-36.0, -4.0, rush)
 	wind.pitch_scale = 0.8 + rush * 0.5
-	rumble.volume_db = lerpf(-30.0, -10.0, rush) - (8.0 if phase == "dream" else 0.0)
+	rumble.volume_db = lerpf(-30.0, -10.0, rush)
+	# The cloud: streaks of mist rushing past, and the wind louder in it.
+	mist.amount_ratio = cloud
+	wind.volume_db += cloud * 5.0
 	rumble.pitch_scale = 0.6 + rush * 0.6
 	sparks.emitting = speed > 34.0
 	if phase == "home" and travelled >= length - 0.01 and speed < 0.7:
@@ -586,8 +683,21 @@ func _track_step(delta: float) -> void:
 	var f := frame_at(at)
 	var climb := (-f.basis.z).y
 	var left := length - travelled
+	var out_from := fposmod(gate_at - HOME, length) - 600.0
+	var to_gate := fposmod(gate_at - HOME, length) - travelled
+	var home_from := fposmod(return_at - HOME, length)
+	var hills := fposmod(hills_at - HOME, length)
 	if travelled < launch_end:
 		speed = minf(speed + LAUNCH_PUSH * delta, LAUNCH)
+	elif phase == "track" and travelled > out_from:
+		# Boosters on the long run out: faster and faster into the haze. Meanwhile the dream's
+		# track is laid, a piece a frame.
+		speed = move_toward(speed, BOOST, delta * 4.0)
+		if not dream.preparing and not dreamed:
+			dream.prepare()
+		dream.prepare_step()
+	elif phase == "home" and travelled < hills:
+		speed = move_toward(speed, HOLD, delta * 6.0)
 	elif left < BRAKE_FROM:
 		var want := lerpf(0.0, CRAWL * 2.5, left / BRAKE_FROM)
 		speed = move_toward(speed, maxf(want, 0.6 if left > 0.5 else 0.0), delta * 14.0)
@@ -602,22 +712,30 @@ func _track_step(delta: float) -> void:
 	_place_train()
 	if f.basis.y.y < -0.9:
 		inverted = true
+	# The haze thickens over the last stretch before the swap, and thins on the way home after it.
+	if haze != null:
+		var thick := 0.0
+		if phase == "track":
+			thick = smoothstep(HAZE_FROM, 0.0, to_gate)
+		else:
+			thick = smoothstep(HAZE_BACK, 0.0, travelled - home_from)
+		cloud = thick
+		haze.fog_density = lerpf(haze_base, HAZE, thick * thick)
+		rider.camera.environment = haze if thick > 0.001 else null
 	if phase == "track" and travelled >= fposmod(gate_at - HOME, length):
 		_into_dream()
 
 func _into_dream() -> void:
 	phase = "dream"
 	dreamed = true
-	dream_d = 0.0
+	# The whole train on the dream's track from the first moment, not bunched at its start.
+	dream_d = CARS * CAR_GAP + 2.0
 	speed = maxf(speed, 42.0)
 	dream.begin()
 	rider.camera.environment = dream.environment
 	for car in cars:
 		for mesh: VisualInstance3D in car.find_children("*", "VisualInstance3D", true, false):
 			mesh.layers = 1 | Dream.LAYER
-	_play("warp")
-	_play("warp_boom", 0.8)
-	flash.emit(1.0)
 	dream_changed.emit(true)
 	was_under = false
 
@@ -625,6 +743,9 @@ func _into_dream() -> void:
 func _dream_step(delta: float) -> void:
 	var f: Transform3D = dream.frame_at(dream_d)
 	var target := clampf(DREAM_SPEED - 32.0 * (-f.basis.z).y, 40.0, 88.0)
+	# Easing down to the way home's speed in the last cloud, so nothing jumps when it comes out.
+	target = lerpf(target, HOLD, smoothstep(Dream.END - 360.0, Dream.END - 80.0, dream_d))
+	cloud = dream.hazed
 	speed = move_toward(speed, target, delta * 10.0)
 	dream_d += speed * delta
 	for i in range(cars.size()):
@@ -658,11 +779,11 @@ func _out_of_dream() -> void:
 		for mesh: VisualInstance3D in car.find_children("*", "VisualInstance3D", true, false):
 			mesh.layers = 1
 	at = return_at
-	travelled = length - fposmod(HOME - return_at, length)
-	speed = 26.0
+	travelled = fposmod(return_at - HOME, length)
+	speed = maxf(speed, HOLD)
 	_place_train()
-	_play("warp")
-	flash.emit(1.0)
+	haze.fog_density = HAZE
+	rider.camera.environment = haze
 	dream_changed.emit(false)
 
 func _on_shard(count: int, total: int) -> void:
@@ -693,7 +814,10 @@ func _step_off() -> void:
 	rumble.stop()
 	music.stop()
 	sparks.emitting = false
+	mist.amount_ratio = 0.0
+	cloud = 0.0
 	rider.camera.fov = base_fov
+	rider.camera.environment = null
 	rider.camera.h_offset = 0.0
 	rider.camera.v_offset = 0.0
 	rider.eye = rider.EYE

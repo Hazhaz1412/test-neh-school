@@ -1175,7 +1175,9 @@ func _coasting(delta: float) -> void:
 	fold.music.volume_db = move_toward(fold.music.volume_db, -80.0, delta * 40.0)
 	var coaster: Node3D = fold.coaster
 	speed_lines.set_shader_parameter("amount", clampf((coaster.speed - 25.0) / 45.0, 0.0, 1.0))
-	_clear_view(0.5 if coaster.phase == "dream" else 0.0)
+	# Crisper out in the open dream, never switched: it follows the cloud at the seams.
+	var open: float = (1.0 - coaster.cloud) if coaster.phase == "dream" else 0.0
+	_clear_view(0.5 * open)
 	shard_pop = maxf(shard_pop - delta * 2.0, 0.0)
 	shard_count.scale = Vector2.ONE * (1.0 + shard_pop * 0.35)
 

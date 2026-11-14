@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cuy1dh4h1clun"
-path="res://.godot/imported/coaster-ride-46.0.png-5fc7aaffc0d449ddf7eb283f0eeadf68.ctex"
+uid="uid://btykvgm6b5x6n"
+path="res://.godot/imported/coaster-seam-k-home-160.png-9a5ce132d72e06ade9306b5bd03d882e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/coaster-ride-46.0.png"
-dest_files=["res://.godot/imported/coaster-ride-46.0.png-5fc7aaffc0d449ddf7eb283f0eeadf68.ctex"]
+source_file="res://docs/coaster-seam-k-home-160.png"
+dest_files=["res://.godot/imported/coaster-seam-k-home-160.png-9a5ce132d72e06ade9306b5bd03d882e.ctex"]
 
 [params]
 

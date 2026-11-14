@@ -15,6 +15,8 @@ signal shard_taken(count: int, total: int)
 const DREAM_AT := Vector3(0, 15000, 0)
 const LAYER := 128
 const STEP := 0.5
+# The track's mesh is laid in metre steps (the path itself is sampled finer).
+const MESH_STEP := 1.0
 const CONTROL := 12.0
 const CHUNK := 120.0
 const AHEAD := 1000.0
@@ -28,6 +30,8 @@ const CLOUDS_END := 3300.0
 const END := 4500.0
 const SEA_LEVEL := 0.0
 const FLOOR := -78.0
+# The box's night haze (dream_meadow.gd make_night), for the seams with the fair.
+const HAZE_COLOR := Color(0.2, 0.25, 0.4)
 const LOOK_ANGLE := 0.16
 const LOOK_RANGE := 95.0
 const DWELL := 0.18
@@ -75,6 +79,9 @@ var rock: StandardMaterial3D
 var bulb_mesh: SphereMesh
 var cloud_paint: ShaderMaterial
 var underwater := 0.0
+var preparing := false
+# How deep in cloud the train is at either end of the dream (0 clear, 1 white-out).
+var hazed := 1.0
 
 func _ready() -> void:
 	top_level = true
@@ -184,6 +191,12 @@ func _sky_and_sea() -> void:
 # Height of the track over the sea at distance c along it: each place has its own, the next one's
 # taken up over BLEND metres before the border.
 func height_at(c: float) -> float:
+	# Level and straight for the last stretch, so the way home is met on the level.
+	if c > END - 320.0:
+		return lerpf(_height(c), _height(END - 320.0), smoothstep(END - 320.0, END - 140.0, c))
+	return _height(c)
+
+func _height(c: float) -> float:
 	var levels := [8.0 + 3.0 * sin(c / 55.0), -34.0 + 7.0 * sin(c / 40.0), 175.0 + 22.0 * sin(c / 80.0), 520.0 + 45.0 * sin(c / 110.0)]
 	var ends := [SEA_END, DEEP_END, CLOUDS_END, INF]
 	for i in range(4):
@@ -233,7 +246,7 @@ func reset() -> void:
 func _add_control() -> void:
 	var c := control_at
 	var turn := 0.0048 * sin(c / 170.0 + 1.0) + 0.0032 * sin(c / 63.0)
-	turn *= smoothstep(60.0, 200.0, c)
+	turn *= smoothstep(60.0, 200.0, c) * (1.0 - smoothstep(END - 340.0, END - 160.0, c))
 	heading = heading.rotated(Vector3.UP, turn * CONTROL)
 	var last: Vector3 = controls[-1]
 	var next := last + heading * CONTROL
@@ -285,45 +298,76 @@ func frame_at(d: float) -> Transform3D:
 
 # --- Chunks of track and what is round them -------------------------------------------------
 
+# A stretch of track, written straight into vertex arrays (rails, spine, ties) with their normals,
+# so laying a chunk costs a couple of milliseconds, not a stall.
 func _build_chunk(from: float, to: float) -> void:
 	var holder := Node3D.new()
 	add_child(holder)
-	var rails := SurfaceTool.new()
-	rails.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var spine := SurfaceTool.new()
-	spine.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var ties := SurfaceTool.new()
-	ties.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var parts := [[PackedVector3Array(), PackedVector3Array()], [PackedVector3Array(), PackedVector3Array()], [PackedVector3Array(), PackedVector3Array()]]
 	var lights_at: Array[Transform3D] = []
 	var colours: Array[Color] = []
 	var palette := [Color(1.0, 0.35, 0.45), Color(1.0, 0.8, 0.4), Color(0.45, 0.75, 1.0), Color(0.7, 1.0, 0.6)]
-	var previous: Array = []
+	var tubes := [[Vector3(-GAUGE, 0, 0), 0.07, 0], [Vector3(GAUGE, 0, 0), 0.07, 0], [Vector3(0, -0.42, 0), 0.16, 1]]
+	var sides := 6
+	var circle: Array[Vector3] = []
+	for k in range(sides):
+		var a := TAU * k / sides
+		circle.append(Vector3(cos(a), sin(a), 0))
+	# Each ring is worked out once and joined to the one before it.
+	var last_rings: Array = []
 	var d := from
 	var k := 0
 	while d <= to + 0.01:
 		var f := local_frame(d)
-		var current: Array = [_ring(f, Vector3(-GAUGE, 0, 0), 0.07), _ring(f, Vector3(GAUGE, 0, 0), 0.07), _ring(f, Vector3(0, -0.42, 0), 0.16)]
-		if not previous.is_empty():
-			_tube(rails, previous[0], current[0])
-			_tube(rails, previous[1], current[1])
-			_tube(spine, previous[2], current[2])
-		previous = current
+		var rings: Array = []
+		for tube: Array in tubes:
+			var centre: Vector3 = tube[0]
+			var radius: float = tube[1]
+			var at := PackedVector3Array()
+			var normal := PackedVector3Array()
+			at.resize(sides)
+			normal.resize(sides)
+			for j in range(sides):
+				var n := f.basis * circle[j]
+				normal[j] = n
+				at[j] = f.origin + f.basis * centre + n * radius
+			rings.append([at, normal])
+		if not last_rings.is_empty():
+			for t in range(tubes.size()):
+				var verts: PackedVector3Array = parts[tubes[t][2]][0]
+				var norms: PackedVector3Array = parts[tubes[t][2]][1]
+				var a0s: PackedVector3Array = last_rings[t][0]
+				var an: PackedVector3Array = last_rings[t][1]
+				var b0s: PackedVector3Array = rings[t][0]
+				var bn: PackedVector3Array = rings[t][1]
+				for j in range(sides):
+					var j1 := (j + 1) % sides
+					verts.append_array([a0s[j], b0s[j], b0s[j1], a0s[j], b0s[j1], a0s[j1]])
+					norms.append_array([an[j], bn[j], bn[j1], an[j], bn[j1], an[j1]])
+		last_rings = rings
+		if k % 2 == 0:
+			var ties: PackedVector3Array = parts[2][0]
+			var tie_n: PackedVector3Array = parts[2][1]
+			_fast_bar(ties, tie_n, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(GAUGE, -0.05, 0), 0.06, f.basis)
+			_fast_bar(ties, tie_n, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
+			_fast_bar(ties, tie_n, f * Vector3(GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
 		if k % 3 == 0:
-			_bar(ties, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(GAUGE, -0.05, 0), 0.06, f.basis)
-			_bar(ties, f * Vector3(-GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
-			_bar(ties, f * Vector3(GAUGE, -0.05, 0), f * Vector3(0, -0.42, 0), 0.05, f.basis)
-		if k % 5 == 0:
 			for side in range(2):
 				lights_at.append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * 0.15), f * Vector3((side * 2 - 1) * (GAUGE + 0.16), -0.08, 0)))
 				colours.append(palette[int(d / 7.5) % palette.size()] * 3.0)
-		d += STEP
+		d += MESH_STEP
 		k += 1
-	for part: Array in [[rails, steel], [spine, red], [ties, dark]]:
-		var tool: SurfaceTool = part[0]
-		tool.generate_normals()
+	var paints := [steel, red, dark]
+	for i in range(3):
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = parts[i][0]
+		arrays[Mesh.ARRAY_NORMAL] = parts[i][1]
+		var shape := ArrayMesh.new()
+		shape.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		var mesh := MeshInstance3D.new()
-		mesh.mesh = tool.commit()
-		mesh.material_override = part[1]
+		mesh.mesh = shape
+		mesh.material_override = paints[i]
 		mesh.layers = LAYER
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		holder.add_child(mesh)
@@ -345,6 +389,20 @@ func _build_chunk(from: float, to: float) -> void:
 		if at >= from and at < to:
 			_shard(i)
 	chunks.append({"from": from, "to": to, "node": holder})
+
+func _fast_bar(verts: PackedVector3Array, norms: PackedVector3Array, from: Vector3, to: Vector3, thick: float, basis: Basis) -> void:
+	var along := (to - from).normalized()
+	var across := basis.z if absf(basis.z.dot(along)) < 0.9 else basis.x
+	var side := across.cross(along).normalized()
+	var lift := along.cross(side).normalized()
+	var corners := [side + lift, -side + lift, -side - lift, side - lift]
+	var faces := [lift, -side, -lift, side]
+	for k in range(4):
+		var c0: Vector3 = corners[k] * thick
+		var c1: Vector3 = corners[(k + 1) % 4] * thick
+		var n: Vector3 = faces[k]
+		verts.append_array([from + c0, to + c0, to + c1, from + c0, to + c1, from + c1])
+		norms.append_array([n, n, n, n, n, n])
 
 func _ring(f: Transform3D, offset: Vector3, radius: float) -> PackedVector3Array:
 	var ring := PackedVector3Array()
@@ -401,8 +459,8 @@ func _scenery(holder: Node3D, from: float, to: float) -> void:
 		1: _deep_scenery(holder, from, to)
 		2: _cloud_scenery(holder, from, to)
 		3: _space_scenery(holder, from, to)
-	if from <= END - 60.0 and to > END - 60.0:
-		_keyhole(holder, END - 60.0)
+	if from <= END - 320.0 and to > END - 320.0:
+		_keyhole(holder, END - 320.0)
 
 func _sea_scenery(holder: Node3D, from: float, to: float) -> void:
 	for i in range(3):
@@ -668,21 +726,36 @@ func _halo_texture() -> GradientTexture2D:
 
 # --- Every frame ---------------------------------------------------------------------------------
 
-func begin() -> void:
+# Laid out ahead of time, while the train is still running out into the haze: one chunk a frame
+# (prepare_step), so by the time it slips across, the first kilometre is there.
+func prepare() -> void:
 	reset()
-	visible = true
 	_extend(AHEAD + CHUNK)
+	preparing = true
+
+func prepare_step() -> void:
+	if preparing and built_to < AHEAD:
+		_build_chunk(built_to, built_to + CHUNK)
+		built_to += CHUNK
+
+func begin() -> void:
+	if not preparing:
+		prepare()
+	preparing = false
+	visible = true
 	update(0.0, null, 0.0)
 
 func finish() -> void:
 	visible = false
+	preparing = false
 	reset()
 
 # Keep the track laid ahead of `d` and cleared behind, the sea and sky with the eye, the air and
 # light right for where the eye is; catch shards looked at. Returns how many things just swept past.
 func update(d: float, eye: Camera3D, delta: float) -> int:
 	_extend(d + AHEAD + CHUNK)
-	while built_to + CHUNK <= dists[dists.size() - 1] - 30.0 and built_to < d + AHEAD:
+	# One chunk a frame at most, so laying track never stalls a frame.
+	if built_to + CHUNK <= dists[dists.size() - 1] - 30.0 and built_to < d + AHEAD:
 		_build_chunk(built_to, built_to + CHUNK)
 		built_to += CHUNK
 	for chunk in chunks.duplicate():
@@ -759,14 +832,22 @@ func _air(d: float) -> void:
 	var fog: Color = (a.fog as Color).lerp(b.fog, t)
 	var density := lerpf(a.density, b.density, t)
 	var deep := Color(0.03, 0.16, 0.22)
-	environment.fog_light_color = fog.lerp(deep, underwater)
-	environment.fog_density = lerpf(density, 0.022, underwater)
+	# Haze at both ends, the same as the box's out where the train slipped away: it thins as the
+	# dream opens up, and closes in again before the way home.
+	hazed = maxf(smoothstep(520.0, 14.0, d), smoothstep(END - 360.0, END - 55.0, d))
+	environment.fog_light_color = fog.lerp(deep, underwater).lerp(HAZE_COLOR, hazed)
+	environment.fog_density = lerpf(lerpf(density, 0.022, underwater), 0.5, hazed * hazed)
+	# In the cloud, the same light as out over the fair (the box's moonlight), so the train looks
+	# the same on both sides of the seam.
+	environment.tonemap_exposure = 1.25
 	environment.ambient_light_color = (a.ambient as Color).lerp(b.ambient, t).lerp(Color(0.2, 0.5, 0.55), underwater)
 	environment.ambient_light_energy = 0.8
-	sky_paint.set_shader_parameter("veil", underwater)
-	sky_paint.set_shader_parameter("veil_color", deep)
-	light.light_color = (a.light as Color).lerp(b.light, t)
-	light.light_energy = lerpf(a.energy, b.energy, t)
+	sky_paint.set_shader_parameter("veil", maxf(underwater, hazed))
+	sky_paint.set_shader_parameter("veil_color", deep.lerp(HAZE_COLOR, hazed))
+	light.light_color = (a.light as Color).lerp(b.light, t).lerp(Color(0.62, 0.72, 1.0), hazed)
+	light.light_energy = lerpf(lerpf(a.energy, b.energy, t), 0.0, hazed)
+	environment.ambient_light_color = environment.ambient_light_color.lerp(Color(0.2, 0.24, 0.4), hazed)
+	environment.ambient_light_energy = lerpf(0.8, 0.3, hazed)
 	var sun_dir := Vector3(0.85, 0.18, -0.5).normalized()
 	sky_paint.set_shader_parameter("sun_dir", sun_dir)
 	# From above at night and in space, from the low sun over the clouds.

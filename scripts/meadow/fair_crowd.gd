@@ -168,7 +168,7 @@ func _process(delta: float) -> void:
 		if near:
 			heard = 1.0 - smoothstep(HEAR * 0.75, HEAR, eye.global_position.distance_to(people[i].global_position))
 		bubble.shown = move_toward(bubble.shown, bubble.want * heard, delta * 3.0)
-		if bubble.want > 0.0:
+		if bubble.want > 0.0 and not bubble.sized:
 			_fit(bubble)
 		var on: bool = bubble.shown > 0.001 and bubble.sized
 		(bubble.words as Label3D).visible = on

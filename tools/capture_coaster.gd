@@ -41,9 +41,12 @@ func run() -> void:
 	player.enabled = true
 	player.gravity_field = meadow.inside.up_at
 	var coaster: Node3D = meadow.fold.coaster
-	stand(Vector3(20, 0.05, -2), Vector3(170, 25, -10))
+	stand(Vector3(60, 0.05, 0), Vector3(400, 6, -20))
 	await wait(1.5)
 	await shot("overview")
+	stand(Vector3(300, 0.05, 0), Vector3(1200, 6, 0))
+	await wait(1.0)
+	await shot("endless")
 	stand(Vector3(120, 0.05, 60), Vector3(200, 25, -10))
 	await wait(1.0)
 	await shot("side")
@@ -58,11 +61,25 @@ func run() -> void:
 	await wait(0.2)
 	await shot("ride-start")
 	print("start cam near ", player.camera.near, " far ", player.camera.far, " fov ", player.camera.fov, " env ", player.camera.environment)
-	var start := Time.get_ticks_msec()
-	for at: float in [2.5, 6.0, 12.0, 20.0, 27.0, 34.0, 46.0, 54.0, 66.0, 76.0, 84.0]:
-		while (Time.get_ticks_msec() - start) / 1000.0 < at:
+	# Frame by frame across the two seams, by distance: into the cloud and the dream, and home.
+	var gate: float = fposmod(coaster.gate_at - coaster.HOME, coaster.length)
+	var home: float = fposmod(coaster.return_at - coaster.HOME, coaster.length)
+	var marks := [["a-out-300", func() -> bool: return coaster.phase == "track" and coaster.travelled > gate - 300.0],
+		["b-out-120", func() -> bool: return coaster.phase == "track" and coaster.travelled > gate - 120.0],
+		["c-out-20", func() -> bool: return coaster.phase == "track" and coaster.travelled > gate - 20.0],
+		["d-in-30", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > 30.0],
+		["e-in-160", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > 160.0],
+		["f-in-400", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > 400.0],
+		["g-end-300", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > coaster.Dream.END - 300.0],
+		["h-end-120", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > coaster.Dream.END - 120.0],
+		["i-end-65", func() -> bool: return coaster.phase == "dream" and coaster.dream_d > coaster.Dream.END - 65.0],
+		["j-home-20", func() -> bool: return coaster.phase == "home" and coaster.travelled > home + 20.0],
+		["k-home-160", func() -> bool: return coaster.phase == "home" and coaster.travelled > home + 160.0],
+		["l-home-400", func() -> bool: return coaster.phase == "home" and coaster.travelled > home + 400.0]]
+	for mark: Array in marks:
+		var ready: Callable = mark[1]
+		while not ready.call():
 			await process_frame
-		await shot("ride-%04.1f" % at)
-		var cam: Camera3D = player.camera
-		print("shot ", at, " phase ", coaster.phase, " dream ", coaster.dream_d, " speed ", coaster.speed, " shards ", coaster.dream.taken)
+		await shot("seam-" + mark[0])
+		print("shot ", mark[0], " speed ", coaster.speed, " cloud ", coaster.cloud)
 	quit()

@@ -660,6 +660,14 @@ func _fireworks() -> void:
 		process.damping_max = 3.0
 		process.scale_min = 0.6
 		process.scale_max = 1.2
+		# One fade from white-hot to clear, set once; each burst only changes `color`.
+		var fade := Gradient.new()
+		fade.set_color(0, Color(2.0, 2.0, 2.0, 1))
+		fade.set_color(1, Color(1, 1, 1, 0))
+		fade.add_point(0.15, Color(1, 1, 1, 1))
+		var ramp := GradientTexture1D.new()
+		ramp.gradient = fade
+		process.color_ramp = ramp
 		burst.process_material = process
 		burst.draw_pass_1 = spark
 		burst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -700,13 +708,7 @@ func _tick_fireworks(delta: float) -> void:
 		var hue := rng.randf()
 		var colour := Color.from_hsv(hue, 0.6, 1.0) * 4.0
 		var process: ParticleProcessMaterial = burst.process_material
-		var ramp := Gradient.new()
-		ramp.set_color(0, Color(4, 4, 4, 1))
-		ramp.set_color(1, Color(colour.r, colour.g, colour.b, 0))
-		ramp.add_point(0.15, Color(colour.r, colour.g, colour.b, 1))
-		var texture := GradientTexture1D.new()
-		texture.gradient = ramp
-		process.color_ramp = texture
+		process.color = Color(colour.r, colour.g, colour.b, 1.0)
 		burst.position = Vector3(rng.randf_range(-36, 36), rng.randf_range(38, 60), rng.randf_range(-40, 12))
 		if on_top:
 			var hub := WHEEL_AT + Vector3(0, Wheel.HUB, 0)
