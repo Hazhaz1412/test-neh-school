@@ -64,6 +64,9 @@ const Coaster := preload("res://scripts/meadow/roller_coaster.gd")
 const WHEEL_AT := Vector3(-27, 0, -12)
 const WHEEL_TURN := 65.0
 const FLAG := preload("res://assets/materials/meadow_flag.gdshader")
+const TelescopeEventBus := preload("res://scripts/telescope/telescope_event_bus.gd")
+const LENS_PICKUP_AT := Vector3(-6.8, 0.0, 7.5)
+const LENS_PICKUP_REACH := 2.6
 
 var arc := R * PI / 2
 var wall := SIZE - 2.0 * R
@@ -72,6 +75,9 @@ var fair_s := 0.0
 var house_s := 0.0
 var fair: Node3D
 var house: Node3D
+var lens_pickup: Node3D
+var lens_orb: Node3D
+var lens_light: OmniLight3D
 var door_hinge: Node3D
 var door_frame: Node3D
 var door_open := 0.0
@@ -503,6 +509,7 @@ func _fair() -> void:
 	swing_mark.name = "GameSwing"
 	swing_mark.position = Vector3(-14, 0, 16)
 	fair.add_child(swing_mark)
+	_build_lens_pickup(LENS_PICKUP_AT)
 	for plan in [["hot_air_balloon_red", Vector3(-34, 30, -46), 14.0], ["hot_air_balloon_blue", Vector3(40, 38, -22), 12.0], ["hot_air_balloon_red", Vector3(12, 46, 16), 10.0],
 			["hot_air_balloon_blue", Vector3(-46, 40, 20), 11.0], ["hot_air_balloon_red", Vector3(30, 54, 40), 9.0]]:
 		var balloon := _fit(plan[0], plan[2])
@@ -1181,6 +1188,103 @@ func _process(delta: float) -> void:
 		var node: Node3D = balloon.node
 		node.position = balloon.home + Vector3(sin(clock * 0.05 + balloon.phase) * 6.0, sin(clock * 0.3 + balloon.phase) * 1.2, cos(clock * 0.04 + balloon.phase) * 6.0)
 		node.rotation.y += delta * 0.03
+	if lens_orb != null and lens_orb.visible:
+		lens_orb.rotation.y += delta * 1.35
+		lens_orb.position.y = 1.18 + sin(clock * 2.4) * 0.06
+
+# Builds the Telescope Optical Lens Core pickup pedestal (`TelescopeLensPickup`) in the Fairground plaza.
+func _build_lens_pickup(at: Vector3) -> void:
+	lens_pickup = Node3D.new()
+	lens_pickup.name = "TelescopeLensPickup"
+	lens_pickup.position = at
+	fair.add_child(lens_pickup)
+
+	var brass := StandardMaterial3D.new()
+	brass.albedo_color = Color(0.86, 0.68, 0.34)
+	brass.metallic = 0.88
+	brass.roughness = 0.26
+
+	var dark_stone := StandardMaterial3D.new()
+	dark_stone.albedo_color = Color(0.18, 0.22, 0.26)
+	dark_stone.roughness = 0.72
+
+	var crystal := StandardMaterial3D.new()
+	crystal.albedo_color = Color(0.32, 0.98, 0.78, 0.92)
+	crystal.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	crystal.emission_enabled = true
+	crystal.emission = Color(0.28, 0.96, 0.74)
+	crystal.emission_energy_multiplier = 2.4
+	crystal.roughness = 0.06
+	crystal.metallic = 0.25
+
+	var base := CylinderMesh.new()
+	base.top_radius = 0.36
+	base.bottom_radius = 0.44
+	base.height = 0.14
+	_mesh(lens_pickup, base, Vector3(0, 0.07, 0), dark_stone)
+
+	var column := CylinderMesh.new()
+	column.top_radius = 0.14
+	column.bottom_radius = 0.18
+	column.height = 0.72
+	_mesh(lens_pickup, column, Vector3(0, 0.50, 0), dark_stone)
+
+	var tray := CylinderMesh.new()
+	tray.top_radius = 0.30
+	tray.bottom_radius = 0.22
+	tray.height = 0.08
+	_mesh(lens_pickup, tray, Vector3(0, 0.88, 0), brass)
+
+	lens_orb = Node3D.new()
+	lens_orb.name = "LensCoreOrb"
+	lens_orb.position = Vector3(0, 1.18, 0)
+	lens_pickup.add_child(lens_orb)
+
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.16
+	sphere.height = 0.32
+	_mesh(lens_orb, sphere, Vector3.ZERO, crystal)
+
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.19
+	ring.outer_radius = 0.23
+	var g1 := _mesh(lens_orb, ring, Vector3.ZERO, brass)
+	g1.rotation_degrees.x = 55.0
+	var g2 := _mesh(lens_orb, ring, Vector3.ZERO, brass)
+	g2.rotation_degrees.z = -55.0
+
+	lens_light = OmniLight3D.new()
+	lens_light.name = "LensPickupLight"
+	lens_light.position = Vector3(0, 1.35, 0)
+	lens_light.light_color = Color(0.35, 0.98, 0.78)
+	lens_light.light_energy = 2.2
+	lens_light.omni_range = 7.5
+	lens_pickup.add_child(lens_light)
+
+	_sync_lens_pickup()
+
+func _sync_lens_pickup() -> void:
+	var taken: bool = TelescopeEventBus.instance().has_item(TelescopeEventBus.ITEM_LENS_CORE)
+	if lens_orb != null:
+		lens_orb.visible = not taken
+	if lens_light != null:
+		lens_light.light_energy = 0.45 if taken else 2.2
+
+func near_lens_pickup(at: Vector3) -> bool:
+	if fair == null or lens_pickup == null:
+		return false
+	if TelescopeEventBus.instance().has_item(TelescopeEventBus.ITEM_LENS_CORE):
+		return false
+	var local := fair.to_local(at)
+	return absf(local.y) < 2.6 and Vector2(local.x - LENS_PICKUP_AT.x, local.z - LENS_PICKUP_AT.z).length() < LENS_PICKUP_REACH
+
+func take_lens_pickup() -> bool:
+	var bus := TelescopeEventBus.instance()
+	if bus.has_item(TelescopeEventBus.ITEM_LENS_CORE):
+		return false
+	bus.pickup_lens_core()
+	_sync_lens_pickup()
+	return true
 
 # Where the walker is (for the scene's hints).
 func check_walker(at: Vector3) -> void:

@@ -387,6 +387,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				var pickup := is_pickup(target)
 				if target.interact(self) and pickup:
 					held_visual.grab_with_right_hand()
+			elif get_parent().get("rooftop_telescope") != null:
+				get_parent().rooftop_telescope.interact_nearest(global_position)
 
 func _physics_process(delta: float) -> void:
 	tick_chalk_charge(delta)

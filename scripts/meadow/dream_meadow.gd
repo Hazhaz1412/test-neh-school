@@ -45,6 +45,8 @@ const TREE_SCALE := 2.3
 const BED_AT := Vector2(2.4, 1.2)
 const BED_TURN := -25.0
 const BED_REACH := 2.6
+const TELESCOPE_AT := Vector2(-3.2, 2.2)
+const TelescopeStation := preload("res://scripts/telescope/telescope_station.gd")
 const Fold := preload("res://scripts/meadow/land_fold.gd")
 const Inside := preload("res://scripts/meadow/house_inside.gd")
 const LID := preload("res://assets/materials/eyelids.gdshader")
@@ -121,6 +123,7 @@ var shard_count: Label
 var flash_rect: ColorRect
 var shard_pop := 0.0
 var first_meadow: Node3D
+var telescope_station: Node3D
 
 static func ground_height(x: float, z: float) -> float:
 	# Must match ground_height() in meadow_grass.gdshader.
@@ -179,6 +182,7 @@ func _ready() -> void:
 	_sound()
 	_hud()
 	_make_player(Transform3D(Basis.IDENTITY, on_ground(START.x, START.z) + Vector3(0, 0.05, 0)), 0.08)
+	_setup_telescope()
 	# Once everything that follows the light exists, set it all once.
 	shown_bright = -1.0
 	_apply_brightness()
@@ -266,6 +270,7 @@ func begin_again(body: Transform3D, head: float, speed: Vector3) -> void:
 	_hud()
 	var flat := Vector3(-body.basis.z.x, 0, -body.basis.z.z).normalized()
 	_make_player(Transform3D(Basis.looking_at(flat, Vector3.UP), body.origin), head)
+	_setup_telescope()
 	player.velocity = Vector3(speed.x, 0, speed.z)
 	player.enabled = true
 	fade.color.a = 0.0
@@ -588,6 +593,17 @@ func _tree_and_bed() -> void:
 	body.add_child(shape)
 	bed.add_child(body)
 
+func _setup_telescope() -> void:
+	if telescope_station != null:
+		return
+	telescope_station = TelescopeStation.new()
+	telescope_station.name = "TelescopeStation"
+	telescope_station.requires_lens_repair = true
+	telescope_station.position = on_ground(TELESCOPE_AT.x, TELESCOPE_AT.y)
+	telescope_station.rotation_degrees.y = 140.0
+	add_child(telescope_station)
+	telescope_station.setup(hud, player, 2)
+
 func _solid_cylinder(at: Vector3, radius: float, height: float) -> void:
 	var body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
@@ -867,16 +883,22 @@ func _say(text: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if preview:
 		return
+	if telescope_station != null and telescope_station.is_open():
+		return
 	if event is InputEventMouseButton and event.pressed and state != "leave":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_E:
-		if near_bed():
+		if state == "walk" and telescope_station != null and telescope_station.interact_nearest(player.global_position):
+			prompt.modulate.a = 0.0
+		elif near_bed():
 			lie_down()
 		elif night and state == "walk":
 			var at := player.global_position
-			if fold.near_door(at):
+			if fold.near_lens_pickup(at):
+				pickup_telescope_lens()
+			elif fold.near_door(at):
 				open_house()
 			elif fold.wheel.near_board(at):
 				ride_wheel()
@@ -959,9 +981,15 @@ func _walk() -> void:
 	if night:
 		fold.check_walker(player.global_position)
 		fireflies.global_position = player.global_position
-	prompt.text = "E · Nằm xuống" if near_bed() else ""
-	if night:
-		if fold.near_door(p) or inside.near_planet_door(p):
+	var tele_prompt: String = telescope_station.prompt_for(p) if telescope_station != null else ""
+	if tele_prompt != "":
+		prompt.text = tele_prompt
+	else:
+		prompt.text = "E · Nằm xuống" if near_bed() else ""
+	if night and tele_prompt == "":
+		if fold.near_lens_pickup(p):
+			prompt.text = "E · Nhặt Cục Thấu Kính Tinh Tú (Sửa Kính Thiên Văn)"
+		elif fold.near_door(p) or inside.near_planet_door(p):
 			prompt.text = "E · Mở cửa"
 		elif fold.wheel.near_board(p):
 			prompt.text = "E · Lên đu quay"
@@ -970,6 +998,14 @@ func _walk() -> void:
 		elif inside.near_globe(p):
 			prompt.text = "E · Chạm vào quả cầu"
 	prompt.modulate.a = 1.0 if prompt.text != "" else 0.0
+
+func pickup_telescope_lens() -> void:
+	if fold == null or not fold.take_lens_pickup():
+		return
+	if chime != null:
+		chime.play()
+	prompt.modulate.a = 0.0
+	_say("Đã nhặt Cục Thấu Kính Tinh Tú! Hãy mang về gắn vào Kính Thiên Văn cạnh gốc cây.")
 
 func lie_down() -> void:
 	if state != "walk":

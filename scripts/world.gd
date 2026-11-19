@@ -7,6 +7,8 @@ const CityBuilder := preload("res://scripts/city_backdrop/city_builder.gd")
 const Gear := preload("res://scripts/night_gear.gd")
 const Settings := preload("res://scripts/game_settings.gd")
 const Progress := preload("res://scripts/game_progress.gd")
+const TelescopeStation := preload("res://scripts/telescope/telescope_station.gd")
+const ROOFTOP_TELESCOPE_POS := Vector3(15.5, 11.70, 2.5)
 
 @export_group("Night · guard hunt")
 @export var hunt_enabled := true
@@ -61,6 +63,7 @@ var test_cheats: Node
 var cheat_finish_button: Button
 var death_panel: ColorRect
 var death_text: Label
+var rooftop_telescope: Node3D
 @onready var player: CharacterBody3D = $Player
 
 func _build_city_backdrop() -> void:
@@ -68,6 +71,15 @@ func _build_city_backdrop() -> void:
 	city.name = "CityBackdrop"
 	add_child(city)
 	CityBuilder.new().build(city, CityPlan.new(CityPlan.layout()))
+
+func _build_rooftop_telescope() -> void:
+	rooftop_telescope = TelescopeStation.new()
+	rooftop_telescope.name = "RooftopTelescopeStation"
+	rooftop_telescope.interactive = false
+	rooftop_telescope.position = ROOFTOP_TELESCOPE_POS
+	rooftop_telescope.rotation_degrees.y = -25.0
+	add_child(rooftop_telescope)
+	rooftop_telescope.setup(get_node("HUD"), player, 1)
 
 func _ready() -> void:
 	preload("res://scripts/campus_fixes.gd").apply(self)
@@ -118,6 +130,7 @@ func _ready() -> void:
 	compact.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	compact.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	get_node("HUD").get_child(0).add_child(compact)
+	_build_rooftop_telescope()
 	for sign in find_children("HideSign", "Label3D", true, false):
 		sign.hide()
 	for child in $Atmosphere.get_children():
@@ -207,6 +220,8 @@ func _label(parent: Node, pos: Vector2, size: int, color: Color) -> Label:
 	return label
 
 func _unhandled_input(event: InputEvent) -> void:
+	if rooftop_telescope != null and rooftop_telescope.is_open():
+		return
 	if survival.opening.playing or journal != null and journal.panel_visible() or progression != null and progression.panel_visible():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -294,8 +309,10 @@ func _process(delta: float) -> void:
 	# The rescue bar carries its own prompt.
 	if team != null and not team.prompt().is_empty():
 		interaction_label.text = ""
-	if environmental_story and target != null and not player.is_hidden():
+	if environmental_story and target != null and not player.is_hidden() and not bool(target.get("keep_interaction_text")):
 		interaction_label.text = "E"
+	if interaction_label.text.is_empty() and rooftop_telescope != null and simulation_active() and not player.is_hidden():
+		interaction_label.text = rooftop_telescope.prompt_for(player.global_position)
 	for light in flicker_lights:
 		if light.visible:
 			light.light_energy = flicker_energy(light)
